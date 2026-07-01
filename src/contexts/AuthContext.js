@@ -7,39 +7,53 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return Boolean(localStorage.getItem('token'));
+  });
+
+  const setAuthToken = (token) => {
+    if (token) {
+      localStorage.setItem('token', token);
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `token=${token}; Path=/; Max-Age=604800; SameSite=Lax${secure}`;
+      return;
+    }
+
+    localStorage.removeItem('token');
+    document.cookie = 'token=; Path=/; Max-Age=0; SameSite=Lax';
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => {
-        setUser(res.data);
-      }).catch(() => {
-        localStorage.removeItem('token');
-      }).finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    if (!token) return;
+
+    setAuthToken(token);
+    axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => {
+      setUser(res.data);
+    }).catch(() => {
+      setAuthToken(null);
+    }).finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
     const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, { email, password });
-    localStorage.setItem('token', res.data.token);
+    setAuthToken(res.data.token);
     setUser(res.data.user);
     return res.data;
   };
 
   const register = async (data) => {
     const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, data);
-    localStorage.setItem('token', res.data.token);
+    setAuthToken(res.data.token);
     setUser(res.data.user);
     return res.data;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    setAuthToken(null);
     setUser(null);
   };
 

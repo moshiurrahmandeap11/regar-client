@@ -23,9 +23,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      const auth = await login(email, password);
       toast.success(locale === 'fr' ? 'Connecte !' : 'Logged in!');
-      router.push(`/${locale}/dashboard`);
+      router.push(auth?.user?.isAdmin ? '/admin/dashboard' : `/${locale}/dashboard`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {

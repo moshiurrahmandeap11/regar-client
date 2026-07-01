@@ -8,7 +8,7 @@ import {
   Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from '@/i18n/routing';
+import Link from 'next/link';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
@@ -31,7 +31,7 @@ export default function AdminLayoutClient({ children }) {
 
   useEffect(() => {
     if (!user?.isAdmin) {
-      router.push('/fr');
+      router.push('/fr/login');
     }
   }, [user, router]);
 
@@ -89,7 +89,7 @@ export default function AdminLayoutClient({ children }) {
             </div>
           </div>
           <button
-            onClick={() => { logout(); router.push('/fr'); }}
+            onClick={() => { logout(); router.push('/fr/login'); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function AdminLayoutClient({ children }) {
                   ))}
                 </nav>
                 <button
-                  onClick={() => { logout(); router.push('/fr'); }}
+                  onClick={() => { logout(); router.push('/fr/login'); }}
                   className="mt-8 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />

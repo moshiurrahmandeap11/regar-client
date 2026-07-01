@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
+import NextLink from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -117,9 +118,9 @@ export default function Navbar() {
                         <User className="w-4 h-4" /> {t('profile')}
                       </Link>
                       {user.isAdmin && (
-                        <Link href="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
+                        <NextLink href="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
                           <LayoutDashboard className="w-4 h-4" /> Admin
-                        </Link>
+                        </NextLink>
                       )}
                       <button
                         onClick={() => { logout(); setUserMenuOpen(false); }}
