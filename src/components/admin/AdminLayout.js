@@ -26,14 +26,22 @@ const menuItems = [
 export default function AdminLayoutClient({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!user?.isAdmin) {
+    if (!loading && !user?.isAdmin) {
       router.push('/fr/login');
     }
-  }, [user, router]);
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (!user?.isAdmin) return null;
 
