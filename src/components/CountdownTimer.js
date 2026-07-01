@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-export default function CountdownTimer({ targetDate, locale }) {
+export default function CountdownTimer({ targetDate, locale, variant }) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -28,6 +28,22 @@ export default function CountdownTimer({ targetDate, locale }) {
     { value: timeLeft.minutes, label: locale === 'fr' ? 'Min' : 'Min' },
     { value: timeLeft.seconds, label: locale === 'fr' ? 'Sec' : 'Sec' },
   ];
+
+  if (variant === 'banner') {
+    return (
+      <div className="flex items-center gap-3 sm:gap-5">
+        {units.map((unit, i) => (
+          <div key={i} className="flex items-center gap-3 sm:gap-5">
+            <div className="text-center min-w-10 sm:min-w-12">
+              <p className="text-white text-3xl sm:text-4xl font-extrabold leading-none">{String(unit.value).padStart(2, '0')}</p>
+              <p className="text-[10px] tracking-[0.18em] uppercase text-[#7eb6de] mt-2">{unit.label}</p>
+            </div>
+            {i < units.length - 1 ? <span className="text-[#7eb6de] text-2xl font-semibold">:</span> : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-2">

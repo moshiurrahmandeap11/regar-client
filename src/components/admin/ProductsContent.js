@@ -12,13 +12,13 @@ export default function ProductsContent() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [colorImagePreviews, setColorImagePreviews] = useState([]);
   const [form, setForm] = useState({
     name: '', nameEn: '', description: '', descriptionEn: '', price: '', originalPrice: '',
-    stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '' }], sizes: [''],
+    stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
     featured: false, isActive: true
   });
-  const [imageFile, setImageFile] = useState(null);
+  const [colorImageFiles, setColorImageFiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -39,14 +39,20 @@ export default function ProductsContent() {
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+  const handleColorImageChange = (index, file) => {
+    if (!file) return;
+
+    const nextFiles = [...colorImageFiles];
+    nextFiles[index] = file;
+    setColorImageFiles(nextFiles);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const nextPreviews = [...colorImagePreviews];
+      nextPreviews[index] = reader.result;
+      setColorImagePreviews(nextPreviews);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -59,7 +65,10 @@ export default function ProductsContent() {
         formData.append(key, form[key]);
       }
     });
-    if (imageFile) formData.append('images', imageFile);
+
+    colorImageFiles.forEach((file, index) => {
+      if (file) formData.append(`colorImage_${index}`, file);
+    });
 
     const url = editing ? `${API}/api/products/${editing}` : `${API}/api/products`;
     const method = editing ? 'PUT' : 'POST';
@@ -96,11 +105,14 @@ export default function ProductsContent() {
       name: product.name, nameEn: product.nameEn || '', description: product.description || '',
       descriptionEn: product.descriptionEn || '', price: product.price, originalPrice: product.originalPrice || '',
       stock: product.stock, maxTickets: product.maxTickets, category: product.category,
-      colors: product.colors?.length ? product.colors : [{ name: '', hex: '' }],
+      colors: product.colors?.length
+        ? product.colors.map((color) => ({ name: color.name || '', hex: color.hex || '#000000', image: color.image || '' }))
+        : [{ name: '', hex: '', image: '' }],
       sizes: product.sizes?.length ? product.sizes : [''],
       featured: product.featured, isActive: product.isActive
     });
-    setImagePreview(product.images?.[0] || null);
+    setColorImagePreviews((product.colors || []).map((color) => color.image || null));
+    setColorImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -108,17 +120,27 @@ export default function ProductsContent() {
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
-    setImagePreview(null);
-    setImageFile(null);
+    setColorImagePreviews([]);
+    setColorImageFiles([]);
     setForm({
       name: '', nameEn: '', description: '', descriptionEn: '', price: '', originalPrice: '',
-      stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '' }], sizes: [''],
+      stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
       featured: false, isActive: true
     });
   };
 
-  const addColor = () => setForm({ ...form, colors: [...form.colors, { name: '', hex: '' }] });
-  const removeColor = (i) => setForm({ ...form, colors: form.colors.filter((_, idx) => idx !== i) });
+  const addColor = () => {
+    setForm({ ...form, colors: [...form.colors, { name: '', hex: '', image: '' }] });
+    setColorImageFiles((prev) => [...prev, null]);
+    setColorImagePreviews((prev) => [...prev, null]);
+  };
+
+  const removeColor = (i) => {
+    setForm({ ...form, colors: form.colors.filter((_, idx) => idx !== i) });
+    setColorImageFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setColorImagePreviews((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
   const updateColor = (i, field, val) => {
     const newColors = [...form.colors];
     newColors[i][field] = val;
@@ -219,11 +241,31 @@ export default function ProductsContent() {
                 {/* Colors */}
                 <div>
                   <label className="text-sm font-medium text-neutral-700 mb-2 block">Colors</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {form.colors.map((color, i) => (
-                      <div key={i} className="flex items-center gap-2 bg-neutral-50 rounded-lg p-2">
+                      <div key={i} className="flex flex-wrap items-center gap-2 bg-neutral-50 rounded-lg p-2">
                         <input type="color" value={color.hex} onChange={e => updateColor(i, 'hex', e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
                         <input value={color.name} onChange={e => updateColor(i, 'name', e.target.value)} placeholder="Color name" className="w-24 px-2 py-1 rounded border border-neutral-200 text-xs" />
+
+                        <label className="flex items-center gap-2 px-2 py-1.5 border border-neutral-200 rounded-lg cursor-pointer bg-white hover:bg-neutral-50 transition-colors">
+                          <Upload className="w-3 h-3" />
+                          <span className="text-xs">{colorImageFiles[i]?.name || 'Image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleColorImageChange(i, e.target.files?.[0])}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {(colorImagePreviews[i] || color.image) ? (
+                          <img
+                            src={colorImagePreviews[i] || color.image}
+                            alt={color.name || `color-${i}`}
+                            className="w-8 h-8 rounded object-cover border border-neutral-200"
+                          />
+                        ) : null}
+
                         {form.colors.length > 1 && (
                           <button type="button" onClick={() => removeColor(i)} className="text-red-500 hover:text-red-700"><X className="w-3 h-3" /></button>
                         )}
@@ -246,24 +288,6 @@ export default function ProductsContent() {
                       </div>
                     ))}
                     <button type="button" onClick={addSize} className="px-3 py-2 bg-neutral-100 rounded-lg text-xs font-medium hover:bg-neutral-200 transition-colors">+ Add</button>
-                  </div>
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                  <label className="text-sm font-medium text-neutral-700 mb-2 block">Product Image</label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 px-4 py-2.5 border border-neutral-200 rounded-xl cursor-pointer hover:bg-neutral-50 transition-colors">
-                      <Upload className="w-4 h-4" />
-                      <span className="text-sm">{imageFile ? imageFile.name : 'Choose image'}</span>
-                      <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                    </label>
-                    {imagePreview && (
-                      <div className="relative">
-                        <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-lg object-cover" />
-                        <button type="button" onClick={() => { setImagePreview(null); setImageFile(null); }} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs">×</button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -322,7 +346,7 @@ export default function ProductsContent() {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-neutral-100 overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-neutral-100 overflow-hidden shrink-0">
                             {product.images?.[0] ? (
                               <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
                             ) : (

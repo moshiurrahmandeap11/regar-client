@@ -3,7 +3,7 @@ import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
 const intlProxy = createMiddleware(routing);
-const protectedRoutes = ['/dashboard', '/profile', '/orders', '/admin'];
+const protectedRoutes = ['/dashboard', '/profile', '/orders', '/order-detail', '/tickets', '/admin'];
 
 function normalizePathname(pathname) {
   const segments = pathname.split('/').filter(Boolean);

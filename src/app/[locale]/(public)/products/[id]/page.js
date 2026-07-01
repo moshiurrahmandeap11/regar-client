@@ -24,6 +24,14 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const selectedColorData = product?.colors?.find((color) => color.name === selectedColor);
+  const displayImages = (() => {
+    if (!product) return [];
+    const baseImages = Array.isArray(product.images) ? product.images : [];
+    if (!selectedColorData?.image) return baseImages;
+    return [selectedColorData.image, ...baseImages.filter((img) => img !== selectedColorData.image)];
+  })();
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -48,7 +56,7 @@ export default function ProductDetailPage() {
       toast.error(locale === 'fr' ? 'Veuillez selectionner une couleur et une taille' : 'Please select color and size');
       return;
     }
-    addToCart(product, selectedColor, selectedSize, quantity);
+    addToCart(product, selectedColor, selectedSize, quantity, displayImages[activeImage] || displayImages[0]);
     toast.success(locale === 'fr' ? 'Ajoute au panier !' : 'Added to cart!');
   };
 
@@ -63,14 +71,14 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               <div className="aspect-square bg-neutral-100 rounded-2xl overflow-hidden">
                 <img
-                  src={product.images?.[activeImage] || '/placeholder.jpg'}
+                  src={displayImages?.[activeImage] || '/placeholder.jpg'}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              {product.images?.length > 1 && (
+              {displayImages?.length > 1 && (
                 <div className="flex gap-2">
-                  {product.images.map((img, i) => (
+                  {displayImages.map((img, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveImage(i)}
@@ -106,7 +114,10 @@ export default function ProductDetailPage() {
                       {product.colors.map((color) => (
                         <button
                           key={color.name}
-                          onClick={() => setSelectedColor(color.name)}
+                          onClick={() => {
+                            setSelectedColor(color.name);
+                            setActiveImage(0);
+                          }}
                           className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === color.name ? 'border-neutral-900 scale-110' : 'border-neutral-200'}`}
                           style={{ backgroundColor: color.hex }}
                           title={color.name}

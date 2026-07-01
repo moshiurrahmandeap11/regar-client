@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Ticket, ShoppingBag, Trophy, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import { Link } from '@/i18n/routing';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
 
@@ -13,6 +15,9 @@ export default function DashboardPage() {
   const locale = useLocale();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -20,14 +25,40 @@ export default function DashboardPage() {
     }
   }, [user, loading, router, locale]);
 
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!user) return;
+      try {
+        const [ordersRes, ticketsRes] = await Promise.all([
+          api.get('/api/orders'),
+          api.get('/api/tickets/my'),
+        ]);
+        setOrders(Array.isArray(ordersRes.data) ? ordersRes.data : []);
+        setTickets(Array.isArray(ticketsRes.data) ? ticketsRes.data : []);
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to load dashboard data');
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
   if (!user) return null;
+  if (pageLoading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
+
+  const wins = tickets.filter((ticket) => ticket.isWinner).length;
+  const spent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const recentOrders = orders.slice(0, 4);
+  const recentTickets = tickets.slice(0, 4);
 
   const stats = [
-    { icon: ShoppingBag, label: locale === 'fr' ? 'Commandes' : 'Orders', value: '0', color: 'bg-blue-100 text-blue-600' },
-    { icon: Ticket, label: locale === 'fr' ? 'Tickets' : 'Tickets', value: '0', color: 'bg-amber-100 text-amber-600' },
-    { icon: Trophy, label: locale === 'fr' ? 'Gains' : 'Wins', value: '0', color: 'bg-green-100 text-green-600' },
-    { icon: TrendingUp, label: locale === 'fr' ? 'Depenses' : 'Spent', value: '0 CHF', color: 'bg-purple-100 text-purple-600' },
+    { icon: ShoppingBag, label: locale === 'fr' ? 'Commandes' : 'Orders', value: String(orders.length), color: 'bg-blue-100 text-blue-600' },
+    { icon: Ticket, label: locale === 'fr' ? 'Tickets' : 'Tickets', value: String(tickets.length), color: 'bg-amber-100 text-amber-600' },
+    { icon: Trophy, label: locale === 'fr' ? 'Gains' : 'Wins', value: String(wins), color: 'bg-green-100 text-green-600' },
+    { icon: TrendingUp, label: locale === 'fr' ? 'Depenses' : 'Spent', value: `${spent.toFixed(2)} CHF`, color: 'bg-purple-100 text-purple-600' },
   ];
 
   return (
@@ -67,10 +98,21 @@ export default function DashboardPage() {
                   {locale === 'fr' ? 'Voir tout' : 'View all'}
                 </Link>
               </div>
-              <div className="text-center py-8 text-neutral-400">
-                <ShoppingBag className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-sm">{locale === 'fr' ? 'Aucune commande pour le moment' : 'No orders yet'}</p>
-              </div>
+              {recentOrders.length === 0 ? (
+                <div className="text-center py-8 text-neutral-400">
+                  <ShoppingBag className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">{locale === 'fr' ? 'Aucune commande pour le moment' : 'No orders yet'}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentOrders.map((order) => (
+                    <div key={order._id} className="rounded-xl border border-neutral-200 p-3 text-sm">
+                      <p className="font-medium">{order.orderNumber}</p>
+                      <p className="text-neutral-500 mt-1">{new Date(order.createdAt).toLocaleDateString('fr-CH')} • {order.total?.toFixed(2)} CHF</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </FadeIn>
 
@@ -82,10 +124,21 @@ export default function DashboardPage() {
                   {locale === 'fr' ? 'Voir tout' : 'View all'}
                 </Link>
               </div>
-              <div className="text-center py-8 text-neutral-400">
-                <Ticket className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-sm">{locale === 'fr' ? 'Aucun ticket pour le moment' : 'No tickets yet'}</p>
-              </div>
+              {recentTickets.length === 0 ? (
+                <div className="text-center py-8 text-neutral-400">
+                  <Ticket className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">{locale === 'fr' ? 'Aucun ticket pour le moment' : 'No tickets yet'}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentTickets.map((ticket) => (
+                    <div key={ticket._id} className="rounded-xl border border-neutral-200 p-3 text-sm">
+                      <p className="font-mono font-medium">{ticket.ticketNumber}</p>
+                      <p className="text-neutral-500 mt-1">{ticket.raffle?.name || 'Raffle TBD'} • {ticket.isWinner ? 'Winner' : 'Active'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </FadeIn>
         </div>

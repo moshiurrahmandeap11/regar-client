@@ -8,7 +8,39 @@ import toast from 'react-hot-toast';
 
 export default function ContentContent() {
   const [faqs, setFaqs] = useState([]);
-  const [heroContent, setHeroContent] = useState({ valueFr: '', valueEn: '' });
+  const defaultHeroConfig = {
+    fr: {
+      eyebrow: '',
+      titleLine1: 'Achetez la casquette.',
+      titleLine2: 'Gagnez le tirage.',
+      subtitle: 'Chaque casquette achetee vaut un ticket de tirage.',
+      capSectionTitle: 'La casquette du tirage',
+      prizeSectionTitle: 'Prix a gagner',
+      noActiveRaffleText: 'Aucun raffle actif',
+      noProductsText: 'Aucun produit de raffle a afficher.',
+      noPrizesText: 'Aucun prix configure pour ce raffle.',
+      soldLabel: 'tickets vendus',
+      remainingLabel: 'tickets restants',
+      maxLabel: 'tickets max',
+      enterDrawLabel: 'Participer'
+    },
+    en: {
+      eyebrow: '',
+      titleLine1: 'Buy the cap.',
+      titleLine2: 'Win the draw.',
+      subtitle: 'Each cap purchased is worth one raffle ticket.',
+      capSectionTitle: 'The cap of the draw',
+      prizeSectionTitle: 'Prizes to be won',
+      noActiveRaffleText: 'No active raffle',
+      noProductsText: 'No raffle products to display.',
+      noPrizesText: 'No prizes configured for this raffle.',
+      soldLabel: 'tickets sold',
+      remainingLabel: 'tickets remaining',
+      maxLabel: 'max tickets',
+      enterDrawLabel: 'Enter the draw'
+    }
+  };
+  const [heroContent, setHeroContent] = useState(defaultHeroConfig);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('faq');
   const [showForm, setShowForm] = useState(false);
@@ -43,9 +75,30 @@ export default function ContentContent() {
 
   const fetchHeroContent = async () => {
     try {
-      const res = await fetch(`${API}/api/content/hero`);
+      const res = await fetch(`${API}/api/content/heroConfig`);
       const data = await res.json();
-      if (data) setHeroContent({ valueFr: data.valueFr || '', valueEn: data.valueEn || '' });
+      if (!data) return;
+
+      let fr = defaultHeroConfig.fr;
+      let en = defaultHeroConfig.en;
+
+      if (data.valueFr) {
+        try {
+          fr = { ...fr, ...JSON.parse(data.valueFr) };
+        } catch {
+          fr = { ...fr, titleLine1: data.valueFr };
+        }
+      }
+
+      if (data.valueEn) {
+        try {
+          en = { ...en, ...JSON.parse(data.valueEn) };
+        } catch {
+          en = { ...en, titleLine1: data.valueEn };
+        }
+      }
+
+      setHeroContent({ fr, en });
     } catch (error) {
       console.error('Failed to load hero content');
     }
@@ -53,10 +106,13 @@ export default function ContentContent() {
 
   const saveHeroContent = async () => {
     try {
-      const res = await fetch(`${API}/api/content/hero`, {
+      const res = await fetch(`${API}/api/content/heroConfig`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(heroContent),
+        body: JSON.stringify({
+          valueFr: JSON.stringify(heroContent.fr),
+          valueEn: JSON.stringify(heroContent.en),
+        }),
       });
       if (!res.ok) throw new Error('Failed to save');
       toast.success('Hero content saved');
@@ -289,27 +345,43 @@ export default function ContentContent() {
         <FadeIn>
           <div className="bg-white rounded-2xl border border-neutral-200 p-6">
             <h2 className="text-lg font-semibold mb-4">Hero Section Content</h2>
-            <div className="space-y-4 max-w-lg">
-              <div>
-                <label className="text-sm font-medium text-neutral-700 mb-1 block">Hero Text (FR)</label>
-                <textarea
-                  value={heroContent.valueFr}
-                  onChange={e => setHeroContent({...heroContent, valueFr: e.target.value})}
-                  rows={4}
-                  className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
-                  placeholder="Enter hero text in French..."
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-neutral-700 mb-1 block">Hero Text (EN)</label>
-                <textarea
-                  value={heroContent.valueEn}
-                  onChange={e => setHeroContent({...heroContent, valueEn: e.target.value})}
-                  rows={4}
-                  className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
-                  placeholder="Enter hero text in English..."
-                />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {['fr', 'en'].map((lang) => (
+                <div key={lang} className="space-y-3 p-4 rounded-xl border border-neutral-200">
+                  <h3 className="font-semibold uppercase text-sm">{lang === 'fr' ? 'French' : 'English'}</h3>
+
+                  {[
+                    ['eyebrow', 'Eyebrow'],
+                    ['titleLine1', 'Title line 1'],
+                    ['titleLine2', 'Title line 2'],
+                    ['subtitle', 'Subtitle'],
+                    ['capSectionTitle', 'Cap section title'],
+                    ['prizeSectionTitle', 'Prize section title'],
+                    ['soldLabel', 'Sold label'],
+                    ['remainingLabel', 'Remaining label'],
+                    ['maxLabel', 'Max label'],
+                    ['enterDrawLabel', 'Enter draw button'],
+                    ['noActiveRaffleText', 'No active raffle text'],
+                    ['noProductsText', 'No products text'],
+                    ['noPrizesText', 'No prizes text'],
+                  ].map(([field, label]) => (
+                    <div key={field}>
+                      <label className="text-xs font-medium text-neutral-600 mb-1 block">{label}</label>
+                      <input
+                        value={heroContent[lang][field]}
+                        onChange={(e) => setHeroContent((prev) => ({
+                          ...prev,
+                          [lang]: { ...prev[lang], [field]: e.target.value }
+                        }))}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

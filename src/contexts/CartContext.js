@@ -16,7 +16,7 @@ export function CartProvider({ children }) {
     localStorage.setItem('regar_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product, color, size, quantity = 1) => {
+  const addToCart = (product, color, size, quantity = 1, imageOverride = null) => {
     setCart(prev => {
       const existing = prev.find(item => item.productId === product._id && item.color === color && item.size === size);
       if (existing) {
@@ -29,7 +29,7 @@ export function CartProvider({ children }) {
         productId: product._id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: imageOverride || product.images?.[0],
         color,
         size,
         quantity,

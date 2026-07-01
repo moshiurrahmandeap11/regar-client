@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Search, UserCheck, UserX, Mail, Calendar, ChevronLeft, ChevronRight, Shield, Users } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
@@ -139,16 +140,24 @@ export default function UsersContent() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => toggleStatus(user._id, user.isActive)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            user.isActive
-                              ? 'text-red-600 hover:bg-red-50'
-                              : 'text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                        >
-                          {user.isActive ? 'Suspend' : 'Activate'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/user-detail?id=${user._id}`}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            Details
+                          </Link>
+                          <button
+                            onClick={() => toggleStatus(user._id, user.isActive)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                              user.isActive
+                                ? 'text-red-600 hover:bg-red-50'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {user.isActive ? 'Suspend' : 'Activate'}
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

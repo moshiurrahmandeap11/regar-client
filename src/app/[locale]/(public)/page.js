@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { motion } from 'framer-motion';
-import { ArrowRight, ShoppingBag, Ticket, Trophy, ChevronRight } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Ticket, Trophy } from 'lucide-react';
 import api from '@/lib/api';
-import ProductCard from '@/components/ProductCard';
 import CountdownTimer from '@/components/CountdownTimer';
 import ReviewCard from '@/components/ReviewCard';
 import SectionTitle from '@/components/SectionTitle';
@@ -19,6 +17,7 @@ export default function HomePage() {
   const [raffles, setRaffles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [winners, setWinners] = useState([]);
+  const [heroContent, setHeroContent] = useState(null);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +34,13 @@ export default function HomePage() {
         setRaffles(raffleRes.data.slice(0, 3));
         setReviews(reviewRes.data.slice(0, 4));
         setWinners(winnerRes.data.slice(0, 5));
+
+        try {
+          const heroRes = await api.get('/api/content/heroConfig');
+          setHeroContent(heroRes.data || null);
+        } catch {
+          setHeroContent(null);
+        }
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -61,41 +67,168 @@ export default function HomePage() {
     { icon: Trophy, title: t('howItWorks.step3'), desc: t('howItWorks.step3Desc') },
   ];
 
+  const defaultHeroText = {
+    eyebrow: '',
+    titleLine1: locale === 'fr' ? 'Achetez la casquette.' : 'Buy the cap.',
+    titleLine2: locale === 'fr' ? 'Gagnez le tirage.' : 'Win the draw.',
+    subtitle: locale === 'fr' ? 'Chaque casquette achetee vaut un ticket de tirage.' : 'Each cap purchased is worth one raffle ticket.',
+    capSectionTitle: locale === 'fr' ? 'La casquette du tirage' : 'The cap of the draw',
+    prizeSectionTitle: locale === 'fr' ? 'Prix a gagner' : 'Prizes to be won',
+    noActiveRaffleText: locale === 'fr' ? 'Aucun raffle actif' : 'No active raffle',
+    noProductsText: locale === 'fr' ? 'Aucun produit de raffle a afficher.' : 'No raffle products to display.',
+    noPrizesText: locale === 'fr' ? 'Aucun prix configure pour ce raffle.' : 'No prizes configured for this raffle.',
+    soldLabel: locale === 'fr' ? 'tickets vendus' : 'tickets sold',
+    remainingLabel: locale === 'fr' ? 'tickets restants' : 'tickets remaining',
+    maxLabel: locale === 'fr' ? 'tickets max' : 'max tickets',
+    enterDrawLabel: locale === 'fr' ? 'Participer' : 'Enter the draw'
+  };
+
+  const parseHeroLocaleConfig = () => {
+    const raw = locale === 'fr' ? heroContent?.valueFr : heroContent?.valueEn;
+    if (!raw) return defaultHeroText;
+
+    try {
+      const parsed = JSON.parse(raw);
+      return { ...defaultHeroText, ...parsed };
+    } catch {
+      return { ...defaultHeroText, titleLine1: raw };
+    }
+  };
+
+  const heroText = parseHeroLocaleConfig();
+
+  const heroRaffle = raffles[0];
+  const raffleProducts = raffles
+    .map((raffle) => raffle.product)
+    .filter((product, index, arr) => product?._id && arr.findIndex((p) => p?._id === product._id) === index);
+
+  const heroProducts = raffleProducts.slice(0, 2);
+  const heroProduct = heroRaffle?.product || heroProducts[0];
+  const soldTickets = heroProduct?.soldTickets;
+  const maxTickets = heroProduct?.maxTickets;
+  const remainingTickets = typeof soldTickets === 'number' && typeof maxTickets === 'number'
+    ? Math.max(maxTickets - soldTickets, 0)
+    : null;
+  const heroTargetDate = heroRaffle?.endDate || heroProduct?.raffleEndDate;
+  const heroPrizes = (heroRaffle?.prizes || []).slice(0, 3);
+
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="relative bg-neutral-900 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_rgba(245,158,11,0.3),transparent_50%)]" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative">
-          <div className="max-w-2xl">
-            <FadeIn>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
-                {t('hero.title')}
-              </h1>
-            </FadeIn>
-            <FadeIn delay={0.15}>
-              <p className="mt-6 text-lg sm:text-xl text-neutral-300 leading-relaxed">
-                {t('hero.subtitle')}
-              </p>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/products"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-neutral-900 font-medium rounded-xl hover:bg-neutral-100 transition-colors"
-                >
-                  {t('hero.cta')} <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/#how-it-works"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-white/30 text-white font-medium rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  {t('hero.secondaryCta')}
-                </Link>
+      <section className="bg-[#ece9df] text-[#14253a] pt-12 sm:pt-16 pb-10 sm:pb-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mx-auto w-36 h-24 sm:w-44 sm:h-28 rounded-full flex items-center justify-center bg-[#d7d2c4] overflow-hidden">
+            {heroProduct?.images?.[0] ? (
+              <img src={heroProduct.images[0]} alt={heroProduct.name} className="w-full h-full object-contain" />
+            ) : (
+              <ShoppingBag className="w-10 h-10 text-[#1b2f48]" />
+            )}
+          </div>
+
+          <p className="mt-8 text-[11px] tracking-[0.25em] uppercase text-[#c8442d] font-semibold">
+            {heroText.eyebrow || (heroRaffle ? (locale === 'fr' ? heroRaffle.name : (heroRaffle.nameEn || heroRaffle.name)) : heroText.noActiveRaffleText)}
+          </p>
+
+          <h1 className="mt-4 text-4xl sm:text-5xl md:text-6xl font-black leading-tight uppercase">
+            {heroText.titleLine1}
+            <br />
+            {heroText.titleLine2}
+          </h1>
+
+          <p className="mt-4 text-neutral-600 text-base sm:text-lg">
+            {heroText.subtitle}
+          </p>
+
+          <div className="mt-7 inline-flex flex-col items-center">
+            <div className="bg-[#1b2f48] rounded-2xl px-6 py-4">
+              {heroTargetDate ? (
+                <CountdownTimer targetDate={heroTargetDate} locale={locale} variant="banner" />
+              ) : (
+                <p className="text-[#7eb6de] text-sm">{locale === 'fr' ? 'Date du tirage non definie' : 'Draw date not set'}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-6 sm:gap-10 mt-5">
+              <div>
+                <p className="text-3xl font-extrabold">{typeof soldTickets === 'number' ? soldTickets : '-'}</p>
+                <p className="text-xs text-neutral-500 mt-1">{heroText.soldLabel}</p>
               </div>
-            </FadeIn>
+              <div>
+                <p className="text-3xl font-extrabold">{remainingTickets ?? '-'}</p>
+                <p className="text-xs text-neutral-500 mt-1">{heroText.remainingLabel}</p>
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold">{typeof maxTickets === 'number' ? maxTickets : '-'}</p>
+                <p className="text-xs text-neutral-500 mt-1">{heroText.maxLabel}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-14 text-left">
+            <h2 className="text-sm tracking-[0.18em] uppercase font-semibold mb-5">
+              {heroText.capSectionTitle}
+            </h2>
+            {heroProducts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {heroProducts.map((product) => (
+                  <div key={product._id} className="bg-[#f7f7f7] border border-[#cfc8b7] rounded-2xl p-4">
+                    <div className="h-36 bg-[#d7d2c4] rounded-xl overflow-hidden flex items-center justify-center">
+                      {product.images?.[0] ? (
+                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <ShoppingBag className="w-9 h-9 text-[#1b2f48]" />
+                      )}
+                    </div>
+                    <h3 className="text-2xl font-bold mt-4">{product.name}</h3>
+                    <p className="text-lg text-neutral-500 mt-1">€{product.price}</p>
+                    <Link
+                      href={`/products/${product._id}`}
+                      className="mt-4 block text-center py-3 rounded-xl bg-[#cd442e] text-white font-semibold hover:bg-[#b73a27] transition-colors"
+                    >
+                      {heroText.enterDrawLabel}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#f7f7f7] border border-[#cfc8b7] rounded-2xl p-6 text-sm text-neutral-600">
+                {heroText.noProductsText}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-10 bg-[#d7d2c4] rounded-2xl p-5 sm:p-7 text-left">
+            <h2 className="text-sm tracking-[0.18em] uppercase font-semibold mb-5">
+              {heroText.prizeSectionTitle}
+            </h2>
+            {heroPrizes.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {heroPrizes.map((prize, index) => (
+                  <div key={`${prize.name}-${index}`} className="bg-[#f7f7f7] rounded-xl border border-[#cfc8b7] px-4 py-5 text-center">
+                    <Trophy className="w-5 h-5 mx-auto text-[#b8862f]" />
+                    <p className="mt-3 text-base">{locale === 'fr' ? prize.name : (prize.nameEn || prize.name)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#f7f7f7] rounded-xl border border-[#cfc8b7] px-4 py-5 text-sm text-neutral-600">
+                {heroText.noPrizesText}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+            <Link
+              href="/products"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#14253a] text-white font-medium rounded-xl hover:bg-[#1b2f48] transition-colors"
+            >
+              {t('hero.cta')} <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/#how-it-works"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#1b2f48]/30 text-[#14253a] font-medium rounded-xl hover:bg-white/40 transition-colors"
+            >
+              {t('hero.secondaryCta')}
+            </Link>
           </div>
         </div>
       </section>
@@ -122,63 +255,6 @@ export default function HomePage() {
               </StaggerItem>
             ))}
           </StaggerContainer>
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-16 sm:py-20 bg-neutral-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-10">
-            <SectionTitle title={t('featured')} centered={false} />
-            <Link href="/products" className="hidden sm:flex items-center gap-1 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors">
-              {locale === 'fr' ? 'Voir tout' : 'View all'} <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product._id} product={product} locale={locale} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Active Raffles */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle title={t('activeRaffles')} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {raffles.map((raffle) => (
-              <FadeIn key={raffle._id}>
-                <HoverScale>
-                  <div className="bg-neutral-50 rounded-2xl border border-neutral-200 p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <img
-                        src={raffle.product?.images?.[0] || '/placeholder.jpg'}
-                        alt={raffle.name}
-                        className="w-16 h-16 rounded-xl object-cover"
-                      />
-                      <div>
-                        <h3 className="font-semibold text-neutral-900">{raffle.name}</h3>
-                        <p className="text-sm text-neutral-500">{raffle.product?.name}</p>
-                      </div>
-                    </div>
-                    {raffle.endDate && (
-                      <div className="mb-4">
-                        <p className="text-xs text-neutral-500 mb-2">{locale === 'fr' ? 'Se termine dans' : 'Ends in'}</p>
-                        <CountdownTimer targetDate={raffle.endDate} locale={locale} />
-                      </div>
-                    )}
-                    <Link
-                      href={`/products/${raffle.product?._id}`}
-                      className="block w-full text-center py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl hover:bg-neutral-800 transition-colors"
-                    >
-                      {locale === 'fr' ? 'Participer' : 'Participate'}
-                    </Link>
-                  </div>
-                </HoverScale>
-              </FadeIn>
-            ))}
-          </div>
         </div>
       </section>
 

@@ -10,6 +10,7 @@ export default function ProductCard({ product, locale }) {
   const [hovered, setHovered] = useState(false);
   const endDate = product.raffleEndDate ? new Date(product.raffleEndDate) : null;
   const isActive = endDate && endDate > new Date();
+  const coverImage = product.images?.[0] || product.colors?.find((color) => color.image)?.image;
 
   return (
     <FadeIn>
@@ -21,9 +22,9 @@ export default function ProductCard({ product, locale }) {
         >
           <Link href={`/products/${product._id}`} className="block relative">
             <div className="aspect-square bg-neutral-100 relative overflow-hidden">
-              {product.images?.[0] ? (
+              {coverImage ? (
                 <img
-                  src={product.images[0]}
+                  src={coverImage}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
