@@ -41,6 +41,63 @@ export default function ContentContent() {
     }
   };
   const [heroContent, setHeroContent] = useState(defaultHeroConfig);
+  const defaultLegalContent = {
+    terms: {
+      fr: {
+        title: 'Conditions generales',
+        description: 'Les CGV, reglement du tirage et politique de confidentialite seront publies ici selon le modele Regar-site.',
+        primaryLabel: 'Politique retours',
+        primaryHref: '/refund',
+        secondaryLabel: 'Contact',
+        secondaryHref: '/contact',
+      },
+      en: {
+        title: 'Terms and conditions',
+        description: 'Terms of sale, raffle rules and legal information are published here.',
+        primaryLabel: 'Refund policy',
+        primaryHref: '/refund',
+        secondaryLabel: 'Contact',
+        secondaryHref: '/contact',
+      },
+    },
+    privacy: {
+      fr: {
+        title: 'Politique de confidentialite',
+        description: 'Cette page couvre le traitement des donnees personnelles, cookies et droits RGPD.',
+        primaryLabel: 'Conditions',
+        primaryHref: '/terms',
+        secondaryLabel: 'Contact',
+        secondaryHref: '/contact',
+      },
+      en: {
+        title: 'Privacy policy',
+        description: 'This page covers personal data processing, cookies and privacy rights.',
+        primaryLabel: 'Terms',
+        primaryHref: '/terms',
+        secondaryLabel: 'Contact',
+        secondaryHref: '/contact',
+      },
+    },
+    refund: {
+      fr: {
+        title: 'Retours et remboursements',
+        description: 'Retour possible sous 14 jours pour produit non porte. Remboursement apres validation du retour.',
+        primaryLabel: 'Suivre ma commande',
+        primaryHref: '/track-order',
+        secondaryLabel: 'FAQ',
+        secondaryHref: '/faq',
+      },
+      en: {
+        title: 'Returns and refunds',
+        description: 'Returns are possible within 14 days for unworn products. Refund is processed after validation.',
+        primaryLabel: 'Track my order',
+        primaryHref: '/track-order',
+        secondaryLabel: 'FAQ',
+        secondaryHref: '/faq',
+      },
+    },
+  };
+  const [legalContent, setLegalContent] = useState(defaultLegalContent);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('faq');
   const [showForm, setShowForm] = useState(false);
@@ -59,6 +116,7 @@ export default function ContentContent() {
   useEffect(() => {
     fetchFaqs();
     fetchHeroContent();
+    fetchLegalContent();
   }, []);
 
   const fetchFaqs = async () => {
@@ -116,6 +174,80 @@ export default function ContentContent() {
       });
       if (!res.ok) throw new Error('Failed to save');
       toast.success('Hero content saved');
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const fetchLegalContent = async () => {
+    const keyBySection = {
+      terms: 'legal_terms',
+      privacy: 'legal_privacy',
+      refund: 'legal_refund',
+    };
+
+    try {
+      const entries = await Promise.all(
+        Object.entries(keyBySection).map(async ([section, key]) => {
+          const res = await fetch(`${API}/api/content/${key}`);
+          const data = await res.json();
+
+          if (!data) {
+            return [section, defaultLegalContent[section]];
+          }
+
+          let fr = defaultLegalContent[section].fr;
+          let en = defaultLegalContent[section].en;
+
+          if (data.valueFr) {
+            try {
+              fr = { ...fr, ...JSON.parse(data.valueFr) };
+            } catch {
+              fr = { ...fr, description: data.valueFr };
+            }
+          }
+
+          if (data.valueEn) {
+            try {
+              en = { ...en, ...JSON.parse(data.valueEn) };
+            } catch {
+              en = { ...en, description: data.valueEn };
+            }
+          }
+
+          return [section, { fr, en }];
+        })
+      );
+
+      setLegalContent(Object.fromEntries(entries));
+    } catch {
+      // Keep defaults if legal content cannot be loaded.
+    }
+  };
+
+  const saveLegalContent = async (section) => {
+    const keyBySection = {
+      terms: 'legal_terms',
+      privacy: 'legal_privacy',
+      refund: 'legal_refund',
+    };
+
+    const key = keyBySection[section];
+    if (!key) return;
+
+    try {
+      const payload = legalContent[section];
+      const res = await fetch(`${API}/api/content/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          valueFr: JSON.stringify(payload.fr),
+          valueEn: JSON.stringify(payload.en),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save legal content');
+      toast.success(`${section} content saved`);
     } catch (error) {
       toast.error(error.message);
     }
@@ -204,6 +336,12 @@ export default function ContentContent() {
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'hero' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
         >
           Hero Content
+        </button>
+        <button
+          onClick={() => setActiveTab('legal')}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'legal' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+        >
+          Legal Content
         </button>
       </div>
 
@@ -402,6 +540,72 @@ export default function ContentContent() {
                 Save Hero Content
               </motion.button>
             </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {activeTab === 'legal' && (
+        <FadeIn>
+          <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6">
+            <h2 className="text-lg font-semibold">Legal Pages Content</h2>
+
+            {[
+              ['terms', 'Terms'],
+              ['privacy', 'Privacy'],
+              ['refund', 'Refund'],
+            ].map(([section, sectionLabel]) => (
+              <div key={section} className="rounded-xl border border-neutral-200 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm uppercase tracking-wide">{sectionLabel}</h3>
+                  <button
+                    onClick={() => saveLegalContent(section)}
+                    className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-xs font-medium hover:bg-neutral-800 transition-colors"
+                  >
+                    Save {sectionLabel}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {['fr', 'en'].map((lang) => (
+                    <div key={`${section}-${lang}`} className="space-y-2 p-3 rounded-lg border border-neutral-100 bg-neutral-50/50">
+                      <h4 className="text-xs uppercase font-semibold text-neutral-500">{lang === 'fr' ? 'French' : 'English'}</h4>
+
+                      {[['title', 'Title'], ['description', 'Description'], ['primaryLabel', 'Primary label'], ['primaryHref', 'Primary href'], ['secondaryLabel', 'Secondary label'], ['secondaryHref', 'Secondary href']].map(([field, label]) => (
+                        <div key={`${section}-${lang}-${field}`}>
+                          <label className="text-xs font-medium text-neutral-600 mb-1 block">{label}</label>
+                          {field === 'description' ? (
+                            <textarea
+                              value={legalContent[section][lang][field] || ''}
+                              onChange={(e) => setLegalContent((prev) => ({
+                                ...prev,
+                                [section]: {
+                                  ...prev[section],
+                                  [lang]: { ...prev[section][lang], [field]: e.target.value },
+                                },
+                              }))}
+                              rows={4}
+                              className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                            />
+                          ) : (
+                            <input
+                              value={legalContent[section][lang][field] || ''}
+                              onChange={(e) => setLegalContent((prev) => ({
+                                ...prev,
+                                [section]: {
+                                  ...prev[section],
+                                  [lang]: { ...prev[section][lang], [field]: e.target.value },
+                                },
+                              }))}
+                              className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </FadeIn>
       )}

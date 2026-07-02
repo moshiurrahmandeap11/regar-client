@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
-import { Trophy, Calendar, Ticket } from 'lucide-react';
+import { Trophy, Ticket } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import SectionTitle from '@/components/SectionTitle';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
 
@@ -14,16 +15,59 @@ export default function WinnersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/api/tickets/winners').then(res => {
-      setWinners(res.data);
-      setLoading(false);
-    });
+    let hasShownError = false;
+
+    const fetchWinners = async () => {
+      try {
+        const res = await api.get(`/api/tickets/winners?limit=50&t=${Date.now()}`, { timeout: 12000 });
+        const rows = Array.isArray(res.data) ? res.data : [];
+
+        rows.sort((a, b) => {
+          const aDate = new Date(a?.ticket?.drawDate || a?.createdAt || 0).getTime();
+          const bDate = new Date(b?.ticket?.drawDate || b?.createdAt || 0).getTime();
+          return bDate - aDate;
+        });
+
+        setWinners(rows);
+      } catch (error) {
+        try {
+          const fallbackRes = await api.get('/api/tickets/winners', { timeout: 12000 });
+          const fallbackRows = Array.isArray(fallbackRes.data) ? fallbackRes.data : [];
+          fallbackRows.sort((a, b) => {
+            const aDate = new Date(a?.ticket?.drawDate || a?.createdAt || 0).getTime();
+            const bDate = new Date(b?.ticket?.drawDate || b?.createdAt || 0).getTime();
+            return bDate - aDate;
+          });
+          setWinners(fallbackRows);
+          hasShownError = false;
+        } catch {
+          setWinners([]);
+          if (!hasShownError) {
+            toast.error(locale === 'fr' ? 'Impossible de charger les gagnants' : 'Failed to load winners');
+            hasShownError = true;
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWinners();
+
+    const intervalId = setInterval(fetchWinners, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
     <div className="min-h-screen py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionTitle title={locale === 'fr' ? 'Nos gagnants' : 'Our winners'} />
+
+        {loading ? (
+          <div className="text-center py-16">
+            <p className="text-neutral-500">{locale === 'fr' ? 'Chargement...' : 'Loading...'}</p>
+          </div>
+        ) : null}
 
         <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {winners.map((winner, i) => (
@@ -39,12 +83,14 @@ export default function WinnersPage() {
                         {winner.user?.firstName} {winner.user?.lastName?.charAt(0)}.
                       </p>
                       <p className="text-sm text-neutral-500">
-                        {new Date(winner.createdAt).toLocaleDateString(locale === 'fr' ? 'fr-CH' : 'en-US')}
+                        {new Date(winner.ticket?.drawDate || winner.createdAt).toLocaleDateString(locale === 'fr' ? 'fr-CH' : 'en-US')}
                       </p>
                     </div>
                   </div>
                   <div className="bg-neutral-50 rounded-xl p-4">
-                    <p className="text-sm font-medium text-neutral-700">{winner.prize}</p>
+                    <p className="text-sm font-medium text-neutral-700">
+                      {locale === 'fr' ? winner.prize : (winner.prizeEn || winner.prize)}
+                    </p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-neutral-500">
                       <Ticket className="w-3 h-3" />
                       {winner.ticket?.ticketNumber}
@@ -70,7 +116,7 @@ export default function WinnersPage() {
           ))}
         </StaggerContainer>
 
-        {winners.length === 0 && (
+        {!loading && winners.length === 0 && (
           <div className="text-center py-16">
             <p className="text-neutral-500">{locale === 'fr' ? 'Aucun gagnant pour le moment' : 'No winners yet'}</p>
           </div>

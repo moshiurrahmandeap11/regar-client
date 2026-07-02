@@ -16,6 +16,11 @@ export default function AnalyticsContent() {
     fetchAnalytics();
   }, []);
 
+  const toNumber = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
+  };
+
   const fetchAnalytics = async () => {
     try {
       const [salesRes, dashboardRes] = await Promise.all([
@@ -23,18 +28,24 @@ export default function AnalyticsContent() {
         api.get('/api/analytics/dashboard'),
       ]);
 
-      const salesData = Array.isArray(salesRes.data) ? salesRes.data : [];
+      const salesData = Array.isArray(salesRes.data)
+        ? salesRes.data.map((entry) => ({
+            month: entry?.month || '-',
+            revenue: toNumber(entry?.revenue),
+            orders: toNumber(entry?.orders),
+          }))
+        : [];
       const dashboardData = dashboardRes.data || {};
 
       setSales(salesData);
       setStats({
-        totalRevenue: dashboardData.totalRevenue || 0,
-        totalOrders: dashboardData.totalOrders || 0,
-        totalUsers: dashboardData.totalUsers || 0,
-        activeRaffles: dashboardData.activeRaffles || 0,
+        totalRevenue: toNumber(dashboardData.totalRevenue),
+        totalOrders: toNumber(dashboardData.totalOrders),
+        totalUsers: toNumber(dashboardData.totalUsers),
+        activeRaffles: toNumber(dashboardData.activeRaffles),
       });
     } catch (error) {
-      toast.error('Failed to load analytics');
+      toast.error(error?.response?.data?.message || 'Failed to load analytics');
     } finally {
       setLoading(false);
     }

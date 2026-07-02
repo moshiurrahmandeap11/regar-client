@@ -25,16 +25,15 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, raffleRes, reviewRes, winnerRes] = await Promise.all([
+        const [prodRes, raffleRes, reviewRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
           api.get('/api/reviews?limit=4'),
-          api.get('/api/tickets/winners?limit=5'),
         ]);
         setProducts(prodRes.data.slice(0, 4));
         setRaffles(raffleRes.data.slice(0, 3));
         setReviews(reviewRes.data.slice(0, 4));
-        setWinners(winnerRes.data.slice(0, 5));
+        await fetchLatestWinners();
 
         try {
           const heroRes = await api.get('/api/content/heroConfig');
@@ -48,7 +47,23 @@ export default function HomePage() {
         setLoading(false);
       }
     };
+
+    const fetchLatestWinners = async () => {
+      try {
+        const winnerRes = await api.get(`/api/tickets/winners?limit=5&t=${Date.now()}`);
+        setWinners(Array.isArray(winnerRes.data) ? winnerRes.data.slice(0, 5) : []);
+      } catch {
+        // Keep previous winners list if refresh fails.
+      }
+    };
+
     fetchData();
+
+    const intervalId = setInterval(() => {
+      fetchLatestWinners();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleNewsletter = async (e) => {
@@ -265,21 +280,28 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionTitle title={t('winners')} subtitle={locale === 'fr' ? 'Decouvrez nos derniers gagnants' : 'Discover our latest winners'} />
           <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {winners.map((winner, i) => (
+            {winners.map((winner, i) => {
+              const winnerDate = winner?.ticket?.drawDate || winner?.createdAt;
+              const prizeText = locale === 'fr' ? winner?.prize : (winner?.prizeEn || winner?.prize);
+
+              return (
               <StaggerItem key={winner._id || i}>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/10">
                   <div className="w-12 h-12 mx-auto bg-amber-500 rounded-full flex items-center justify-center mb-3">
                     <Trophy className="w-5 h-5 text-white" />
                   </div>
                   <p className="font-medium text-sm">{winner.user?.firstName} {winner.user?.lastName?.charAt(0)}.</p>
-                  <p className="text-xs text-neutral-400 mt-1">{winner.prize}</p>
+                  <p className="text-xs text-neutral-400 mt-1">{prizeText || '-'}</p>
                   <p className="text-xs text-neutral-500 mt-1">
-                    {new Date(winner.createdAt).toLocaleDateString(locale === 'fr' ? 'fr-CH' : 'en-US')}
+                    {winnerDate ? new Date(winnerDate).toLocaleDateString(locale === 'fr' ? 'fr-CH' : 'en-US') : '-'}
                   </p>
                 </div>
               </StaggerItem>
-            ))}
+            )})}
           </StaggerContainer>
+          {winners.length === 0 ? (
+            <p className="text-sm text-neutral-400 mt-4">{locale === 'fr' ? 'Aucun gagnant recent' : 'No recent winners yet'}</p>
+          ) : null}
         </div>
       </section>
 

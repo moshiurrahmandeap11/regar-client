@@ -17,24 +17,37 @@ export default function DashboardContent() {
     fetchDashboard();
   }, []);
 
+  const toNumber = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
+  };
+
   const fetchDashboard = async () => {
     try {
       const res = await api.get('/api/analytics/dashboard');
       const data = res.data || {};
       setStats({
-        totalRevenue: data.totalRevenue || 0,
-        totalOrders: data.totalOrders || 0,
-        totalUsers: data.totalUsers || 0,
-        activeRaffles: data.activeRaffles || 0,
+        totalRevenue: toNumber(data.totalRevenue),
+        totalOrders: toNumber(data.totalOrders),
+        totalUsers: toNumber(data.totalUsers),
+        activeRaffles: toNumber(data.activeRaffles),
       });
       setRecentOrders(data.recentOrders || []);
-      setTopProducts(data.topProducts || []);
+      setTopProducts((data.topProducts || []).map((product) => ({
+        ...product,
+        count: toNumber(product.count),
+        revenue: toNumber(product.revenue),
+      })));
     } catch (error) {
-      toast.error('Failed to load dashboard');
+      toast.error(error?.response?.data?.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return <div className="h-40 flex items-center justify-center">Loading dashboard...</div>;
+  }
 
   const statCards = [
     { label: 'Total Revenue', value: `${stats.totalRevenue.toFixed(2)} CHF`, icon: TrendingUp, color: 'bg-emerald-100 text-emerald-600', change: '+12%', positive: true },
