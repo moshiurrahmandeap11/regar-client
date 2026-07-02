@@ -278,7 +278,12 @@ export default function HomePage() {
       {/* Winners */}
       <section className="py-16 sm:py-20 bg-neutral-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle title={t('winners')} subtitle={locale === 'fr' ? 'Decouvrez nos derniers gagnants' : 'Discover our latest winners'} />
+          <SectionTitle
+            title={t('winners')}
+            subtitle={locale === 'fr' ? 'Decouvrez nos derniers gagnants' : 'Discover our latest winners'}
+            titleClassName="text-white"
+            subtitleClassName="text-neutral-200"
+          />
           <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {winners.map((winner, i) => {
               const winnerDate = winner?.ticket?.drawDate || winner?.createdAt;
