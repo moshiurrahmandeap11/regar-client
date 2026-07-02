@@ -32,7 +32,7 @@ export default function RafflesContent() {
     try {
       const res = await fetch(`${API}/api/raffles`);
       const data = await res.json();
-      setRaffles(data);
+      setRaffles(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Failed to load raffles');
     } finally {
@@ -275,7 +275,7 @@ export default function RafflesContent() {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        {raffle.status === 'active' && (
+                        {raffle.canDraw && (
                           <button
                             onClick={() => drawWinner(raffle._id)}
                             className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"

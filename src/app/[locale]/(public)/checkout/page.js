@@ -88,6 +88,15 @@ export default function CheckoutPage() {
 
       setOrder(res.data);
 
+      if (Array.isArray(res.data?.participationSkippedProducts) && res.data.participationSkippedProducts.length > 0) {
+        toast(
+          locale === 'fr'
+            ? 'Commande acceptee. Participation tombola deja utilisee pour ce produit.'
+            : 'Order accepted. Raffle participation already used for this product.',
+          { icon: '⚠️' }
+        );
+      }
+
       if (paymentMethod === 'stripe') {
         const sessionRes = await api.post('/api/payments/stripe/session', { orderId: res.data._id, amount: total });
         if (sessionRes.data.url) { window.location.href = sessionRes.data.url; return; }

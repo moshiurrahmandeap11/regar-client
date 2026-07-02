@@ -15,13 +15,48 @@ export default function DrawContent() {
 
   const loadRaffles = async () => {
     try {
-      const res = await fetch(`${API}/api/raffles`);
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
+      const [raffleRes, ticketRes] = await Promise.all([
+        fetch(`${API}/api/raffles`),
+        fetch(`${API}/api/tickets`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const raffleData = await raffleRes.json();
+      const ticketData = ticketRes.ok ? await ticketRes.json() : [];
+
+      const ticketCountByRaffle = new Map();
+      (Array.isArray(ticketData) ? ticketData : []).forEach((ticket) => {
+        const raffleId = ticket?.raffle?._id || ticket?.raffle;
+        if (!raffleId) return;
+        const key = String(raffleId);
+        ticketCountByRaffle.set(key, (ticketCountByRaffle.get(key) || 0) + 1);
+      });
+
+      const now = new Date();
+      const list = (Array.isArray(raffleData) ? raffleData : [])
+        .filter((raffle) => ['active', 'closed'].includes(raffle.status) && !raffle.winner)
+        .map((raffle) => {
+          const raffleId = String(raffle._id);
+          const ticketCount = Number.isFinite(raffle.ticketCount)
+            ? raffle.ticketCount
+            : (ticketCountByRaffle.get(raffleId) || 0);
+          const isEnded = raffle.endDate ? new Date(raffle.endDate) <= now : false;
+          const canDraw = typeof raffle.canDraw === 'boolean'
+            ? raffle.canDraw
+            : (ticketCount > 0 && isEnded);
+
+          return {
+            ...raffle,
+            ticketCount,
+            canDraw,
+          };
+        });
+
       setRaffles(list);
 
       if (!selectedRaffleId) {
-        const firstEligible = list.find((raffle) => ['active', 'closed'].includes(raffle.status) && !raffle.winner);
+        const firstEligible = list.find((raffle) => raffle.canDraw) || list[0];
         if (firstEligible?._id) setSelectedRaffleId(firstEligible._id);
       }
     } catch (error) {
@@ -37,6 +72,12 @@ export default function DrawContent() {
     () => raffles.find((raffle) => raffle._id === selectedRaffleId) || null,
     [raffles, selectedRaffleId]
   );
+
+  const getNotReadyReason = (raffle) => {
+    if (!raffle) return '';
+    if (!raffle.ticketCount) return 'No eligible tickets';
+    return 'Raffle is still running';
+  };
 
   const handleDraw = async () => {
     if (!selectedRaffleId) {
@@ -79,11 +120,9 @@ export default function DrawContent() {
             className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
           >
             <option value="">Select raffle</option>
-            {raffles
-              .filter((raffle) => ['active', 'closed'].includes(raffle.status) && !raffle.winner)
-              .map((raffle) => (
+            {raffles.map((raffle) => (
                 <option key={raffle._id} value={raffle._id}>
-                  {raffle.name} - {raffle.product?.name || 'No product'}
+                  {raffle.name} - {raffle.product?.name || 'No product'} ({raffle.ticketCount || 0} tickets){raffle.canDraw ? '' : ` - ${getNotReadyReason(raffle)}`}
                 </option>
               ))}
           </select>
@@ -93,12 +132,16 @@ export default function DrawContent() {
               <p><span className="font-medium">Raffle:</span> {selectedRaffle.name}</p>
               <p className="mt-1"><span className="font-medium">Product:</span> {selectedRaffle.product?.name || '-'}</p>
               <p className="mt-1"><span className="font-medium">Ends:</span> {selectedRaffle.endDate ? new Date(selectedRaffle.endDate).toLocaleString('fr-CH') : '-'}</p>
+              <p className="mt-1"><span className="font-medium">Tickets:</span> {selectedRaffle.ticketCount || 0}</p>
+              {!selectedRaffle.canDraw && (
+                <p className="mt-2 text-amber-700">Not ready for draw: {getNotReadyReason(selectedRaffle)}</p>
+              )}
             </div>
           ) : null}
 
           <button
             onClick={handleDraw}
-            disabled={loading || !selectedRaffleId}
+            disabled={loading || !selectedRaffleId || !selectedRaffle?.canDraw}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-900 text-white text-sm disabled:opacity-60"
           >
             <Sparkles className="w-4 h-4" />
