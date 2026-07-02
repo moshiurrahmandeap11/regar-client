@@ -54,7 +54,7 @@ export default function HomePage() {
   const handleNewsletter = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/api/content/newsletter', { email });
+      await api.post('/api/newsletters', { email });
       setEmail('');
       toast.success(locale === 'fr' ? 'Inscription reussie !' : 'Subscribed successfully!');
     } catch (error) {

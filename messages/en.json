@@ -73,7 +73,6 @@
     "shipping": "Shipping address",
     "payment": "Payment method",
     "card": "Credit card",
-    "paypal": "PayPal",
     "firstName": "First name",
     "lastName": "Last name",
     "email": "Email",

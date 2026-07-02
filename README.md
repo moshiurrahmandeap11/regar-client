@@ -1,3 +1,18 @@
+# Client - regar
+
+Local setup
+
+1. Copy `.env.example` to `.env.local` and adjust `NEXT_PUBLIC_API_URL`.
+2. Install deps and run dev server:
+   ```bash
+   cd regar-client
+   npm install
+   npm run dev
+   ```
+
+Payments
+- Manual payments submit to `/api/payments/manual` (multipart/form-data with `proof` file).
+- Stripe session created at `/api/payments/stripe/session` and redirects to Stripe Checkout.
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

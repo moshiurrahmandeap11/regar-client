@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Store, Mail, Phone, Instagram, Facebook, Twitter, Globe, Truck, CreditCard } from 'lucide-react';
+import { Save, Store, Mail, Phone, Instagram, Facebook, Twitter, Globe, Truck, CreditCard, Plus, Trash2 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,7 @@ export default function SettingsContent() {
     freeShippingThreshold: 100,
     maintenanceMode: false,
     socialLinks: { instagram: '', facebook: '', twitter: '', tiktok: '' },
+    newsletterTemplates: [],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -41,6 +42,7 @@ export default function SettingsContent() {
           freeShippingThreshold: data.freeShippingThreshold || 100,
           maintenanceMode: data.maintenanceMode || false,
           socialLinks: data.socialLinks || { instagram: '', facebook: '', twitter: '', tiktok: '' },
+          newsletterTemplates: Array.isArray(data.newsletterTemplates) ? data.newsletterTemplates : [],
         });
       }
     } catch (error) {
@@ -73,6 +75,47 @@ export default function SettingsContent() {
       ...settings,
       socialLinks: { ...settings.socialLinks, [platform]: value }
     });
+  };
+
+  const addTemplate = () => {
+    setSettings({
+      ...settings,
+      newsletterTemplates: [
+        ...(settings.newsletterTemplates || []),
+        {
+          name: '',
+          subject: '',
+          html: '',
+          type: 'BULK',
+          isDefault: false,
+        },
+      ],
+    });
+  };
+
+  const updateTemplate = (index, field, value) => {
+    const updatedTemplates = [...(settings.newsletterTemplates || [])];
+    updatedTemplates[index] = { ...updatedTemplates[index], [field]: value };
+    setSettings({ ...settings, newsletterTemplates: updatedTemplates });
+  };
+
+  const removeTemplate = (index) => {
+    const updatedTemplates = [...(settings.newsletterTemplates || [])];
+    updatedTemplates.splice(index, 1);
+    setSettings({ ...settings, newsletterTemplates: updatedTemplates });
+  };
+
+  const setTemplateDefault = (index) => {
+    const templates = [...(settings.newsletterTemplates || [])];
+    const current = templates[index];
+    if (!current) return;
+
+    const updatedTemplates = templates.map((template, templateIndex) => {
+      if (template.type !== current.type) return template;
+      return { ...template, isDefault: templateIndex === index };
+    });
+
+    setSettings({ ...settings, newsletterTemplates: updatedTemplates });
   };
 
   if (loading) {
@@ -213,9 +256,104 @@ export default function SettingsContent() {
                 onChange={e => setSettings({...settings, maintenanceMode: e.target.checked})}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neutral-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900" />
+              <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neutral-900/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900" />
             </label>
           </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Newsletter Email Templates</h2>
+              <p className="text-sm text-neutral-500">Add HTML templates for instant thank-you and bulk emails.</p>
+            </div>
+            <button
+              type="button"
+              onClick={addTemplate}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-900 text-white text-sm hover:bg-neutral-800"
+            >
+              <Plus className="w-4 h-4" />
+              Add Template
+            </button>
+          </div>
+
+          <div className="rounded-xl border bg-neutral-50 p-3 text-xs text-neutral-600 mb-4">
+            Available variables: <span className="font-mono">{'{{email}}'}</span>, <span className="font-mono">{'{{siteName}}'}</span>, <span className="font-mono">{'{{year}}'}</span>
+          </div>
+
+          {(!settings.newsletterTemplates || settings.newsletterTemplates.length === 0) ? (
+            <p className="text-sm text-neutral-500">No templates yet. Add one of type THANK_YOU and one of type BULK.</p>
+          ) : (
+            <div className="space-y-4">
+              {settings.newsletterTemplates.map((template, index) => (
+                <div key={template._id || index} className="rounded-xl border border-neutral-200 p-4 bg-white space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Template Name</label>
+                      <input
+                        value={template.name || ''}
+                        onChange={(e) => updateTemplate(index, 'name', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+                        placeholder="Summer Promotion"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Template Type</label>
+                      <select
+                        value={template.type || 'BULK'}
+                        onChange={(e) => updateTemplate(index, 'type', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+                      >
+                        <option value="BULK">BULK</option>
+                        <option value="THANK_YOU">THANK_YOU</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-neutral-700 mb-1 block">Email Subject</label>
+                    <input
+                      value={template.subject || ''}
+                      onChange={(e) => updateTemplate(index, 'subject', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm"
+                      placeholder="Thanks for subscribing"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-neutral-700 mb-1 block">HTML Body</label>
+                    <textarea
+                      value={template.html || ''}
+                      onChange={(e) => updateTemplate(index, 'html', e.target.value)}
+                      rows={8}
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm font-mono"
+                      placeholder="<h1>Hello {{email}}</h1>"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <label className="inline-flex items-center gap-2 text-sm text-neutral-700">
+                      <input
+                        type="checkbox"
+                        checked={!!template.isDefault}
+                        onChange={() => setTemplateDefault(index)}
+                      />
+                      Set as default for this template type
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => removeTemplate(index)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 text-sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <motion.button

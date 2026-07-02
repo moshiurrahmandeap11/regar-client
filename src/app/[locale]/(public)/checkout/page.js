@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { CreditCard, PayPalIcon, Truck, Shield, Check } from 'lucide-react';
+import { CreditCard, Truck, Shield, Check } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import ManualPaymentForm from '@/components/ManualPaymentForm';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -17,7 +18,7 @@ export default function CheckoutPage() {
   const { cart, subtotal, clearCart } = useCart();
   const { user, loading } = useAuth();
   const [step, setStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('stripe');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [order, setOrder] = useState(null);
@@ -84,24 +85,19 @@ export default function CheckoutPage() {
         total,
         paymentMethod,
       });
+
       setOrder(res.data);
-      
-      // In development mode, skip PayPal and complete order directly
-      if (process.env.NODE_ENV === 'development') {
-        clearCart();
-        setStep(3);
-        toast.success(locale === 'fr' ? 'Commande passee !' : 'Order placed!');
+
+      if (paymentMethod === 'stripe') {
+        const sessionRes = await api.post('/api/payments/stripe/session', { orderId: res.data._id, amount: total });
+        if (sessionRes.data.url) { window.location.href = sessionRes.data.url; return; }
+      }
+
+      if (paymentMethod === 'manual') {
+        setStep(2);
         return;
       }
-      
-      if (paymentMethod === 'paypal') {
-        const paypalRes = await api.post('/api/paypal/create', { orderId: res.data._id, total });
-        if (paypalRes.data.approvalUrl) {
-          window.location.href = paypalRes.data.approvalUrl;
-          return;
-        }
-      }
-      
+
       clearCart();
       setStep(3);
       toast.success(locale === 'fr' ? 'Commande passee !' : 'Order placed!');
@@ -152,6 +148,14 @@ export default function CheckoutPage() {
               >
                 {locale === 'fr' ? 'Voir mes commandes' : 'View my orders'}
               </button>
+            </div>
+          </FadeIn>
+        ) : step === 2 ? (
+          <FadeIn>
+            <div className="bg-white rounded-2xl border border-neutral-200 p-6 max-w-2xl mx-auto">
+              <h2 className="text-lg font-semibold mb-4">{locale === 'fr' ? 'Paiement manuel' : 'Manual payment'}</h2>
+              <p className="text-sm text-neutral-500 mb-4">{locale === 'fr' ? 'Veuillez effectuer le virement et fournir la preuve' : 'Make the transfer and upload proof below'}</p>
+              <ManualPaymentForm order={order} onDone={() => { clearCart(); setStep(3); toast.success(locale === 'fr' ? 'Paiement soumis' : 'Payment submitted'); }} />
             </div>
           </FadeIn>
         ) : (
@@ -217,17 +221,17 @@ export default function CheckoutPage() {
               </h2>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-colors ${paymentMethod === 'card' ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200'}`}
+                  onClick={() => setPaymentMethod('stripe')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-colors ${paymentMethod === 'stripe' ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200'}`}
                 >
                   <CreditCard className="w-5 h-5" />
-                  {locale === 'fr' ? 'Carte' : 'Card'}
+                  {locale === 'fr' ? 'Stripe' : 'Stripe'}
                 </button>
                 <button
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-colors ${paymentMethod === 'paypal' ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200'}`}
+                  onClick={() => setPaymentMethod('manual')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-colors ${paymentMethod === 'manual' ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200'}`}
                 >
-                  PayPal
+                  {locale === 'fr' ? 'Paiement manuel' : 'Manual'}
                 </button>
               </div>
             </div>

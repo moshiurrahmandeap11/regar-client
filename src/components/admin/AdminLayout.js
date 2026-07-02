@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Ticket, Trophy,
-  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store, Mail
+  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store, Mail, CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -23,6 +23,7 @@ const menuItems = [
   { id: 'reviews', label: 'Reviews', icon: Star, href: '/admin/reviews' },
   { id: 'notifications', label: 'Notifications', icon: FileText, href: '/admin/notifications' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
+  { id: 'payments', label: 'Payments', icon: CreditCard, href: '/admin/payments' },
   { id: 'content', label: 'Content', icon: FileText, href: '/admin/content' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
   { id: 'newsletters', label: 'Newsletters', icon: Mail, href: '/admin/newsletters' },
