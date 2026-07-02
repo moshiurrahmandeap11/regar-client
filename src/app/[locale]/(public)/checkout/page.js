@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -15,22 +15,39 @@ export default function CheckoutPage() {
   const locale = useLocale();
   const router = useRouter();
   const { cart, subtotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
   const [order, setOrder] = useState(null);
   const [form, setForm] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    street: user?.address?.street || '',
-    city: user?.address?.city || '',
-    zip: user?.address?.zip || '',
-    country: user?.address?.country || 'Suisse',
+    firstName: '', lastName: '', email: '', phone: '',
+    street: '', city: '', zip: '', country: 'Suisse',
   });
+
+  // Auth guard: redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push(`/${locale}/login`);
+    }
+  }, [user, loading, router, locale]);
+
+  // Pre-fill form when user data loads
+  useEffect(() => {
+    if (user) {
+      setForm({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        street: user.address?.street || '',
+        city: user.address?.city || '',
+        zip: user.address?.zip || '',
+        country: user.address?.country || 'Suisse',
+      });
+    }
+  }, [user]);
 
   const shipping = subtotal > 100 ? 0 : 9.90;
   const total = subtotal + shipping;
@@ -40,7 +57,7 @@ export default function CheckoutPage() {
       toast.error(locale === 'fr' ? 'Veuillez confirmer votre age' : 'Please confirm your age');
       return;
     }
-    setLoading(true);
+    setOrderLoading(true);
     try {
       const res = await api.post('/api/orders', {
         items: cart.map(item => ({
@@ -69,6 +86,14 @@ export default function CheckoutPage() {
       });
       setOrder(res.data);
       
+      // In development mode, skip PayPal and complete order directly
+      if (process.env.NODE_ENV === 'development') {
+        clearCart();
+        setStep(3);
+        toast.success(locale === 'fr' ? 'Commande passee !' : 'Order placed!');
+        return;
+      }
+      
       if (paymentMethod === 'paypal') {
         const paypalRes = await api.post('/api/paypal/create', { orderId: res.data._id, total });
         if (paypalRes.data.approvalUrl) {
@@ -83,9 +108,12 @@ export default function CheckoutPage() {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error');
     } finally {
-      setLoading(false);
+      setOrderLoading(false);
     }
   };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
+  if (!user) return null;
 
   if (cart.length === 0 && step !== 3) {
     router.push(`/${locale}/products`);
@@ -248,10 +276,10 @@ export default function CheckoutPage() {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={handleCreateOrder}
-                disabled={loading}
+                disabled={orderLoading}
                 className="mt-4 w-full py-3.5 bg-neutral-900 text-white font-medium rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50"
               >
-                {loading ? (locale === 'fr' ? 'Traitement...' : 'Processing...') : (locale === 'fr' ? 'Commander' : 'Place order')}
+                {orderLoading ? (locale === 'fr' ? 'Traitement...' : 'Processing...') : (locale === 'fr' ? 'Commander' : 'Place order')}
               </motion.button>
             </div>
           </div>

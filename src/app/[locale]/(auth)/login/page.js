@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,25 +13,35 @@ import toast from 'react-hot-toast';
 export default function LoginPage() {
   const locale = useLocale();
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Redirect logged-in users away from login page
+  useEffect(() => {
+    if (!loading && user) {
+      router.push(user.isAdmin ? '/admin/dashboard' : `/${locale}/`);
+    }
+  }, [user, loading, router, locale]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     try {
       const auth = await login(email, password);
       toast.success(locale === 'fr' ? 'Connecte !' : 'Logged in!');
-      router.push(auth?.user?.isAdmin ? '/admin/dashboard' : `/${locale}/dashboard`);
+      router.push(auth?.user?.isAdmin ? '/admin/dashboard' : `/${locale}/`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
+  if (user) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
@@ -90,10 +100,10 @@ export default function LoginPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full py-3 bg-neutral-900 text-white font-medium rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50"
             >
-              {loading ? (locale === 'fr' ? 'Connexion...' : 'Logging in...') : (locale === 'fr' ? 'Se connecter' : 'Log in')}
+              {submitting ? (locale === 'fr' ? 'Connexion...' : 'Logging in...') : (locale === 'fr' ? 'Se connecter' : 'Log in')}
             </motion.button>
           </form>
 

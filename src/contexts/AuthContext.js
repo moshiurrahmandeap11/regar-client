@@ -66,8 +66,21 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(res.data);
+    } catch (error) {
+      console.error('Failed to refresh user');
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, loading, isAdmin: user?.isAdmin }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, refreshUser, loading, isAdmin: user?.isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

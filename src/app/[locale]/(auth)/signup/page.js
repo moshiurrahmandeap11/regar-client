@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,10 +13,17 @@ import toast from 'react-hot-toast';
 export default function SignupPage() {
   const locale = useLocale();
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, user, loading } = useAuth();
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Redirect logged-in users away from signup page
+  useEffect(() => {
+    if (!loading && user) {
+      router.push(user.isAdmin ? '/admin/dashboard' : `/${locale}/`);
+    }
+  }, [user, loading, router, locale]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +31,7 @@ export default function SignupPage() {
       toast.error(locale === 'fr' ? 'Les mots de passe ne correspondent pas' : 'Passwords do not match');
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     try {
       await register({
         firstName: form.firstName,
@@ -33,13 +40,16 @@ export default function SignupPage() {
         password: form.password,
       });
       toast.success(locale === 'fr' ? 'Compte cree !' : 'Account created!');
-      router.push(`/${locale}/dashboard`);
+      router.push(`/${locale}/`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
+  if (user) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
@@ -132,10 +142,10 @@ export default function SignupPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full py-3 bg-neutral-900 text-white font-medium rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50"
             >
-              {loading ? (locale === 'fr' ? 'Creation...' : 'Creating...') : (locale === 'fr' ? 'S\'inscrire' : 'Sign up')}
+              {submitting ? (locale === 'fr' ? 'Creation...' : 'Creating...') : (locale === 'fr' ? 'S\'inscrire' : 'Sign up')}
             </motion.button>
           </form>
 

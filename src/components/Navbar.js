@@ -133,8 +133,12 @@ export default function Navbar() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-white/15 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-white/15 flex items-center justify-center">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <ChevronDown className="w-4 h-4 hidden sm:block" />
                 </button>
