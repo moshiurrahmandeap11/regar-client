@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Ticket, Trophy,
-  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store
+  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store, Mail
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ const menuItems = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
   { id: 'content', label: 'Content', icon: FileText, href: '/admin/content' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
+  { id: 'newsletters', label: 'Newsletters', icon: Mail, href: '/admin/newsletters' },
 ];
 
 export default function AdminLayoutClient({ children }) {

@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { ArrowRight, ShoppingBag, Ticket, Trophy } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import CountdownTimer from '@/components/CountdownTimer';
 import ReviewCard from '@/components/ReviewCard';
 import SectionTitle from '@/components/SectionTitle';
@@ -55,9 +56,10 @@ export default function HomePage() {
     try {
       await api.post('/api/content/newsletter', { email });
       setEmail('');
-      alert(locale === 'fr' ? 'Inscription reussie !' : 'Subscribed successfully!');
+      toast.success(locale === 'fr' ? 'Inscription reussie !' : 'Subscribed successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Error');
+      const msg = error.response?.data?.message || 'Error';
+      toast.error(msg);
     }
   };
 
