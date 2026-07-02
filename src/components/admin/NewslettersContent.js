@@ -58,7 +58,18 @@ export default function NewslettersContent() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this subscriber?')) return;
+    const confirmed = await new Promise((resolve) => {
+      toast((t) => (
+        <div className="space-y-2">
+          <p className="text-sm">Delete this subscriber?</p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 rounded bg-neutral-900 text-white text-xs" onClick={() => { toast.dismiss(t.id); resolve(true); }}>Delete</button>
+            <button className="px-3 py-1 rounded border text-xs" onClick={() => { toast.dismiss(t.id); resolve(false); }}>Cancel</button>
+          </div>
+        </div>
+      ), { duration: 10000 });
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/api/newsletters/${id}`);
       toast.success('Deleted');

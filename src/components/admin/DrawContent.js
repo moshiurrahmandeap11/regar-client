@@ -79,13 +79,38 @@ export default function DrawContent() {
     return 'Raffle is still running';
   };
 
+  const confirmWithToast = (message) => {
+    return new Promise((resolve) => {
+      toast((t) => (
+        <div className="space-y-2">
+          <p className="text-sm">{message}</p>
+          <div className="flex gap-2">
+            <button
+              className="px-3 py-1 rounded bg-neutral-900 text-white text-xs"
+              onClick={() => { toast.dismiss(t.id); resolve(true); }}
+            >
+              Confirm
+            </button>
+            <button
+              className="px-3 py-1 rounded border text-xs"
+              onClick={() => { toast.dismiss(t.id); resolve(false); }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ), { duration: 10000 });
+    });
+  };
+
   const handleDraw = async () => {
     if (!selectedRaffleId) {
       toast.error('Select a raffle first');
       return;
     }
 
-    if (!confirm('Run draw for this raffle now?')) return;
+    const confirmed = await confirmWithToast('Run draw for this raffle now?');
+    if (!confirmed) return;
 
     setLoading(true);
     try {

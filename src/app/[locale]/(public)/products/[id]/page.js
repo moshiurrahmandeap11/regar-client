@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Heart, Truck, Shield, RotateCcw } from 'lucide-react';
+import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star } from 'lucide-react';
 import api from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import QuantitySelector from '@/components/QuantitySelector';
 import ProductCard from '@/components/ProductCard';
 import { FadeIn } from '@/components/animations';
@@ -16,8 +17,13 @@ export default function ProductDetailPage() {
   const locale = useLocale();
   const params = useParams();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [productReviews, setProductReviews] = useState([]);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -39,6 +45,9 @@ export default function ProductDetailPage() {
         setProduct(res.data);
         setSelectedColor(res.data.colors?.[0]?.name);
         setSelectedSize(res.data.sizes?.[0]);
+
+        const reviewsRes = await api.get(`/api/reviews?product=${params.id}&limit=10`);
+        setProductReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
         
         const relatedRes = await api.get(`/api/products?category=${res.data.category}&active=true`);
         setRelated(relatedRes.data.filter(p => p._id !== res.data._id).slice(0, 4));
@@ -58,6 +67,37 @@ export default function ProductDetailPage() {
     }
     addToCart(product, selectedColor, selectedSize, quantity, displayImages[activeImage] || displayImages[0]);
     toast.success(locale === 'fr' ? 'Ajoute au panier !' : 'Added to cart!');
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error(locale === 'fr' ? 'Veuillez vous connecter pour laisser un avis' : 'Please login to leave a review');
+      return;
+    }
+    if (!reviewComment.trim()) {
+      toast.error(locale === 'fr' ? 'Le commentaire est requis' : 'Comment is required');
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      await api.post('/api/reviews', {
+        product: params.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+
+      const reviewsRes = await api.get(`/api/reviews?product=${params.id}&limit=10`);
+      setProductReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
+      setReviewComment('');
+      setReviewRating(5);
+      toast.success(locale === 'fr' ? 'Avis ajoute avec succes' : 'Review added successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add review');
+    } finally {
+      setReviewLoading(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
@@ -199,6 +239,67 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
+
+        <div className="mt-16 space-y-6">
+          <h2 className="text-xl font-bold">{locale === 'fr' ? 'Avis clients' : 'Customer reviews'}</h2>
+
+          <form onSubmit={handleSubmitReview} className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4">
+            <div>
+              <label className="text-sm font-medium block mb-2">{locale === 'fr' ? 'Votre note' : 'Your rating'}</label>
+              <div className="flex gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setReviewRating(i + 1)}
+                    className="p-1"
+                  >
+                    <Star className={`w-5 h-5 ${i < reviewRating ? 'text-amber-400 fill-amber-400' : 'text-neutral-300'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-2">{locale === 'fr' ? 'Commentaire' : 'Comment'}</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm"
+                placeholder={locale === 'fr' ? 'Partagez votre experience...' : 'Share your experience...'}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={reviewLoading}
+              className="px-5 py-2.5 rounded-xl bg-neutral-900 text-white text-sm disabled:opacity-60"
+            >
+              {reviewLoading ? (locale === 'fr' ? 'Envoi...' : 'Submitting...') : (locale === 'fr' ? 'Ajouter un avis' : 'Add review')}
+            </button>
+          </form>
+
+          {productReviews.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {productReviews.map((review) => (
+                <div key={review._id} className="bg-white rounded-2xl border border-neutral-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{review.name}</p>
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-amber-400 fill-amber-400' : 'text-neutral-300'}`} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-neutral-600 mt-2">{locale === 'fr' ? review.comment : review.commentEn || review.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500">{locale === 'fr' ? 'Aucun avis pour ce produit.' : 'No reviews for this product yet.'}</p>
+          )}
+        </div>
       </div>
     </div>
   );

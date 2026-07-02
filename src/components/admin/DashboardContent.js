@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, ShoppingCart, Users, Ticket, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
+import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 export default function DashboardContent() {
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, activeRaffles: 0 });
@@ -17,10 +19,8 @@ export default function DashboardContent() {
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analytics/dashboard`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const data = await res.json();
+      const res = await api.get('/api/analytics/dashboard');
+      const data = res.data || {};
       setStats({
         totalRevenue: data.totalRevenue || 0,
         totalOrders: data.totalOrders || 0,
@@ -30,7 +30,7 @@ export default function DashboardContent() {
       setRecentOrders(data.recentOrders || []);
       setTopProducts(data.topProducts || []);
     } catch (error) {
-      console.error('Dashboard error:', error);
+      toast.error('Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ export default function DashboardContent() {
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{product._id}</p>
+                      <p className="font-medium text-sm truncate">{product.name || product._id || 'Product'}</p>
                       <p className="text-xs text-neutral-500">{product.count} sold</p>
                     </div>
                     <div className="text-right">

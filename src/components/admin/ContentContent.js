@@ -141,7 +141,18 @@ export default function ContentContent() {
   };
 
   const handleDeleteFaq = async (id) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return;
+    const confirmed = await new Promise((resolve) => {
+      toast((t) => (
+        <div className="space-y-2">
+          <p className="text-sm">Are you sure you want to delete this FAQ?</p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 rounded bg-neutral-900 text-white text-xs" onClick={() => { toast.dismiss(t.id); resolve(true); }}>Delete</button>
+            <button className="px-3 py-1 rounded border text-xs" onClick={() => { toast.dismiss(t.id); resolve(false); }}>Cancel</button>
+          </div>
+        </div>
+      ), { duration: 10000 });
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API}/api/content/faq/${id}`, {
         method: 'DELETE',

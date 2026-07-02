@@ -5,14 +5,12 @@ import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp, DollarSign, ShoppingBag, Users, Calendar } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
+import api from '@/lib/api';
 
 export default function AnalyticsContent() {
   const [sales, setSales] = useState([]);
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, activeRaffles: 0 });
   const [loading, setLoading] = useState(true);
-
-  const API = process.env.NEXT_PUBLIC_API_URL;
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
   useEffect(() => {
     fetchAnalytics();
@@ -21,11 +19,13 @@ export default function AnalyticsContent() {
   const fetchAnalytics = async () => {
     try {
       const [salesRes, dashboardRes] = await Promise.all([
-        fetch(`${API}/api/analytics/sales`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/api/analytics/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+        api.get('/api/analytics/sales'),
+        api.get('/api/analytics/dashboard'),
       ]);
-      const salesData = await salesRes.json();
-      const dashboardData = await dashboardRes.json();
+
+      const salesData = Array.isArray(salesRes.data) ? salesRes.data : [];
+      const dashboardData = dashboardRes.data || {};
+
       setSales(salesData);
       setStats({
         totalRevenue: dashboardData.totalRevenue || 0,

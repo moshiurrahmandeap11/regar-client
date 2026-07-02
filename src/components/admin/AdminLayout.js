@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, Ticket, Trophy,
-  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store, Mail, CreditCard
+  Star, FileText, Settings, BarChart3, LogOut, Menu, X, Store, Mail, CreditCard, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ const menuItems = [
   { id: 'winners', label: 'Winners', icon: Trophy, href: '/admin/winners' },
   { id: 'reviews', label: 'Reviews', icon: Star, href: '/admin/reviews' },
   { id: 'notifications', label: 'Notifications', icon: FileText, href: '/admin/notifications' },
+  { id: 'contacts', label: 'Contacts', icon: MessageSquare, href: '/admin/contacts' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
   { id: 'payments', label: 'Payments', icon: CreditCard, href: '/admin/payments' },
   { id: 'content', label: 'Content', icon: FileText, href: '/admin/content' },
@@ -94,7 +95,7 @@ export default function AdminLayoutClient({ children }) {
 
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3 px-3 py-2 mb-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-neutral-700 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-neutral-700 flex items-center justify-center shrink-0">
               {user.avatar ? (
                 <img src={user.avatar} alt="" className="w-full h-full object-cover" />
               ) : (

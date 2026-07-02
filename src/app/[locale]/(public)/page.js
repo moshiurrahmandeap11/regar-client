@@ -28,8 +28,8 @@ export default function HomePage() {
         const [prodRes, raffleRes, reviewRes, winnerRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
-          api.get('/api/reviews'),
-          api.get('/api/tickets/winners'),
+          api.get('/api/reviews?limit=4'),
+          api.get('/api/tickets/winners?limit=5'),
         ]);
         setProducts(prodRes.data.slice(0, 4));
         setRaffles(raffleRes.data.slice(0, 3));

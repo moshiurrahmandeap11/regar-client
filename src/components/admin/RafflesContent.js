@@ -68,7 +68,18 @@ export default function RafflesContent() {
   };
 
   const drawWinner = async (id) => {
-    if (!confirm('Are you sure you want to draw a winner? This action cannot be undone.')) return;
+    const confirmed = await new Promise((resolve) => {
+      toast((t) => (
+        <div className="space-y-2">
+          <p className="text-sm">Draw winner now? This action cannot be undone.</p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 rounded bg-neutral-900 text-white text-xs" onClick={() => { toast.dismiss(t.id); resolve(true); }}>Confirm</button>
+            <button className="px-3 py-1 rounded border text-xs" onClick={() => { toast.dismiss(t.id); resolve(false); }}>Cancel</button>
+          </div>
+        </div>
+      ), { duration: 10000 });
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API}/api/raffles/${id}/draw`, {
         method: 'POST',
