@@ -59,7 +59,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-neutral-800 text-center text-sm text-neutral-500">
-          <p>2024 Regar. {t('rights')}</p>
+          <p>2026 Regar. {t('rights')}</p>
         </div>
       </div>
     </footer>
