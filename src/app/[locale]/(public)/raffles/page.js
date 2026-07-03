@@ -53,7 +53,11 @@ export default function RafflesPage() {
           {filtered.map(raffle => (
             <FadeIn key={raffle._id}>
               <HoverScale>
-                <div className="group bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <Link
+                  href={`/products/${raffle.product?._id}`}
+                  className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                >
+                  {/* Image */}
                   <div className="aspect-square bg-neutral-100 relative overflow-hidden">
                     <img
                       src={raffle.product?.images?.[0] || '/placeholder.jpg'}
@@ -73,10 +77,19 @@ export default function RafflesPage() {
                     </div>
                   </div>
 
+                  {/* Info */}
                   <div className="p-4">
                     <h3 className="font-semibold text-neutral-900 truncate">{raffle.name}</h3>
-                    <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{raffle.product?.name}</p>
-                    
+                    <p className="text-sm text-neutral-500 mt-1 truncate">{raffle.product?.name}</p>
+                    {/* Product description */}
+                    {(raffle.product?.description || raffle.product?.descriptionEn) && (
+                      <p className="text-sm text-neutral-600 mt-2 line-clamp-2">
+                        {locale === 'fr'
+                          ? raffle.product.description
+                          : raffle.product.descriptionEn || raffle.product.description}
+                      </p>
+                    )}
+
                     {raffle.prizes?.length > 0 && (
                       <div className="mt-3">
                         <p className="text-xs text-neutral-500 mb-2">{locale === 'fr' ? 'Prix' : 'Prizes'}:</p>
@@ -91,10 +104,25 @@ export default function RafflesPage() {
                       </div>
                     )}
 
+                    {/* Tickets sold progress */}
+                    {typeof raffle.product?.soldTickets === 'number' && typeof raffle.product?.maxTickets === 'number' && raffle.product.maxTickets > 0 && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span className="text-neutral-500">{locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}</span>
+                          <span className="font-semibold text-neutral-700">{raffle.product.soldTickets} / {raffle.product.maxTickets}</span>
+                        </div>
+                        <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
+                            style={{ width: `${Math.min((raffle.product.soldTickets / raffle.product.maxTickets) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {raffle.endDate && raffle.status === 'active' && (
                       <div className="mt-4">
-                        <p className="text-xs text-neutral-500 mb-2">{locale === 'fr' ? 'Se termine dans' : 'Ends in'}</p>
-                        <CountdownTimer targetDate={raffle.endDate} locale={locale} />
+                        <CountdownTimer targetDate={raffle.endDate} locale={locale} variant="dark" />
                       </div>
                     )}
 
@@ -107,14 +135,11 @@ export default function RafflesPage() {
                       </div>
                     )}
 
-                    <Link
-                      href={`/products/${raffle.product?._id}`}
-                      className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl hover:bg-neutral-800 transition-colors"
-                    >
+                    <div className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl group-hover:bg-neutral-800 transition-colors">
                       {locale === 'fr' ? 'Participer' : 'Participate'} <ChevronRight className="w-4 h-4" />
-                    </Link>
+                    </div>
                   </div>
-                </div>
+                </Link>
               </HoverScale>
             </FadeIn>
           ))}

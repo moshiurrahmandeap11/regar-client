@@ -164,7 +164,7 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-2xl border border-neutral-200 p-6 max-w-2xl mx-auto">
               <h2 className="text-lg font-semibold mb-4">{locale === 'fr' ? 'Paiement manuel' : 'Manual payment'}</h2>
               <p className="text-sm text-neutral-500 mb-4">{locale === 'fr' ? 'Veuillez effectuer le virement et fournir la preuve' : 'Make the transfer and upload proof below'}</p>
-              <ManualPaymentForm order={order} onDone={() => { clearCart(); setStep(3); toast.success(locale === 'fr' ? 'Paiement soumis' : 'Payment submitted'); }} />
+              <ManualPaymentForm order={order} locale={locale} onDone={() => { clearCart(); setStep(3); toast.success(locale === 'fr' ? 'Paiement soumis' : 'Payment submitted'); }} />
             </div>
           </FadeIn>
         ) : (

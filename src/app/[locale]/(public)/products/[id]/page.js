@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star } from 'lucide-react';
+import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star, Ticket } from 'lucide-react';
 import api from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import QuantitySelector from '@/components/QuantitySelector';
 import ProductCard from '@/components/ProductCard';
+import CountdownTimer from '@/components/CountdownTimer';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeRaffle, setActiveRaffle] = useState(null);
 
   const selectedColorData = product?.colors?.find((color) => color.name === selectedColor);
   const displayImages = (() => {
@@ -51,6 +53,15 @@ export default function ProductDetailPage() {
         
         const relatedRes = await api.get(`/api/products?category=${res.data.category}&active=true`);
         setRelated(relatedRes.data.filter(p => p._id !== res.data._id).slice(0, 4));
+
+        // Fetch the active raffle linked to this product (if any)
+        try {
+          const raffleRes = await api.get(`/api/raffles?product=${params.id}&status=active`);
+          const list = Array.isArray(raffleRes.data) ? raffleRes.data : [];
+          setActiveRaffle(list[0] || null);
+        } catch {
+          setActiveRaffle(null);
+        }
       } catch (error) {
         toast.error('Product not found');
       } finally {
@@ -134,8 +145,21 @@ export default function ProductDetailPage() {
 
           <FadeIn delay={0.1}>
             <div>
+              {activeRaffle && (
+                <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-neutral-900 text-white">
+                  <Ticket className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-amber-400">
+                    Raffle No. {activeRaffle.raffleNumber
+                      ? String(activeRaffle.raffleNumber).padStart(3, '0')
+                      : '—'}
+                  </span>
+                  <span className="w-px h-3 bg-white/20 shrink-0" />
+                  <span className="text-xs text-neutral-300 truncate max-w-[180px]">
+                    {locale === 'fr' ? activeRaffle.name : (activeRaffle.nameEn || activeRaffle.name)}
+                  </span>
+                </div>
+              )}
               <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{product.name}</h1>
-              <p className="mt-2 text-neutral-500">{locale === 'fr' ? product.description : product.descriptionEn || product.description}</p>
               
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-neutral-900">{product.price} CHF</span>
@@ -225,9 +249,48 @@ export default function ProductDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Tickets sold progress */}
+              {typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-neutral-600 font-medium">
+                      {locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}
+                    </span>
+                    <span className="font-semibold text-neutral-900">
+                      {product.soldTickets} / {product.maxTickets}
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min((product.soldTickets / product.maxTickets) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Drawing in countdown */}
+              {activeRaffle?.endDate && (
+                <div className="mt-4">
+                  <CountdownTimer targetDate={activeRaffle.endDate} locale={locale} variant="dark" />
+                </div>
+              )}
             </div>
           </FadeIn>
         </div>
+
+        {/* Product Description */}
+        {(product.description || product.descriptionEn) && (
+          <div className="mt-12 border-t border-neutral-200 pt-10">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-3">
+              {locale === 'fr' ? 'Description' : 'Description'}
+            </h2>
+            <p className="text-neutral-600 leading-relaxed max-w-3xl">
+              {locale === 'fr' ? product.description : product.descriptionEn || product.description}
+            </p>
+          </div>
+        )}
 
         {related.length > 0 && (
           <div className="mt-16">

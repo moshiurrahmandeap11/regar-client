@@ -45,6 +45,36 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
     );
   }
 
+  if (variant === 'dark') {
+    const labels = [
+      locale === 'fr' ? 'JOURS' : 'DAYS',
+      locale === 'fr' ? 'HRS' : 'HRS',
+      'MIN',
+      'SEC',
+    ];
+    const values = [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds];
+    return (
+      <div className="bg-[#1b2535] rounded-2xl px-5 py-4 w-full">
+        <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-3">
+          {locale === 'fr' ? 'Tirage dans' : 'Drawing in'}
+        </p>
+        <div className="flex items-end gap-1">
+          {values.map((val, i) => (
+            <div key={i} className="flex items-end gap-1">
+              <div className="text-center">
+                <span className={`text-3xl font-extrabold leading-none ${i === 3 ? 'text-[#e05c3a]' : 'text-white'}`}>
+                  {String(val).padStart(2, '0')}
+                </span>
+                <p className="text-[10px] tracking-widest uppercase text-neutral-500 mt-1">{labels[i]}</p>
+              </div>
+              {i < 3 && <span className="text-white/40 text-2xl font-bold pb-4 mx-0.5">:</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-2">
       {units.map((unit, i) => (
