@@ -48,13 +48,13 @@ export default function LoginPage() {
       <FadeIn className="w-full max-w-md">
         <div className="bg-white rounded-2xl border border-neutral-200 p-8">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-neutral-900 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">R</span>
+            <div>
+              <span className="text-black font-bold text-lg">R E G A R</span>
             </div>
-            <h1 className="text-2xl font-bold text-neutral-900">
+            <h1 className="text-2xl text-left font-bold text-neutral-900">
               {locale === 'fr' ? 'Connexion' : 'Login'}
             </h1>
-            <p className="text-neutral-500 mt-2 text-sm">
+            <p className="text-neutral-500 text-left mt-2 text-sm">
               {locale === 'fr' ? 'Bienvenue sur Regar' : 'Welcome to Regar'}
             </p>
           </div>
@@ -94,6 +94,11 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
+              </div>
+              <div className="mt-2 text-right">
+                <Link href="/password-reset" className="text-xs text-neutral-600 hover:text-neutral-900">
+                  {locale === 'fr' ? 'Mot de passe oublie ?' : 'Forgot password?'}
+                </Link>
               </div>
             </div>
             <motion.button

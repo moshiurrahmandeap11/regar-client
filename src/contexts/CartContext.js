@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const CartContext = createContext();
 
@@ -50,7 +50,9 @@ export function CartProvider({ children }) {
     ));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = useCallback(() => {
+    setCart((prev) => (prev.length ? [] : prev));
+  }, []);
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

@@ -39,8 +39,8 @@ export default function SignupPage() {
         email: form.email,
         password: form.password,
       });
-      toast.success(locale === 'fr' ? 'Compte cree !' : 'Account created!');
-      router.push(`/${locale}/`);
+      toast.success(locale === 'fr' ? 'Compte cree, verifiez votre email.' : 'Account created, please verify your email.');
+      router.push(`/${locale}/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
@@ -56,10 +56,10 @@ export default function SignupPage() {
       <FadeIn className="w-full max-w-md">
         <div className="bg-white rounded-2xl border border-neutral-200 p-8">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-neutral-900 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">R</span>
+            <div>
+              <span className="text-black font-bold text-lg">R E G A R</span>
             </div>
-            <h1 className="text-2xl font-bold text-neutral-900">
+            <h1 className="text-2xl text-left font-bold text-neutral-900">
               {locale === 'fr' ? 'Creer un compte' : 'Create account'}
             </h1>
           </div>

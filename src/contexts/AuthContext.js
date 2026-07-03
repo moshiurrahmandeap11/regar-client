@@ -47,8 +47,6 @@ export function AuthProvider({ children }) {
 
   const register = async (data) => {
     const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, data);
-    setAuthToken(res.data.token);
-    setUser(res.data.user);
     return res.data;
   };
 

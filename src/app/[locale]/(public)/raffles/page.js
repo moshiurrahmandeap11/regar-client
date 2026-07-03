@@ -53,16 +53,16 @@ export default function RafflesPage() {
           {filtered.map(raffle => (
             <FadeIn key={raffle._id}>
               <HoverScale>
-                <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
+                <div className="group bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="aspect-square bg-neutral-100 relative overflow-hidden">
                     <img
                       src={raffle.product?.images?.[0] || '/placeholder.jpg'}
                       alt={raffle.name}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 left-3">
                       <span className={`px-2 py-1 text-xs font-bold rounded-lg ${
-                        raffle.status === 'active' ? 'bg-green-500 text-white' :
+                        raffle.status === 'active' ? 'bg-emerald-500 text-white' :
                         raffle.status === 'drawn' ? 'bg-amber-500 text-white' :
                         'bg-neutral-500 text-white'
                       }`}>
@@ -72,14 +72,15 @@ export default function RafflesPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-semibold text-lg">{raffle.name}</h3>
-                    <p className="text-sm text-neutral-500 mt-1">{raffle.product?.name}</p>
+
+                  <div className="p-4">
+                    <h3 className="font-semibold text-neutral-900 truncate">{raffle.name}</h3>
+                    <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{raffle.product?.name}</p>
                     
                     {raffle.prizes?.length > 0 && (
                       <div className="mt-3">
                         <p className="text-xs text-neutral-500 mb-2">{locale === 'fr' ? 'Prix' : 'Prizes'}:</p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           {raffle.prizes.slice(0, 3).map((prize, i) => (
                             <div key={i} className="flex items-center gap-1 text-xs bg-neutral-100 px-2 py-1 rounded-lg">
                               <Ticket className="w-3 h-3 text-amber-500" />

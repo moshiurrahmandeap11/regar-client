@@ -8,13 +8,13 @@ import { useCart } from '@/contexts/CartContext';
 export default function ConfirmationPage() {
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
+  const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id');
     if (sessionId) {
       clearCart();
     }
-  }, [searchParams, clearCart]);
+  }, [sessionId, clearCart]);
 
   return (
     <StaticInfoPage
