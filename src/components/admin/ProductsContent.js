@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
+import MarketingModal from '@/components/admin/MarketingModal';
 
 export default function ProductsContent() {
   const [products, setProducts] = useState([]);
@@ -21,6 +22,9 @@ export default function ProductsContent() {
   const [colorImageFiles, setColorImageFiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Marketing modal state
+  const [marketingTarget, setMarketingTarget] = useState(null); // { name, url }
 
   const API = process.env.NEXT_PUBLIC_API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
@@ -386,6 +390,16 @@ export default function ProductsContent() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setMarketingTarget({
+                              name: product.name,
+                              url: `${process.env.NEXT_PUBLIC_SITE_URL}/en/products/${product._id}`,
+                            })}
+                            className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                            title="Email Marketing"
+                          >
+                            <Megaphone className="w-4 h-4" />
+                          </button>
                           <button onClick={() => handleEdit(product)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -433,6 +447,14 @@ export default function ProductsContent() {
           </>
         )}
       </div>
+
+      {/* Marketing Modal */}
+      <MarketingModal
+        open={!!marketingTarget}
+        onClose={() => setMarketingTarget(null)}
+        itemName={marketingTarget?.name || ''}
+        itemUrl={marketingTarget?.url || ''}
+      />
     </div>
   );
 }

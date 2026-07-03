@@ -77,6 +77,53 @@ export default function SettingsContent() {
     });
   };
 
+  const MARKETING_TEMPLATE_PRESET = {
+    name: 'Marketing — Product Drop',
+    subject: '🎉 New drop from {{siteName}}: {{productName}}',
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937;">
+  <div style="background:#111827;padding:24px 32px;border-radius:12px 12px 0 0;">
+    <h1 style="margin:0;color:#ffffff;font-size:22px;letter-spacing:1px;">{{siteName}}</h1>
+  </div>
+  <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;">
+    <h2 style="margin:0 0 12px;font-size:20px;color:#111827;">New drop — {{productName}}</h2>
+    <p style="margin:0 0 20px;color:#4b5563;line-height:1.7;">
+      Hi {{email}},<br><br>
+      We have something exciting for you. Check out the latest addition to the Regar collection.
+    </p>
+    <a href="{{productUrl}}"
+       style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;
+              padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:0.5px;">
+      View Now →
+    </a>
+    <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">
+      You're receiving this because you subscribed to {{siteName}} updates.<br>
+      {{year}} © {{siteName}}
+    </p>
+  </div>
+</div>`,
+    type: 'BULK',
+    isDefault: true,
+  };
+
+  const addMarketingPreset = () => {
+    const already = (settings.newsletterTemplates || []).some(
+      (t) => t.name === MARKETING_TEMPLATE_PRESET.name,
+    );
+    if (already) {
+      toast('Marketing template already exists');
+      return;
+    }
+    // If we're marking this as default, unset any other BULK defaults
+    const updated = (settings.newsletterTemplates || []).map((t) =>
+      t.type === 'BULK' ? { ...t, isDefault: false } : t,
+    );
+    setSettings({
+      ...settings,
+      newsletterTemplates: [...updated, { ...MARKETING_TEMPLATE_PRESET }],
+    });
+    toast.success('Marketing template added — save settings to persist it');
+  };
+
   const addTemplate = () => {
     setSettings({
       ...settings,
@@ -267,18 +314,40 @@ export default function SettingsContent() {
               <h2 className="text-lg font-semibold">Newsletter Email Templates</h2>
               <p className="text-sm text-neutral-500">Add HTML templates for instant thank-you and bulk emails.</p>
             </div>
-            <button
-              type="button"
-              onClick={addTemplate}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-900 text-white text-sm hover:bg-neutral-800"
-            >
-              <Plus className="w-4 h-4" />
-              Add Template
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={addMarketingPreset}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 text-sm hover:bg-neutral-50 text-neutral-700"
+              >
+                <Plus className="w-4 h-4" />
+                Marketing Preset
+              </button>
+              <button
+                type="button"
+                onClick={addTemplate}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-900 text-white text-sm hover:bg-neutral-800"
+              >
+                <Plus className="w-4 h-4" />
+                Add Template
+              </button>
+            </div>
           </div>
 
-          <div className="rounded-xl border bg-neutral-50 p-3 text-xs text-neutral-600 mb-4">
-            Available variables: <span className="font-mono">{'{{email}}'}</span>, <span className="font-mono">{'{{siteName}}'}</span>, <span className="font-mono">{'{{year}}'}</span>
+          <div className="rounded-xl border bg-neutral-50 p-3 text-xs text-neutral-600 mb-4 space-y-1">
+            <p className="font-medium text-neutral-700">Available variables</p>
+            <p>
+              <span className="font-mono">{'{{email}}'}</span> &nbsp;
+              <span className="font-mono">{'{{siteName}}'}</span> &nbsp;
+              <span className="font-mono">{'{{year}}'}</span>
+            </p>
+            <p className="text-neutral-500">Marketing sends also support:</p>
+            <p>
+              <span className="font-mono">{'{{productName}}'}</span> &nbsp;
+              <span className="font-mono">{'{{productUrl}}'}</span> &nbsp;
+              <span className="font-mono">{'{{productLink}}'}</span>
+              <span className="text-neutral-400"> (renders as a clickable &lt;a&gt; tag)</span>
+            </p>
           </div>
 
           {(!settings.newsletterTemplates || settings.newsletterTemplates.length === 0) ? (

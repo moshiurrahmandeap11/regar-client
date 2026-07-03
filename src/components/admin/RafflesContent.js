@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
+import MarketingModal from '@/components/admin/MarketingModal';
 
 export default function RafflesContent() {
   const [raffles, setRaffles] = useState([]);
@@ -14,6 +15,9 @@ export default function RafflesContent() {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Marketing modal state
+  const [marketingTarget, setMarketingTarget] = useState(null); // { name, url }
 
   const [form, setForm] = useState({
     name: '', nameEn: '', product: '', startDate: '', endDate: '',
@@ -286,15 +290,27 @@ export default function RafflesContent() {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        {raffle.canDraw && (
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => drawWinner(raffle._id)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"
+                            onClick={() => setMarketingTarget({
+                              name: raffle.name,
+                              url: `${process.env.NEXT_PUBLIC_SITE_URL}/en/raffles`,
+                            })}
+                            className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                            title="Email Marketing"
                           >
-                            <Sparkles className="w-3 h-3" />
-                            Draw
+                            <Megaphone className="w-4 h-4" />
                           </button>
-                        )}
+                          {raffle.canDraw && (
+                            <button
+                              onClick={() => drawWinner(raffle._id)}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              Draw
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </motion.tr>
                   ))}
@@ -322,6 +338,14 @@ export default function RafflesContent() {
           </>
         )}
       </div>
+
+      {/* Marketing Modal */}
+      <MarketingModal
+        open={!!marketingTarget}
+        onClose={() => setMarketingTarget(null)}
+        itemName={marketingTarget?.name || ''}
+        itemUrl={marketingTarget?.url || ''}
+      />
     </div>
   );
 }

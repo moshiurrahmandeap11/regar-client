@@ -186,25 +186,100 @@ export default function HomePage() {
             </h2>
             {heroProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {heroProducts.map((product) => (
-                  <div key={product._id} className="bg-[#f7f7f7] border border-[#cfc8b7] rounded-2xl p-4">
-                    <div className="h-36 bg-[#d7d2c4] rounded-xl overflow-hidden flex items-center justify-center">
-                      {product.images?.[0] ? (
-                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-contain" />
-                      ) : (
-                        <ShoppingBag className="w-9 h-9 text-[#1b2f48]" />
-                      )}
-                    </div>
-                    <h3 className="text-2xl font-bold mt-4">{product.name}</h3>
-                    <p className="text-lg text-neutral-500 mt-1">€{product.price}</p>
-                    <Link
-                      href={`/products/${product._id}`}
-                      className="mt-4 block text-center py-3 rounded-xl bg-[#cd442e] text-white font-semibold hover:bg-[#b73a27] transition-colors"
+                {heroProducts.map((product) => {
+                  const sold = product.soldTickets ?? 0;
+                  const max = product.maxTickets ?? 0;
+                  const remaining = max > 0 ? Math.max(max - sold, 0) : null;
+                  const progressPct = max > 0 ? Math.min((sold / max) * 100, 100) : 0;
+                  const coverImage = product.images?.[0] || product.colors?.find((c) => c.image)?.image;
+
+                  return (
+                    <div
+                      key={product._id}
+                      className="group bg-[#f7f5ef] border border-[#cfc8b7] rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
                     >
-                      {heroText.enterDrawLabel}
-                    </Link>
-                  </div>
-                ))}
+                      {/* Image */}
+                      <Link href={`/products/${product._id}`} className="block relative">
+                        <div className="aspect-[4/3] bg-[#d7d2c4] overflow-hidden relative">
+                          {coverImage ? (
+                            <img
+                              src={coverImage}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ShoppingBag className="w-12 h-12 text-[#1b2f48]/40" />
+                            </div>
+                          )}
+                          {product.featured && (
+                            <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow">
+                              {locale === 'fr' ? 'Populaire' : 'Popular'}
+                            </span>
+                          )}
+                          {remaining === 0 && (
+                            <span className="absolute top-3 right-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-lg shadow">
+                              {locale === 'fr' ? 'Complet' : 'Sold out'}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+
+                      {/* Body */}
+                      <div className="p-5">
+                        <h3 className="text-xl font-bold text-[#14253a] truncate">{product.name}</h3>
+
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-[#c8442d] font-semibold">{product.price} CHF</p>
+                          {product.originalPrice > 0 && (
+                            <span className="text-sm text-neutral-400 line-through">{product.originalPrice} CHF</span>
+                          )}
+                        </div>
+
+                        {/* Color swatches */}
+                        {product.colors?.length > 0 && (
+                          <div className="flex gap-1.5 mt-3">
+                            {product.colors.slice(0, 5).map((color, i) => (
+                              <div
+                                key={i}
+                                className="w-5 h-5 rounded-full border-2 border-white shadow-sm ring-1 ring-[#cfc8b7]"
+                                style={{ backgroundColor: color.hex || '#ccc' }}
+                                title={color.name}
+                              />
+                            ))}
+                            {product.colors.length > 5 && (
+                              <span className="text-xs text-neutral-500 self-center">+{product.colors.length - 5}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Ticket progress */}
+                        {max > 0 && (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between text-xs text-neutral-500 mb-1.5">
+                              <span>{sold} {heroText.soldLabel}</span>
+                              <span>{remaining} {heroText.remainingLabel}</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-[#d7d2c4] rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
+                                style={{ width: `${progressPct}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <Link
+                          href={`/products/${product._id}`}
+                          className="mt-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#14253a] text-white font-semibold hover:bg-[#1b2f48] active:scale-95 transition-all"
+                        >
+                          {heroText.enterDrawLabel}
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="bg-[#f7f7f7] border border-[#cfc8b7] rounded-2xl p-6 text-sm text-neutral-600">
