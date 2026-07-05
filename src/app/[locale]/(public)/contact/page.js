@@ -46,7 +46,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-neutral-500">contact@regar.ch</p>
+                    <p className="text-sm text-neutral-500">support@regar.ch</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-neutral-200">

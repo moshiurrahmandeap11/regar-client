@@ -10,7 +10,7 @@ export default function SettingsContent() {
   const [settings, setSettings] = useState({
     siteName: 'Regar',
     siteNameEn: 'Regar',
-    contactEmail: 'contact@regar.ch',
+    contactEmail: 'support@regar.ch',
     contactPhone: '+41 79 123 45 67',
     currency: 'CHF',
     shippingCost: 9.90,
@@ -35,7 +35,7 @@ export default function SettingsContent() {
         setSettings({
           siteName: data.siteName || 'Regar',
           siteNameEn: data.siteNameEn || 'Regar',
-          contactEmail: data.contactEmail || 'contact@regar.ch',
+          contactEmail: data.contactEmail || 'support@regar.ch',
           contactPhone: data.contactPhone || '+41 79 123 45 67',
           currency: data.currency || 'CHF',
           shippingCost: data.shippingCost || 9.90,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone } from 'lucide-react';
+import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone, Trash2 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
@@ -107,6 +107,34 @@ export default function RafflesContent() {
       });
       if (!res.ok) throw new Error('Failed to update');
       toast.success('Status updated');
+      fetchRaffles();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleDelete = async (raffle) => {
+    const confirmed = await new Promise((resolve) => {
+      toast((t) => (
+        <div className="space-y-2">
+          <p className="text-sm">Delete this raffle? Linked tickets will be detached.</p>
+          <p className="text-xs text-neutral-500">{raffle.name}</p>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 rounded bg-red-600 text-white text-xs" onClick={() => { toast.dismiss(t.id); resolve(true); }}>Delete</button>
+            <button className="px-3 py-1 rounded border text-xs" onClick={() => { toast.dismiss(t.id); resolve(false); }}>Cancel</button>
+          </div>
+        </div>
+      ), { duration: 10000 });
+    });
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`${API}/api/raffles/${raffle._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete raffle');
+      toast.success('Raffle deleted');
       fetchRaffles();
     } catch (error) {
       toast.error(error.message);
@@ -310,6 +338,13 @@ export default function RafflesContent() {
                               Draw
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDelete(raffle)}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete raffle"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </motion.tr>

@@ -14,9 +14,6 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-neutral-900 font-bold text-sm">R</span>
-              </div>
               <span className="font-bold text-xl text-white">Regar</span>
             </div>
             <p className="text-sm text-neutral-400 mb-4">
@@ -42,7 +39,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">{t('contact')}</h3>
             <ul className="space-y-2 text-sm text-neutral-400">
-              <li>contact@regar.ch</li>
+              <li>support@regar.ch</li>
               <li>+41 79 123 45 67</li>
               <li>Lausanne, Suisse</li>
             </ul>
