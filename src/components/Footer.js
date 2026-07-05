@@ -39,7 +39,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">{t('contact')}</h3>
             <ul className="space-y-2 text-sm text-neutral-400">
-              <li>support@regar.ch</li>
+              <li>contact@regar.ch</li>
               <li>+41 79 123 45 67</li>
               <li>Lausanne, Suisse</li>
             </ul>

@@ -147,17 +147,22 @@ export default function DrawContent() {
             <option value="">Select raffle</option>
             {raffles.map((raffle) => (
                 <option key={raffle._id} value={raffle._id}>
-                  {raffle.name} - {raffle.product?.name || 'No product'} ({raffle.ticketCount || 0} tickets){raffle.canDraw ? '' : ` - ${getNotReadyReason(raffle)}`}
+                  {raffle.raffleNumber ? `Raffle No. ${String(raffle.raffleNumber).padStart(3, '0')} - ` : ''}{raffle.name} - {raffle.product?.name || 'No product'} ({raffle.ticketCount || 0} paid tickets){raffle.canDraw ? '' : ` - ${getNotReadyReason(raffle)}`}
                 </option>
               ))}
           </select>
 
           {selectedRaffle ? (
             <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm">
+              {selectedRaffle.raffleNumber ? (
+                <p className="text-xs font-semibold tracking-wide text-amber-700 mb-2">
+                  Raffle No. {String(selectedRaffle.raffleNumber).padStart(3, '0')}
+                </p>
+              ) : null}
               <p><span className="font-medium">Raffle:</span> {selectedRaffle.name}</p>
               <p className="mt-1"><span className="font-medium">Product:</span> {selectedRaffle.product?.name || '-'}</p>
               <p className="mt-1"><span className="font-medium">Ends:</span> {selectedRaffle.endDate ? new Date(selectedRaffle.endDate).toLocaleString('fr-CH') : '-'}</p>
-              <p className="mt-1"><span className="font-medium">Tickets:</span> {selectedRaffle.ticketCount || 0}</p>
+              <p className="mt-1"><span className="font-medium">Paid tickets:</span> {selectedRaffle.ticketCount || 0}</p>
               {!selectedRaffle.canDraw && (
                 <p className="mt-2 text-amber-700">Not ready for draw: {getNotReadyReason(selectedRaffle)}</p>
               )}

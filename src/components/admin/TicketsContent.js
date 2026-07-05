@@ -9,6 +9,8 @@ export default function TicketsContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [raffleFilter, setRaffleFilter] = useState('all');
+  const [raffles, setRaffles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const API = process.env.NEXT_PUBLIC_API_URL;
@@ -20,6 +22,7 @@ export default function TicketsContent() {
       const query = new URLSearchParams();
       if (search.trim()) query.set('q', search.trim());
       if (status !== 'all') query.set('status', status);
+      if (raffleFilter !== 'all') query.set('raffle', raffleFilter);
 
       const res = await fetch(`${API}/api/tickets?${query.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -35,7 +38,18 @@ export default function TicketsContent() {
     }
   };
 
+  const loadRaffles = async () => {
+    try {
+      const res = await fetch(`${API}/api/raffles`);
+      const data = await res.json();
+      setRaffles(Array.isArray(data) ? data : []);
+    } catch {
+      setRaffles([]);
+    }
+  };
+
   useEffect(() => {
+    loadRaffles();
     loadTickets();
   }, []);
 
@@ -45,7 +59,7 @@ export default function TicketsContent() {
       loadTickets();
     }, 350);
     return () => clearTimeout(timer);
-  }, [search, status]);
+  }, [search, status, raffleFilter]);
 
   if (loading) return <p className="text-sm text-neutral-500">Loading tickets...</p>;
 
@@ -64,6 +78,19 @@ export default function TicketsContent() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-sm"
           />
         </div>
+        <select
+          value={raffleFilter}
+          onChange={(e) => setRaffleFilter(e.target.value)}
+          className="px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+        >
+          <option value="all">All raffles</option>
+          {raffles.map((raffle) => (
+            <option key={raffle._id} value={raffle._id}>
+              {raffle.raffleNumber ? `Raffle No. ${String(raffle.raffleNumber).padStart(3, '0')} - ` : ''}
+              {raffle.name}
+            </option>
+          ))}
+        </select>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -90,6 +117,7 @@ export default function TicketsContent() {
                     <th className="text-left py-3 px-4">Ticket</th>
                     <th className="text-left py-3 px-4">User</th>
                     <th className="text-left py-3 px-4">Raffle</th>
+                    <th className="text-left py-3 px-4">Product</th>
                     <th className="text-left py-3 px-4">Order</th>
                     <th className="text-left py-3 px-4">Result</th>
                   </tr>
@@ -102,8 +130,28 @@ export default function TicketsContent() {
                         <p className="font-medium">{row.user?.firstName} {row.user?.lastName}</p>
                         <p className="text-xs text-neutral-500">{row.user?.email || '-'}</p>
                       </td>
-                      <td className="py-3 px-4">{row.raffle?.name || 'Not assigned'}</td>
-                      <td className="py-3 px-4">{row.order?.orderNumber || '-'}</td>
+                      <td className="py-3 px-4">
+                        {row.raffle ? (
+                          <div>
+                            {row.raffle.raffleNumber ? (
+                              <p className="text-[11px] font-semibold tracking-wide text-amber-700">
+                                Raffle No. {String(row.raffle.raffleNumber).padStart(3, '0')}
+                              </p>
+                            ) : null}
+                            <p className="font-medium">{row.raffle.name}</p>
+                            <p className="text-xs text-neutral-500 capitalize">{row.raffle.status}</p>
+                          </div>
+                        ) : (
+                          <span className="text-neutral-400">Not assigned</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">{row.product?.name || '-'}</td>
+                      <td className="py-3 px-4">
+                        <p>{row.order?.orderNumber || '-'}</p>
+                        <p className="text-xs text-neutral-500 capitalize">
+                          {row.order?.paymentStatus || 'pending'} / {row.order?.status || '-'}
+                        </p>
+                      </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-lg text-xs font-medium ${row.isWinner ? 'bg-amber-100 text-amber-700' : 'bg-neutral-100 text-neutral-600'}`}>
                           {row.isWinner ? 'Winner' : 'Active'}

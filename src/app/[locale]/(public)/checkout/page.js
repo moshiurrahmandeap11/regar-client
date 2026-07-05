@@ -139,10 +139,16 @@ export default function CheckoutPage() {
                 <Check className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-2xl font-bold text-neutral-900">
-                {locale === 'fr' ? 'Commande confirmee !' : 'Order confirmed!'}
+                {order.paymentStatus === 'completed'
+                  ? (locale === 'fr' ? 'Commande confirmee !' : 'Order confirmed!')
+                  : (locale === 'fr' ? 'Paiement soumis' : 'Payment submitted')}
               </h2>
               <p className="text-neutral-500 mt-2">
-                {locale === 'fr' ? 'Numero de commande' : 'Order number'}: {order.orderNumber}
+                {order.paymentStatus === 'completed'
+                  ? `${locale === 'fr' ? 'Numero de commande' : 'Order number'}: ${order.orderNumber}`
+                  : (locale === 'fr'
+                    ? `Numero de commande: ${order.orderNumber}. En attente de validation du paiement.`
+                    : `Order number: ${order.orderNumber}. Waiting for payment approval.`)}
               </p>
               <div className="mt-6 space-y-2 text-sm">
                 {order.tickets?.map((ticket, i) => (

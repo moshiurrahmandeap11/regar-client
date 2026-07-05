@@ -135,7 +135,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-[#ece9df] text-[#14253a] pt-12 sm:pt-16 pb-10 sm:pb-14">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mx-auto w-36 h-24 sm:w-44 sm:h-28 rounded-full flex items-center justify-center bg-[#d7d2c4] overflow-hidden">
+          <div className="mx-auto w-28 h-28 sm:w-36 sm:h-36 rounded-full flex items-center justify-center bg-[#d7d2c4] overflow-hidden">
             {heroProduct?.images?.[0] ? (
               <img src={heroProduct.images[0]} alt={heroProduct.name} className="w-full h-full object-contain" />
             ) : (
