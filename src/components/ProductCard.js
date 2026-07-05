@@ -3,6 +3,7 @@
 import { Link } from '@/i18n/routing';
 import { ShoppingBag, Clock, ArrowRight } from 'lucide-react';
 import { FadeIn, HoverScale } from './animations';
+import { productPath } from '@/lib/productPath';
 
 export default function ProductCard({ product, locale }) {
   const endDate = product.raffleEndDate ? new Date(product.raffleEndDate) : null;
@@ -13,7 +14,7 @@ export default function ProductCard({ product, locale }) {
     <FadeIn>
       <HoverScale>
         <Link
-          href={`/products/${product._id}`}
+          href={productPath(product)}
           className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
         >
           {/* Image */}

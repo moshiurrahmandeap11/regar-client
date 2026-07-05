@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
+import { productPath } from '@/lib/productPath';
 
 export default function ProductsContent() {
   const [products, setProducts] = useState([]);
@@ -29,9 +30,7 @@ export default function ProductsContent() {
   const API = process.env.NEXT_PUBLIC_API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
 
-  useEffect(() => { fetchProducts(); }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/products`);
       const data = await res.json();
@@ -41,7 +40,10 @@ export default function ProductsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const handleColorImageChange = (index, file) => {
     if (!file) return;
@@ -393,7 +395,7 @@ export default function ProductsContent() {
                           <button
                             onClick={() => setMarketingTarget({
                               name: product.name,
-                              url: `${process.env.NEXT_PUBLIC_SITE_URL}/en/products/${product._id}`,
+                              url: `${process.env.NEXT_PUBLIC_SITE_URL}/en${productPath(product)}`,
                             })}
                             className="p-1.5 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
                             title="Email Marketing"

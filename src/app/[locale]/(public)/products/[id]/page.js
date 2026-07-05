@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { useRouter } from '@/i18n/routing';
 import { motion } from 'framer-motion';
 import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star, Ticket } from 'lucide-react';
 import api from '@/lib/api';
@@ -12,11 +13,15 @@ import QuantitySelector from '@/components/QuantitySelector';
 import ProductCard from '@/components/ProductCard';
 import CountdownTimer from '@/components/CountdownTimer';
 import { FadeIn } from '@/components/animations';
+import { productPath, productSlug } from '@/lib/productPath';
 import toast from 'react-hot-toast';
+
+const objectIdPattern = /^[a-f\d]{24}$/i;
 
 export default function ProductDetailPage() {
   const locale = useLocale();
   const params = useParams();
+  const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const [product, setProduct] = useState(null);
@@ -43,20 +48,37 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await api.get(`/api/products/${params.id}`);
-        setProduct(res.data);
-        setSelectedColor(res.data.colors?.[0]?.name);
-        setSelectedSize(res.data.sizes?.[0]);
+        let productData = null;
 
-        const reviewsRes = await api.get(`/api/reviews?product=${params.id}&limit=10`);
+        if (!objectIdPattern.test(params.id)) {
+          const productsRes = await api.get('/api/products');
+          const products = Array.isArray(productsRes.data) ? productsRes.data : [];
+          productData = products.find((item) => productSlug(item) === params.id) || null;
+        }
+
+        if (!productData) {
+          const res = await api.get(`/api/products/${params.id}`);
+          productData = res.data;
+        }
+
+        const productId = productData._id;
+        const canonicalPath = productPath(productData);
+        if (canonicalPath !== `/products/${params.id}`) {
+          router.replace(canonicalPath);
+        }
+        setProduct(productData);
+        setSelectedColor(productData.colors?.[0]?.name);
+        setSelectedSize(productData.sizes?.[0]);
+
+        const reviewsRes = await api.get(`/api/reviews?product=${productId}&limit=10`);
         setProductReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
         
-        const relatedRes = await api.get(`/api/products?category=${res.data.category}&active=true`);
-        setRelated(relatedRes.data.filter(p => p._id !== res.data._id).slice(0, 4));
+        const relatedRes = await api.get(`/api/products?category=${productData.category}&active=true`);
+        setRelated(relatedRes.data.filter(p => p._id !== productData._id).slice(0, 4));
 
         // Fetch the active raffle linked to this product (if any)
         try {
-          const raffleRes = await api.get(`/api/raffles?product=${params.id}&status=active`);
+          const raffleRes = await api.get(`/api/raffles?product=${productId}&status=active`);
           const list = Array.isArray(raffleRes.data) ? raffleRes.data : [];
           setActiveRaffle(list[0] || null);
         } catch {
@@ -69,7 +91,7 @@ export default function ProductDetailPage() {
       }
     };
     if (params.id) fetchProduct();
-  }, [params.id]);
+  }, [params.id, router]);
 
   const handleAddToCart = () => {
     if (!selectedColor || !selectedSize) {
@@ -94,12 +116,12 @@ export default function ProductDetailPage() {
     setReviewLoading(true);
     try {
       await api.post('/api/reviews', {
-        product: params.id,
+        product: product._id,
         rating: reviewRating,
         comment: reviewComment.trim(),
       });
 
-      const reviewsRes = await api.get(`/api/reviews?product=${params.id}&limit=10`);
+      const reviewsRes = await api.get(`/api/reviews?product=${product._id}&limit=10`);
       setProductReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
       setReviewComment('');
       setReviewRating(5);

@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { ArrowRight, ShoppingBag, Ticket, Trophy } from 'lucide-react';
 import api from '@/lib/api';
+import { productPath } from '@/lib/productPath';
 import toast from 'react-hot-toast';
 import CountdownTimer from '@/components/CountdownTimer';
 import ReviewCard from '@/components/ReviewCard';
@@ -141,6 +142,11 @@ export default function HomePage() {
               <ShoppingBag className="w-10 h-10 text-[#1b2f48]" />
             )}
           </div>
+          {heroRaffle?.raffleNumber ? (
+            <div className="mt-3 inline-flex min-w-36 justify-center rounded-lg border-2 border-[#c8442d] bg-[#f7f5ef] px-5 py-1.5 text-xs font-black tracking-[0.18em] uppercase text-[#c8442d]">
+              Raffle No. {String(heroRaffle.raffleNumber).padStart(3, '0')}
+            </div>
+          ) : null}
 
           <p className="mt-8 text-[11px] tracking-[0.25em] uppercase text-[#c8442d] font-semibold">
             {heroText.eyebrow || (heroRaffle ? (locale === 'fr' ? heroRaffle.name : (heroRaffle.nameEn || heroRaffle.name)) : heroText.noActiveRaffleText)}
@@ -199,7 +205,7 @@ export default function HomePage() {
                       className="group bg-[#f7f5ef] border border-[#cfc8b7] rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
                     >
                       {/* Image */}
-                      <Link href={`/products/${product._id}`} className="block relative">
+                      <Link href={productPath(product)} className="block relative">
                         <div className="aspect-[4/3] bg-[#d7d2c4] overflow-hidden relative">
                           {coverImage ? (
                             <img
@@ -270,7 +276,7 @@ export default function HomePage() {
                         )}
 
                         <Link
-                          href={`/products/${product._id}`}
+                          href={productPath(product)}
                           className="mt-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#14253a] text-white font-semibold hover:bg-[#1b2f48] active:scale-95 transition-all"
                         >
                           {heroText.enterDrawLabel}

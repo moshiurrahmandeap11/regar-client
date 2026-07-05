@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing';
 import { motion } from 'framer-motion';
 import { Ticket, Clock, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
+import { productPath } from '@/lib/productPath';
 import CountdownTimer from '@/components/CountdownTimer';
 import SectionTitle from '@/components/SectionTitle';
 import { FadeIn, HoverScale } from '@/components/animations';
@@ -54,7 +55,7 @@ export default function RafflesPage() {
             <FadeIn key={raffle._id}>
               <HoverScale>
                 <Link
-                  href={`/products/${raffle.product?._id}`}
+                  href={productPath(raffle.product)}
                   className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
                 >
                   {/* Image */}

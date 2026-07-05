@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/routing';
 import { Link } from '@/i18n/routing';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function VerifyEmailPage() {
   const params = useSearchParams();
+  const router = useRouter();
   const token = params.get('token');
   const defaultEmail = params.get('email') || '';
   const [email, setEmail] = useState(defaultEmail);
@@ -23,6 +25,7 @@ export default function VerifyEmailPage() {
         await api.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
         setVerified(true);
         toast.success('Email verified successfully');
+        router.replace('/login');
       } catch (error) {
         toast.error(error.response?.data?.message || 'Verification failed');
       } finally {
@@ -31,7 +34,7 @@ export default function VerifyEmailPage() {
     };
 
     verify();
-  }, [token]);
+  }, [router, token]);
 
   const resendEmail = async (e) => {
     e.preventDefault();
