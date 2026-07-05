@@ -42,7 +42,7 @@ export default function MyTicketsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <p className="text-sm font-mono font-medium">{ticket.ticketNumber}</p>
-                    <p className="text-xs text-neutral-500 mt-1">{ticket.raffle?.name || (locale === 'fr' ? 'Tirage a venir' : 'Raffle pending')} • {ticket.order?.orderNumber || '-'}</p>
+                    <p className="text-xs text-neutral-500 mt-1">{ticket.raffle?.name || (locale === 'fr' ? 'Tirage a venir' : 'Raffle pending')} - {ticket.order?.orderNumber || '-'}</p>
                   </div>
                   <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-medium ${ticket.isWinner ? 'bg-amber-100 text-amber-700' : 'bg-neutral-100 text-neutral-700'}`}>
                     {ticket.isWinner ? (locale === 'fr' ? 'Gagnant' : 'Winner') : (locale === 'fr' ? 'Actif' : 'Active')}

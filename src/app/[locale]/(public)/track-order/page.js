@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { getOrderState } from '@/lib/orderDisplay';
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -10,6 +11,7 @@ export default function TrackOrderPage() {
   const [phone, setPhone] = useState('');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const orderState = order ? getOrderState(order, 'fr') : null;
 
   const handleTrack = async (e) => {
     e.preventDefault();
@@ -72,7 +74,12 @@ export default function TrackOrderPage() {
           {order ? (
             <div className="mt-6 rounded-xl border border-neutral-200 p-4">
               <p className="text-sm"><span className="font-medium">Commande:</span> {order.orderNumber}</p>
-              <p className="text-sm mt-1"><span className="font-medium">Statut:</span> {order.status}</p>
+              <p className="text-sm mt-1">
+                <span className="font-medium">Statut:</span>{' '}
+                <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${orderState.tone}`}>
+                  {orderState.label}
+                </span>
+              </p>
               <p className="text-sm mt-1"><span className="font-medium">Paiement:</span> {order.paymentStatus}</p>
               <p className="text-sm mt-1"><span className="font-medium">Total:</span> {order.total?.toFixed(2)} CHF</p>
             </div>

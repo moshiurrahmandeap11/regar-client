@@ -7,11 +7,13 @@ import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import api from '@/lib/api';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
+import useSiteSettings from '@/hooks/useSiteSettings';
 
 export default function ContactPage() {
   const locale = useLocale();
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sending, setSending] = useState(false);
+  const settings = useSiteSettings();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-neutral-500">contact@regar.ch</p>
+                    <p className="text-sm text-neutral-500">{settings.contactEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-neutral-200">
@@ -55,7 +57,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{locale === 'fr' ? 'Telephone' : 'Phone'}</p>
-                    <p className="text-sm text-neutral-500">+41 79 123 45 67</p>
+                    <p className="text-sm text-neutral-500">{settings.contactPhone}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-neutral-200">
@@ -64,7 +66,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{locale === 'fr' ? 'Adresse' : 'Address'}</p>
-                    <p className="text-sm text-neutral-500">Lausanne, Suisse</p>
+                    <p className="text-sm text-neutral-500">{settings.contactLocation}</p>
                   </div>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Link } from '@/i18n/routing';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
+import { getOrderState } from '@/lib/orderDisplay';
 
 export default function DashboardPage() {
   const locale = useLocale();
@@ -50,7 +51,9 @@ export default function DashboardPage() {
   if (pageLoading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-2 border-neutral-900 border-t-transparent rounded-full" /></div>;
 
   const wins = tickets.filter((ticket) => ticket.isWinner).length;
-  const spent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const spent = orders
+    .filter((order) => order.paymentStatus === 'completed')
+    .reduce((sum, order) => sum + (order.total || 0), 0);
   const recentOrders = orders.slice(0, 4);
   const recentTickets = tickets.slice(0, 4);
 
@@ -105,12 +108,22 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {recentOrders.map((order) => (
-                    <div key={order._id} className="rounded-xl border border-neutral-200 p-3 text-sm">
-                      <p className="font-medium">{order.orderNumber}</p>
-                      <p className="text-neutral-500 mt-1">{new Date(order.createdAt).toLocaleDateString('fr-CH')} • {order.total?.toFixed(2)} CHF</p>
-                    </div>
-                  ))}
+                  {recentOrders.map((order) => {
+                    const orderState = getOrderState(order, locale);
+                    return (
+                      <div key={order._id} className="rounded-xl border border-neutral-200 p-3 text-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{order.orderNumber}</p>
+                            <p className="text-neutral-500 mt-1">{new Date(order.createdAt).toLocaleDateString('fr-CH')} - {order.total?.toFixed(2)} CHF</p>
+                          </div>
+                          <span className={`shrink-0 px-2 py-1 rounded-lg text-xs font-medium ${orderState.tone}`}>
+                            {orderState.label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -134,7 +147,7 @@ export default function DashboardPage() {
                   {recentTickets.map((ticket) => (
                     <div key={ticket._id} className="rounded-xl border border-neutral-200 p-3 text-sm">
                       <p className="font-mono font-medium">{ticket.ticketNumber}</p>
-                      <p className="text-neutral-500 mt-1">{ticket.raffle?.name || 'Raffle TBD'} • {ticket.isWinner ? 'Winner' : 'Active'}</p>
+                      <p className="text-neutral-500 mt-1">{ticket.raffle?.name || 'Raffle TBD'} - {ticket.isWinner ? 'Winner' : 'Active'}</p>
                     </div>
                   ))}
                 </div>

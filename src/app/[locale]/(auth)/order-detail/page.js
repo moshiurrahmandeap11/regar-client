@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { getOrderState } from '@/lib/orderDisplay';
 
 export default function OrderDetailPage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('id');
   const [order, setOrder] = useState(null);
+  const orderState = order ? getOrderState(order, 'fr') : null;
 
   useEffect(() => {
     const load = async () => {
@@ -34,7 +36,12 @@ export default function OrderDetailPage() {
           ) : (
             <div className="mt-6 space-y-2 text-sm">
               <p><span className="font-medium">Numero:</span> {order.orderNumber}</p>
-              <p><span className="font-medium">Statut:</span> {order.status}</p>
+              <p>
+                <span className="font-medium">Statut:</span>{' '}
+                <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${orderState.tone}`}>
+                  {orderState.label}
+                </span>
+              </p>
               <p><span className="font-medium">Paiement:</span> {order.paymentStatus}</p>
               <p><span className="font-medium">Total:</span> {order.total?.toFixed(2)} CHF</p>
               <p><span className="font-medium">Tickets:</span> {(order.tickets || []).join(', ') || '-'}</p>

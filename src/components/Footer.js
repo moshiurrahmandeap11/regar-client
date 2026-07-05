@@ -3,10 +3,13 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Instagram, Facebook, Twitter } from 'lucide-react';
+import useSiteSettings from '@/hooks/useSiteSettings';
 
 export default function Footer() {
   const t = useTranslations('Footer');
   const locale = useLocale();
+  const settings = useSiteSettings();
+  const socials = settings.socialLinks || {};
 
   return (
     <footer className="bg-neutral-900 text-neutral-300">
@@ -20,9 +23,9 @@ export default function Footer() {
               {locale === 'fr' ? 'Rafflites de sneakers, casquettes et accessoires de luxe.' : 'Raffles for sneakers, caps and luxury accessories.'}
             </p>
             <div className="flex gap-3">
-              <a href="#" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Instagram className="w-4 h-4" /></a>
-              <a href="#" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Facebook className="w-4 h-4" /></a>
-              <a href="#" className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Twitter className="w-4 h-4" /></a>
+              <a href={socials.instagram || '#'} className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Instagram className="w-4 h-4" /></a>
+              <a href={socials.facebook || '#'} className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Facebook className="w-4 h-4" /></a>
+              <a href={socials.twitter || '#'} className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors"><Twitter className="w-4 h-4" /></a>
             </div>
           </div>
 
@@ -39,9 +42,9 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">{t('contact')}</h3>
             <ul className="space-y-2 text-sm text-neutral-400">
-              <li>contact@regar.ch</li>
-              <li>+41 79 123 45 67</li>
-              <li>Lausanne, Suisse</li>
+              <li>{settings.contactEmail}</li>
+              <li>{settings.contactPhone}</li>
+              <li>{settings.contactLocation}</li>
             </ul>
           </div>
 

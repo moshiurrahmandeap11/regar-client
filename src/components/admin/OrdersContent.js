@@ -27,6 +27,8 @@ const paymentStatusColor = {
   refunded:  'bg-neutral-100 text-neutral-600',
 };
 
+const fulfillmentStatuses = ['paid', 'processing', 'shipped', 'delivered'];
+
 export default function OrdersContent() {
   const [orders, setOrders]             = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -422,18 +424,28 @@ export default function OrdersContent() {
               <section className="border-t border-neutral-200 pt-4">
                 <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">Update Status</h3>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(statusConfig).map(([key, cfg]) => (
-                    <button
-                      key={key}
-                      onClick={() => updateStatus(selectedOrder._id, key)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                        selectedOrder.status === key ? cfg.color : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                      }`}
-                    >
-                      {cfg.label}
-                    </button>
-                  ))}
+                  {Object.entries(statusConfig).map(([key, cfg]) => {
+                    const disabled = fulfillmentStatuses.includes(key) && selectedOrder.paymentStatus !== 'completed';
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => updateStatus(selectedOrder._id, key)}
+                        disabled={disabled}
+                        title={disabled ? 'Approve payment first' : cfg.label}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                          selectedOrder.status === key ? cfg.color : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {cfg.label}
+                      </button>
+                    );
+                  })}
                 </div>
+                {selectedOrder.paymentStatus !== 'completed' && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    Payment is still pending. Approve/complete payment first; tickets become active only after payment is completed.
+                  </p>
+                )}
                 <div className="mt-3">
                   <input
                     type="text"

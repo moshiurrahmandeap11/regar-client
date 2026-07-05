@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { Link } from '@/i18n/routing';
 import { useAuth } from '@/contexts/AuthContext';
 import { FadeIn } from '@/components/animations';
+import { getOrderState } from '@/lib/orderDisplay';
 
 export default function OrdersPage() {
   const locale = useLocale();
@@ -56,7 +57,9 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {orders.map((order) => (
+              {orders.map((order) => {
+                const orderState = getOrderState(order, locale);
+                return (
                 <div key={order._id} className="bg-white rounded-2xl border border-neutral-200 p-5">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div>
@@ -65,15 +68,15 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="text-right">
-                      <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-100 text-neutral-700 capitalize">
-                        {order.status}
+                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${orderState.tone}`}>
+                        {orderState.label}
                       </span>
                       <p className="text-lg font-bold text-neutral-900 mt-2">{order.total?.toFixed(2)} CHF</p>
                     </div>
                   </div>
 
                   <div className="mt-4 text-sm text-neutral-600">
-                    <p>{order.items?.length || 0} {locale === 'fr' ? 'articles' : 'items'} • {(order.tickets || []).length} {locale === 'fr' ? 'tickets' : 'tickets'}</p>
+                    <p>{order.items?.length || 0} {locale === 'fr' ? 'articles' : 'items'} - {(order.tickets || []).length} {locale === 'fr' ? 'tickets' : 'tickets'}</p>
                     <p className="mt-1">{locale === 'fr' ? 'Paiement' : 'Payment'}: <span className="capitalize">{order.paymentStatus}</span></p>
                   </div>
 
@@ -86,7 +89,8 @@ export default function OrdersPage() {
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </FadeIn>

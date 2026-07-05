@@ -123,7 +123,16 @@ export default function TicketsContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((row) => (
+                  {paginated.map((row) => {
+                    const paid = row.order?.paymentStatus === 'completed';
+                    const resultLabel = row.isWinner ? 'Winner' : (paid ? 'Active' : 'Payment pending');
+                    const resultClass = row.isWinner
+                      ? 'bg-amber-100 text-amber-700'
+                      : paid
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-neutral-100 text-neutral-600';
+
+                    return (
                     <tr key={row._id} className="border-b border-neutral-100">
                       <td className="py-3 px-4 font-mono text-xs">{row.ticketNumber}</td>
                       <td className="py-3 px-4">
@@ -153,12 +162,13 @@ export default function TicketsContent() {
                         </p>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${row.isWinner ? 'bg-amber-100 text-amber-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                          {row.isWinner ? 'Winner' : 'Active'}
+                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${resultClass}`}>
+                          {resultLabel}
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
