@@ -29,6 +29,33 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
     { value: timeLeft.seconds, label: locale === 'fr' ? 'Sec' : 'Sec' },
   ];
 
+  if (variant === 'dashboard') {
+    const labels = [
+      locale === 'fr' ? 'JOURS' : 'DAYS',
+      locale === 'fr' ? 'HRS' : 'HRS',
+      'MIN',
+      'SEC',
+    ];
+    const values = [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds];
+    return (
+      <div className="flex items-center gap-3 sm:gap-4">
+        {values.map((val, i) => (
+          <div key={i} className="flex items-center gap-3 sm:gap-4">
+            <div className="text-center min-w-[48px] sm:min-w-[56px]">
+              <div className="bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 sm:px-4 sm:py-3">
+                <span className="text-2xl sm:text-3xl font-extrabold leading-none text-neutral-900">
+                  {String(val).padStart(2, '0')}
+                </span>
+              </div>
+              <p className="text-[10px] tracking-widest uppercase text-neutral-500 mt-1.5 font-semibold">{labels[i]}</p>
+            </div>
+            {i < 3 && <span className="text-neutral-300 text-2xl font-bold">:</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (variant === 'banner') {
     return (
       <div className="flex items-center gap-3 sm:gap-5">
