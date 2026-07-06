@@ -1,435 +1,423 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ArrowRight, ShoppingBag, Ticket, Trophy } from 'lucide-react';
+import {
+  ArrowRight,
+  Award,
+  CheckCircle,
+  Globe2,
+  Mail,
+  PlayCircle,
+  Quote,
+  ShieldCheck,
+  ShoppingCart,
+  Star,
+  Ticket,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import api from '@/lib/api';
 import { productPath } from '@/lib/productPath';
-import toast from 'react-hot-toast';
 import CountdownTimer from '@/components/CountdownTimer';
-import ReviewCard from '@/components/ReviewCard';
-import SectionTitle from '@/components/SectionTitle';
-import { FadeIn, StaggerContainer, StaggerItem, HoverScale } from '@/components/animations';
+import toast from 'react-hot-toast';
+
+const uniqueById = (items = []) => {
+  const seen = new Set();
+  return items.filter((item) => {
+    const id = item?._id;
+    if (!id || seen.has(String(id))) return false;
+    seen.add(String(id));
+    return true;
+  });
+};
+
+const pickImage = (item) => item?.images?.[0] || item?.colors?.find((color) => color.image)?.image || '';
 
 export default function HomePage() {
-  const t = useTranslations('Home');
   const locale = useLocale();
   const [products, setProducts] = useState([]);
   const [raffles, setRaffles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [winners, setWinners] = useState([]);
-  const [heroContent, setHeroContent] = useState(null);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const isFr = locale === 'fr';
+
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
       try {
-        const [prodRes, raffleRes, reviewRes] = await Promise.all([
+        const [productRes, raffleRes, reviewRes, winnerRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
           api.get('/api/reviews?limit=4'),
+          api.get(`/api/tickets/winners?limit=4&t=${Date.now()}`),
         ]);
-        setProducts(prodRes.data.slice(0, 4));
-        setRaffles(raffleRes.data.slice(0, 3));
-        setReviews(reviewRes.data.slice(0, 4));
-        await fetchLatestWinners();
 
-        try {
-          const heroRes = await api.get('/api/content/heroConfig');
-          setHeroContent(heroRes.data || null);
-        } catch {
-          setHeroContent(null);
-        }
+        setProducts(Array.isArray(productRes.data) ? productRes.data : []);
+        setRaffles(Array.isArray(raffleRes.data) ? raffleRes.data : []);
+        setReviews(Array.isArray(reviewRes.data) ? reviewRes.data : []);
+        setWinners(Array.isArray(winnerRes.data) ? winnerRes.data : []);
       } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('Home load failed:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchLatestWinners = async () => {
-      try {
-        const winnerRes = await api.get(`/api/tickets/winners?limit=5&t=${Date.now()}`);
-        setWinners(Array.isArray(winnerRes.data) ? winnerRes.data.slice(0, 5) : []);
-      } catch {
-        // Keep previous winners list if refresh fails.
-      }
-    };
-
-    fetchData();
-
-    const intervalId = setInterval(() => {
-      fetchLatestWinners();
-    }, 30000);
-
-    return () => clearInterval(intervalId);
+    load();
   }, []);
 
-  const handleNewsletter = async (e) => {
-    e.preventDefault();
+  const heroRaffle = raffles[0] || null;
+  const raffleProducts = useMemo(() => uniqueById(raffles.map((raffle) => raffle.product).filter(Boolean)), [raffles]);
+  const shopProducts = useMemo(() => uniqueById([...raffleProducts, ...products]).slice(0, 3), [raffleProducts, products]);
+  const heroProduct = heroRaffle?.product || shopProducts[0] || null;
+  const heroImage = pickImage(heroProduct);
+  const prizeItems = useMemo(() => {
+    const activePrizes = raffles.flatMap((raffle) => (raffle.prizes || []).map((prize) => ({ ...prize, raffle })));
+    return activePrizes.slice(0, 3);
+  }, [raffles]);
+
+  const headline = isFr ? ['Achetez une casquette.', 'Gagnez gros.'] : ['Buy a cap.', 'Win big.'];
+  const heroName = heroRaffle ? (isFr ? heroRaffle.name : heroRaffle.nameEn || heroRaffle.name) : '';
+  const participantCount = Math.max(
+    0,
+    ...raffles.map((raffle) => Number(raffle.ticketCount || raffle.product?.soldTickets || 0))
+  );
+
+  const handleNewsletter = async (event) => {
+    event.preventDefault();
     try {
       await api.post('/api/newsletters', { email });
       setEmail('');
-      toast.success(locale === 'fr' ? 'Inscription reussie !' : 'Subscribed successfully!');
+      toast.success(isFr ? 'Inscription reussie !' : 'Subscribed successfully!');
     } catch (error) {
-      const msg = error.response?.data?.message || 'Error';
-      toast.error(msg);
+      toast.error(error.response?.data?.message || 'Error');
     }
   };
 
-  const steps = [
-    { icon: ShoppingBag, title: t('howItWorks.step1'), desc: t('howItWorks.step1Desc') },
-    { icon: Ticket, title: t('howItWorks.step2'), desc: t('howItWorks.step2Desc') },
-    { icon: Trophy, title: t('howItWorks.step3'), desc: t('howItWorks.step3Desc') },
+  const trustItems = [
+    { icon: ShieldCheck, title: isFr ? '100% securise' : '100% Secure', text: isFr ? 'Vos donnees restent protegees.' : 'Your data is always safe with us.' },
+    { icon: Award, title: isFr ? 'Equitable' : 'Fair and Transparent', text: isFr ? 'Tirage aleatoire verifie.' : 'Random and verified winner selection.' },
+    { icon: Trophy, title: isFr ? 'Gagnants verifies' : 'Verified Winners', text: isFr ? 'Vrais participants, vrais prix.' : 'Real people, real prizes.' },
+    { icon: Globe2, title: isFr ? 'Livraison mondiale' : 'Worldwide Shipping', text: isFr ? 'Livraison rapide et fiable.' : 'Fast and reliable delivery.' },
   ];
 
-  const defaultHeroText = {
-    eyebrow: '',
-    titleLine1: locale === 'fr' ? 'Achetez la casquette.' : 'Buy the cap.',
-    titleLine2: locale === 'fr' ? 'Gagnez le tirage.' : 'Win the draw.',
-    subtitle: locale === 'fr' ? 'Chaque casquette achetee vaut un ticket de tirage.' : 'Each cap purchased is worth one raffle ticket.',
-    capSectionTitle: locale === 'fr' ? 'La casquette du tirage' : 'The cap of the draw',
-    prizeSectionTitle: locale === 'fr' ? 'Prix a gagner' : 'Prizes to be won',
-    noActiveRaffleText: locale === 'fr' ? 'Aucun raffle actif' : 'No active raffle',
-    noProductsText: locale === 'fr' ? 'Aucun produit de raffle a afficher.' : 'No raffle products to display.',
-    noPrizesText: locale === 'fr' ? 'Aucun prix configure pour ce raffle.' : 'No prizes configured for this raffle.',
-    soldLabel: locale === 'fr' ? 'tickets vendus' : 'tickets sold',
-    remainingLabel: locale === 'fr' ? 'tickets restants' : 'tickets remaining',
-    maxLabel: locale === 'fr' ? 'tickets max' : 'max tickets',
-    enterDrawLabel: locale === 'fr' ? 'Participer' : 'Enter the draw'
-  };
+  const steps = [
+    { icon: ShoppingCart, title: isFr ? 'Acheter' : 'Buy a Cap', text: isFr ? 'Choisissez votre casquette et finalisez la commande.' : 'Choose your favorite cap and complete your purchase.' },
+    { icon: Ticket, title: isFr ? 'Recevoir les tickets' : 'Get Entries', text: isFr ? 'Chaque casquette payee ajoute vos tickets au raffle.' : 'Every paid cap adds your entries to the current raffle.' },
+    { icon: Trophy, title: isFr ? 'Gagner' : 'Win Big', text: isFr ? 'Attendez le tirage et devenez le gagnant.' : 'Wait for the draw and be the lucky winner.' },
+  ];
 
-  const parseHeroLocaleConfig = () => {
-    const raw = locale === 'fr' ? heroContent?.valueFr : heroContent?.valueEn;
-    if (!raw) return defaultHeroText;
-
-    try {
-      const parsed = JSON.parse(raw);
-      return { ...defaultHeroText, ...parsed };
-    } catch {
-      return { ...defaultHeroText, titleLine1: raw };
-    }
-  };
-
-  const heroText = parseHeroLocaleConfig();
-
-  const heroRaffle = raffles[0];
-  const raffleProducts = raffles
-    .map((raffle) => raffle.product)
-    .filter((product, index, arr) => product?._id && arr.findIndex((p) => p?._id === product._id) === index);
-
-  const heroProducts = raffleProducts.slice(0, 2);
-  const heroProduct = heroRaffle?.product || heroProducts[0];
-  const soldTickets = heroProduct?.soldTickets;
-  const maxTickets = heroProduct?.maxTickets;
-  const remainingTickets = typeof soldTickets === 'number' && typeof maxTickets === 'number'
-    ? Math.max(maxTickets - soldTickets, 0)
-    : null;
-  const heroTargetDate = heroRaffle?.endDate || heroProduct?.raffleEndDate;
-  const heroPrizes = (heroRaffle?.prizes || []).slice(0, 3);
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-[#f7f3ec]">
+        <div className="h-10 w-10 rounded-full border-2 border-neutral-900 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col">
-      {/* Hero */}
-      <section className="bg-[#ece9df] text-[#14253a] pt-12 sm:pt-16 pb-10 sm:pb-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mx-auto w-28 h-28 sm:w-36 sm:h-36 rounded-full flex items-center justify-center bg-[#d7d2c4] overflow-hidden">
-            {heroProduct?.images?.[0] ? (
-              <img src={heroProduct.images[0]} alt={heroProduct.name} className="w-full h-full object-contain" />
-            ) : (
-              <ShoppingBag className="w-10 h-10 text-[#1b2f48]" />
-            )}
-          </div>
-          {heroRaffle?.raffleNumber ? (
-            <div className="mt-3 inline-flex min-w-36 justify-center rounded-lg border-2 border-[#c8442d] bg-[#f7f5ef] px-5 py-1.5 text-xs font-black tracking-[0.18em] uppercase text-[#c8442d]">
-              Raffle No. {String(heroRaffle.raffleNumber).padStart(3, '0')}
+    <main className="bg-[#f8f5ef] text-[#171410]">
+      <section className="relative bg-black text-white overflow-hidden">
+        <div className="absolute inset-0">
+          {heroImage ? (
+            <img src={heroImage} alt={heroProduct?.name || 'Regar raffle'} className="h-full w-full object-cover opacity-55" />
+          ) : (
+            <div className="h-full w-full bg-[radial-gradient(circle_at_70%_25%,#4b392b_0,#171410_45%,#050505_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/72 to-black/20" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black to-transparent" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-24">
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              {heroRaffle ? (isFr ? 'Raffle en direct' : 'Live raffle') : (isFr ? 'Raffle bientot' : 'Raffle coming soon')}
             </div>
-          ) : null}
 
-          <p className="mt-8 text-[11px] tracking-[0.25em] uppercase text-[#c8442d] font-semibold">
-            {heroText.eyebrow || (heroRaffle ? (locale === 'fr' ? heroRaffle.name : (heroRaffle.nameEn || heroRaffle.name)) : heroText.noActiveRaffleText)}
-          </p>
+            <h1 className="mt-5 text-4xl sm:text-6xl lg:text-7xl font-black uppercase leading-[0.92] tracking-normal">
+              {headline[0]}
+              <span className="block text-[#e2bd87]">{headline[1]}</span>
+            </h1>
 
-          <h1 className="mt-4 text-4xl sm:text-5xl md:text-6xl font-black leading-tight uppercase">
-            {heroText.titleLine1}
-            <br />
-            {heroText.titleLine2}
-          </h1>
+            <p className="mt-5 max-w-md text-sm sm:text-base text-white/80 leading-relaxed">
+              {isFr
+                ? 'Achetez une casquette active et obtenez automatiquement une entree pour gagner des prix premium.'
+                : 'Purchase a cap and get automatic entry to win high-value prizes.'}
+            </p>
 
-          <p className="mt-4 text-neutral-600 text-base sm:text-lg">
-            {heroText.subtitle}
-          </p>
+            {heroName ? (
+              <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#e2bd87]">{heroName}</p>
+            ) : null}
 
-          <div className="mt-7 inline-flex flex-col items-center">
-            <div className="bg-[#1b2f48] rounded-2xl px-6 py-4">
-              {heroTargetDate ? (
-                <CountdownTimer targetDate={heroTargetDate} locale={locale} variant="banner" />
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link href="/products" className="inline-flex items-center gap-2 rounded-lg bg-[#e2bd87] px-5 py-3 text-sm font-black uppercase text-black hover:bg-[#efcf9e]">
+                {isFr ? 'Acheter et participer' : 'Buy cap and enter'}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold uppercase text-white hover:bg-white/10">
+                <PlayCircle className="h-5 w-5" />
+                {isFr ? 'Comment ca marche' : 'How it works'}
+              </Link>
+            </div>
+
+            <div className="mt-8 max-w-md rounded-xl border border-white/10 bg-black/35 p-4 backdrop-blur">
+              <p className="text-center text-[10px] font-bold uppercase tracking-[0.22em] text-white/50">
+                {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
+              </p>
+              {heroRaffle?.endDate ? (
+                <div className="mt-3 flex justify-center">
+                  <CountdownTimer targetDate={heroRaffle.endDate} locale={locale} variant="banner" />
+                </div>
               ) : (
-                <p className="text-[#7eb6de] text-sm">{locale === 'fr' ? 'Date du tirage non definie' : 'Draw date not set'}</p>
+                <p className="mt-3 text-center text-sm text-white/60">{isFr ? 'Date a confirmer' : 'Date to be confirmed'}</p>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-6 sm:gap-10 mt-5">
-              <div>
-                <p className="text-3xl font-extrabold">{typeof soldTickets === 'number' ? soldTickets : '-'}</p>
-                <p className="text-xs text-neutral-500 mt-1">{heroText.soldLabel}</p>
+          </div>
+
+          <div className="mt-8 grid grid-cols-3 gap-3 max-w-lg text-xs text-white/80 sm:flex sm:items-center sm:gap-7">
+            {trustItems.slice(0, 3).map((item) => (
+              <div key={item.title} className="flex items-center gap-2">
+                <item.icon className="h-4 w-4 text-[#e2bd87]" />
+                <span>{item.title}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 ml-auto max-w-xs rounded-xl bg-white p-4 text-black shadow-2xl sm:absolute sm:right-8 sm:bottom-8">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {shopProducts.slice(0, 3).map((product) => (
+                  <span key={product._id} className="h-9 w-9 overflow-hidden rounded-full border-2 border-white bg-[#e8ded0]">
+                    {pickImage(product) ? <img src={pickImage(product)} alt="" className="h-full w-full object-cover" /> : null}
+                  </span>
+                ))}
               </div>
               <div>
-                <p className="text-3xl font-extrabold">{remainingTickets ?? '-'}</p>
-                <p className="text-xs text-neutral-500 mt-1">{heroText.remainingLabel}</p>
-              </div>
-              <div>
-                <p className="text-3xl font-extrabold">{typeof maxTickets === 'number' ? maxTickets : '-'}</p>
-                <p className="text-xs text-neutral-500 mt-1">{heroText.maxLabel}</p>
+                <p className="text-lg font-black text-[#b88238]">{participantCount.toLocaleString()}+</p>
+                <p className="text-xs text-neutral-500">{isFr ? 'Participants actifs' : 'Participants'}</p>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-14 text-left">
-            <h2 className="text-sm tracking-[0.18em] uppercase font-semibold mb-5">
-              {heroText.capSectionTitle}
-            </h2>
-            {heroProducts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {heroProducts.map((product) => {
-                  const sold = product.soldTickets ?? 0;
-                  const max = product.maxTickets ?? 0;
-                  const remaining = max > 0 ? Math.max(max - sold, 0) : null;
-                  const progressPct = max > 0 ? Math.min((sold / max) * 100, 100) : 0;
-                  const coverImage = product.images?.[0] || product.colors?.find((c) => c.image)?.image;
-
-                  return (
-                    <div
-                      key={product._id}
-                      className="group bg-[#f7f5ef] border border-[#cfc8b7] rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
-                    >
-                      {/* Image */}
-                      <Link href={productPath(product)} className="block relative">
-                        <div className="aspect-[4/3] bg-[#d7d2c4] overflow-hidden relative">
-                          {coverImage ? (
-                            <img
-                              src={coverImage}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <ShoppingBag className="w-12 h-12 text-[#1b2f48]/40" />
-                            </div>
-                          )}
-                          {product.featured && (
-                            <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow">
-                              {locale === 'fr' ? 'Populaire' : 'Popular'}
-                            </span>
-                          )}
-                          {remaining === 0 && (
-                            <span className="absolute top-3 right-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-lg shadow">
-                              {locale === 'fr' ? 'Complet' : 'Sold out'}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-
-                      {/* Body */}
-                      <div className="p-5">
-                        <h3 className="text-xl font-bold text-[#14253a] truncate">{product.name}</h3>
-
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-[#c8442d] font-semibold">{product.price} CHF</p>
-                          {product.originalPrice > 0 && (
-                            <span className="text-sm text-neutral-400 line-through">{product.originalPrice} CHF</span>
-                          )}
-                        </div>
-
-                        {/* Color swatches */}
-                        {product.colors?.length > 0 && (
-                          <div className="flex gap-1.5 mt-3">
-                            {product.colors.slice(0, 5).map((color, i) => (
-                              <div
-                                key={i}
-                                className="w-5 h-5 rounded-full border-2 border-white shadow-sm ring-1 ring-[#cfc8b7]"
-                                style={{ backgroundColor: color.hex || '#ccc' }}
-                                title={color.name}
-                              />
-                            ))}
-                            {product.colors.length > 5 && (
-                              <span className="text-xs text-neutral-500 self-center">+{product.colors.length - 5}</span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Ticket progress */}
-                        {max > 0 && (
-                          <div className="mt-4">
-                            <div className="flex items-center justify-between text-xs text-neutral-500 mb-1.5">
-                              <span>{sold} {heroText.soldLabel}</span>
-                              <span>{remaining} {heroText.remainingLabel}</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-[#d7d2c4] rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
-                                style={{ width: `${progressPct}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        <Link
-                          href={productPath(product)}
-                          className="mt-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#14253a] text-white font-semibold hover:bg-[#1b2f48] active:scale-95 transition-all"
-                        >
-                          {heroText.enterDrawLabel}
-                          <ArrowRight className="w-4 h-4" />
-                        </Link>
-                      </div>
+      <section id="shop-caps" className="py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Shop caps' : 'Shop caps'}</p>
+              <h2 className="mt-2 text-3xl font-black">{isFr ? 'Choisissez votre casquette' : 'Choose your cap'}</h2>
+              <div className="mt-8 space-y-5">
+                {[
+                  [Award, isFr ? 'Qualite premium' : 'Premium Quality', isFr ? 'Matiere durable et finition propre.' : 'High quality materials, built to last.'],
+                  [Ticket, isFr ? 'Entrees multiples' : 'One Cap, Multiple Entries', isFr ? 'Chaque achat vous ajoute au raffle.' : 'Every purchase gives raffle entries.'],
+                  [Globe2, isFr ? 'Livraison mondiale' : 'Worldwide Shipping', isFr ? 'Livraison rapide a votre porte.' : 'Fast and reliable delivery to your door.'],
+                ].map(([Icon, title, text]) => (
+                  <div key={title} className="flex gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e2bd87]/25 text-[#9c6b2c]">
+                      <Icon className="h-5 w-5" />
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="bg-[#f7f7f7] border border-[#cfc8b7] rounded-2xl p-6 text-sm text-neutral-600">
-                {heroText.noProductsText}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-10 bg-[#d7d2c4] rounded-2xl p-5 sm:p-7 text-left">
-            <h2 className="text-sm tracking-[0.18em] uppercase font-semibold mb-5">
-              {heroText.prizeSectionTitle}
-            </h2>
-            {heroPrizes.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {heroPrizes.map((prize, index) => (
-                  <div key={`${prize.name}-${index}`} className="bg-[#f7f7f7] rounded-xl border border-[#cfc8b7] px-4 py-5 text-center">
-                    <Trophy className="w-5 h-5 mx-auto text-[#b8862f]" />
-                    <p className="mt-3 text-base">{locale === 'fr' ? prize.name : (prize.nameEn || prize.name)}</p>
+                    <div>
+                      <p className="text-sm font-black">{title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-neutral-500">{text}</p>
+                    </div>
                   </div>
                 ))}
               </div>
+            </div>
+
+            {shopProducts.length ? (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {shopProducts.map((product) => (
+                  <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl">
+                    <div className="aspect-[1.25] rounded-lg bg-[#f0ebe3] p-3">
+                      {pickImage(product) ? (
+                        <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
+                      )}
+                    </div>
+                    <h3 className="mt-4 text-base font-black">{product.name}</h3>
+                    <p className="mt-1 text-sm font-bold">{Number(product.price || 0).toFixed(2)} CHF</p>
+                    <div className="mt-2 flex gap-1.5">
+                      {(product.colors || []).slice(0, 4).map((color, index) => (
+                        <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
+                      ))}
+                    </div>
+                    <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 text-xs font-black uppercase text-white">
+                      <ShoppingCart className="h-4 w-4" />
+                      {isFr ? 'Acheter et entrer' : 'Buy and enter'}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             ) : (
-              <div className="bg-[#f7f7f7] rounded-xl border border-[#cfc8b7] px-4 py-5 text-sm text-neutral-600">
-                {heroText.noPrizesText}
+              <div className="rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">
+                {isFr ? 'Aucun produit actif pour le moment.' : 'No active products yet.'}
               </div>
             )}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-            <Link
-              href="/products"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#14253a] text-white font-medium rounded-xl hover:bg-[#1b2f48] transition-colors"
-            >
-              {t('hero.cta')} <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/#how-it-works"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#1b2f48]/30 text-[#14253a] font-medium rounded-xl hover:bg-white/40 transition-colors"
-            >
-              {t('hero.secondaryCta')}
+      <section id="prizes" className="border-t border-black/5 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Prix premium' : 'Amazing prizes'}</p>
+              <h2 className="mt-2 text-3xl font-black">{isFr ? 'Des prix qui changent la vie' : 'Win life-changing prizes'}</h2>
+            </div>
+            <Link href="/raffles" className="hidden rounded-lg border border-[#d2b68a] px-4 py-2 text-xs font-black uppercase sm:inline-flex">
+              {isFr ? 'Voir les prix' : 'View all prizes'} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle title={t('howItWorks.title')} />
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-            {steps.map((step, i) => (
-              <StaggerItem key={i}>
-                <HoverScale>
-                  <div className="text-center p-6 rounded-2xl bg-neutral-50 hover:bg-neutral-100 transition-colors">
-                    <div className="w-14 h-14 mx-auto bg-neutral-900 rounded-2xl flex items-center justify-center mb-4">
-                      <step.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="w-8 h-8 mx-auto -mt-10 mb-2 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm border-4 border-white">
-                      {i + 1}
-                    </div>
-                    <h3 className="font-semibold text-lg text-neutral-900">{step.title}</h3>
-                    <p className="mt-2 text-neutral-500 text-sm leading-relaxed">{step.desc}</p>
+          {prizeItems.length ? (
+            <div className="mt-8 grid gap-5 sm:grid-cols-3">
+              {prizeItems.map((prize, index) => (
+                <div key={`${prize.raffle?._id}-${index}`} className="relative rounded-xl bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+                  <div className="absolute left-4 top-0 rounded-b bg-[#b88238] px-3 py-3 text-xs font-black uppercase text-white">
+                    {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : 'rd'}<br />Prize
                   </div>
-                </HoverScale>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
-
-      {/* Winners */}
-      <section className="py-16 sm:py-20 bg-neutral-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle
-            title={t('winners')}
-            subtitle={locale === 'fr' ? 'Decouvrez nos derniers gagnants' : 'Discover our latest winners'}
-            titleClassName="text-white"
-            subtitleClassName="text-neutral-200"
-          />
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {winners.map((winner, i) => {
-              const winnerDate = winner?.ticket?.drawDate || winner?.createdAt;
-              const prizeText = locale === 'fr' ? winner?.prize : (winner?.prizeEn || winner?.prize);
-
-              return (
-              <StaggerItem key={winner._id || i}>
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/10">
-                  <div className="w-12 h-12 mx-auto bg-amber-500 rounded-full flex items-center justify-center mb-3">
-                    <Trophy className="w-5 h-5 text-white" />
-                  </div>
-                  <p className="font-medium text-sm">{winner.user?.firstName} {winner.user?.lastName?.charAt(0)}.</p>
-                  <p className="text-xs text-neutral-400 mt-1">{prizeText || '-'}</p>
-                  <p className="text-xs text-neutral-500 mt-1">
-                    {winnerDate ? new Date(winnerDate).toLocaleDateString(locale === 'fr' ? 'fr-CH' : 'en-US') : '-'}
-                  </p>
+                  {prize.image ? (
+                    <img src={prize.image} alt={prize.name} className="mx-auto h-40 w-full object-contain" />
+                  ) : (
+                    <div className="mx-auto flex h-40 items-center justify-center text-[#b88238]"><Trophy className="h-16 w-16" /></div>
+                  )}
+                  <h3 className="mt-4 font-black">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
+                  {prize.value ? <p className="mt-1 text-sm font-bold text-[#b88238]">Value: {Number(prize.value).toLocaleString()} CHF</p> : null}
                 </div>
-              </StaggerItem>
-            )})}
-          </StaggerContainer>
-          {winners.length === 0 ? (
-            <p className="text-sm text-neutral-400 mt-4">{locale === 'fr' ? 'Aucun gagnant recent' : 'No recent winners yet'}</p>
-          ) : null}
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">
+              {isFr ? 'Ajoutez des prix depuis le panel admin pour les afficher ici.' : 'Add raffle prizes from the admin panel to show them here.'}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Reviews */}
-      <section className="py-16 sm:py-20 bg-neutral-50">
+      <section id="how-it-works" className="py-12 sm:py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Comment ca marche' : 'How it works'}</p>
+          <h2 className="mt-2 text-3xl font-black">{isFr ? 'Etapes simples pour gagner' : 'Simple steps to win'}</h2>
+          <div className="mt-9 grid gap-5 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <div key={step.title} className="rounded-xl bg-white p-6 text-left shadow-sm ring-1 ring-black/5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eadb] text-[#b88238]">
+                    <step.icon className="h-6 w-6" />
+                  </div>
+                  <span className="text-xs font-black text-[#b88238]">0{index + 1}</span>
+                </div>
+                <h3 className="mt-5 font-black">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-500">{step.text}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/products" className="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#e2bd87] px-6 py-3 text-sm font-black uppercase text-black">
+            {isFr ? 'Acheter et participer' : 'Buy cap and enter'} <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+      <section className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionTitle title={t('reviews')} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {reviews.map((review) => (
-              <ReviewCard key={review._id} review={review} locale={locale} />
+          <div className="grid gap-5 rounded-xl bg-black p-6 text-white sm:grid-cols-2 lg:grid-cols-4">
+            {trustItems.map((item) => (
+              <div key={item.title} className="flex gap-3">
+                <item.icon className="h-7 w-7 shrink-0 text-[#e2bd87]" />
+                <div>
+                  <p className="text-sm font-black">{item.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/60">{item.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeIn>
-            <div className="bg-neutral-900 rounded-3xl p-8 sm:p-12 text-center text-white">
-              <h2 className="text-2xl sm:text-3xl font-bold">{t('newsletter.title')}</h2>
-              <p className="mt-3 text-neutral-300 max-w-md mx-auto">{t('newsletter.subtitle')}</p>
-              <form onSubmit={handleNewsletter} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
+            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Gagnant recent' : 'Recent winner'}</p>
+              {winners[0] ? (
+                <div className="mt-5 flex gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eadb] text-[#b88238]"><Trophy className="h-7 w-7" /></div>
+                  <div>
+                    <p className="font-black">{winners[0].user?.firstName} {winners[0].user?.lastName}</p>
+                    <p className="mt-1 text-xs text-neutral-500">{winners[0].prizeEn || winners[0].prize || '-'}</p>
+                    <span className="mt-2 inline-flex rounded-full bg-[#e2bd87] px-2 py-0.5 text-[10px] font-black uppercase text-black">Won</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-5 text-sm text-neutral-500">{isFr ? 'Aucun gagnant pour le moment.' : 'No winners yet.'}</p>
+              )}
+              <Link href="/winners" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-3 text-xs font-black uppercase">
+                {isFr ? 'Voir les gagnants' : 'See all winners'} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Avis participants' : 'What our participants say'}</p>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                {(reviews.length ? reviews.slice(0, 2) : []).map((review) => (
+                  <div key={review._id}>
+                    <Quote className="h-8 w-8 text-[#e2bd87]" />
+                    <p className="mt-3 text-sm leading-relaxed text-neutral-600">{isFr ? review.comment : review.commentEn || review.comment}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-sm font-black">{review.name || review.user?.firstName || 'Customer'}</p>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`h-3.5 w-3.5 ${i < Number(review.rating || 5) ? 'fill-[#e2bd87] text-[#e2bd87]' : 'text-neutral-300'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!reviews.length ? <p className="text-sm text-neutral-500">{isFr ? 'Aucun avis pour le moment.' : 'No reviews yet.'}</p> : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="pb-12 sm:pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-6 overflow-hidden rounded-xl bg-[#e8d3b6] p-6 sm:grid-cols-[220px_1fr] sm:items-center">
+            <div className="hidden sm:block">
+              {shopProducts[0] && pickImage(shopProducts[0]) ? (
+                <img src={pickImage(shopProducts[0])} alt={shopProducts[0].name} className="h-28 w-full object-contain" />
+              ) : null}
+            </div>
+            <div className="grid gap-4 lg:grid-cols-[1fr_420px] lg:items-center">
+              <div>
+                <h2 className="text-2xl font-black">{isFr ? 'Ne manquez rien !' : "Don't miss out!"}</h2>
+                <p className="mt-1 text-sm text-black/65">{isFr ? 'Recevez les nouveaux raffles et offres exclusives.' : 'Join our community and get exclusive updates on new raffles and special offers.'}</p>
+              </div>
+              <form onSubmit={handleNewsletter} className="flex gap-2">
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('newsletter.placeholder')}
                   required
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={isFr ? 'Votre email' : 'Enter your email'}
+                  className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-4 py-3 text-sm outline-none"
                 />
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-amber-500 text-neutral-900 font-medium rounded-xl hover:bg-amber-400 transition-colors"
-                >
-                  {t('newsletter.button')}
+                <button type="submit" className="rounded-lg bg-black px-5 py-3 text-xs font-black uppercase text-white">
+                  {isFr ? 'Subscribe' : 'Subscribe'}
                 </button>
               </form>
             </div>
-          </FadeIn>
+          </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
