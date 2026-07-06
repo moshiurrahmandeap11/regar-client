@@ -329,15 +329,27 @@ export default function RafflesContent() {
                           >
                             <Megaphone className="w-4 h-4" />
                           </button>
-                          {raffle.canDraw && (
-                            <button
+                          {raffle.canDraw ? (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                               onClick={() => drawWinner(raffle._id)}
                               className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"
                             >
                               <Sparkles className="w-3 h-3" />
                               Draw
-                            </button>
-                          )}
+                            </motion.button>
+                          ) : raffle.status === 'active' && new Date(raffle.endDate) > new Date() ? (
+                            <span className="text-xs text-neutral-400 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {Math.ceil((new Date(raffle.endDate) - new Date()) / (1000 * 60 * 60 * 24))}d left
+                            </span>
+                          ) : raffle.status === 'active' && new Date(raffle.endDate) <= new Date() ? (
+                            <span className="text-xs text-amber-600 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              Ready to draw
+                            </span>
+                          ) : null}
                           <button
                             onClick={() => handleDelete(raffle)}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

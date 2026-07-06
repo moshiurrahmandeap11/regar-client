@@ -12,7 +12,9 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Link } from '@/i18n/routing';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
+import { motion } from 'framer-motion';
 import { getOrderState } from '@/lib/orderDisplay';
+import { PageLoader, InlineLoader } from '@/components/Loader';
 import CountdownTimer from '@/components/CountdownTimer';
 
 const sidebarNavItems = [
@@ -226,11 +228,16 @@ export default function DashboardPage() {
   const activeRafflesCount = useMemo(() => new Set(tickets.map(t => t.raffle?._id || t.raffle)).size, [tickets]);
 
   // Group tickets by raffle for "My Entries" section
+  // Include tickets WITHOUT a raffle in an "Unassigned" group so nothing is lost
   const ticketsByRaffle = useMemo(() => {
     const groups = {};
+    const unassigned = [];
     tickets.forEach(ticket => {
       const raffleId = ticket.raffle?._id || ticket.raffle;
-      if (!raffleId) return;
+      if (!raffleId) {
+        unassigned.push(ticket);
+        return;
+      }
       if (!groups[raffleId]) {
         groups[raffleId] = {
           raffle: ticket.raffle,
@@ -239,6 +246,13 @@ export default function DashboardPage() {
       }
       groups[raffleId].tickets.push(ticket);
     });
+    // Add unassigned group if any
+    if (unassigned.length > 0) {
+      groups['__unassigned__'] = {
+        raffle: { name: 'Unassigned Entries', nameEn: 'Unassigned Entries', _id: '__unassigned__' },
+        tickets: unassigned,
+      };
+    }
     return groups;
   }, [tickets]);
 
@@ -280,11 +294,7 @@ export default function DashboardPage() {
 
   // NOW conditional returns are safe - all hooks have been called
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="animate-spin w-8 h-8 border-2 border-[#e2bd87] border-t-transparent rounded-full" />
-      </div>
-    );
+    return <PageLoader color="primary" />;
   }
 
   if (!user) return null;
@@ -294,7 +304,7 @@ export default function DashboardPage() {
       <div className="min-h-screen flex">
         <Sidebar user={user} locale={locale} mobileOpen={mobileSidebarOpen} setMobileOpen={setMobileSidebarOpen} />
         <div className="flex-1 flex items-center justify-center bg-neutral-50">
-          <div className="animate-spin w-8 h-8 border-2 border-[#e2bd87] border-t-transparent rounded-full" />
+          <InlineLoader size="lg" color="primary" />
         </div>
       </div>
     );
@@ -586,14 +596,27 @@ export default function DashboardPage() {
                       const raffleNameEn = group.raffle?.nameEn || raffleNameDisplay;
                       const displayName = locale === 'fr' ? raffleNameDisplay : raffleNameEn;
                       return (
-                        <div key={group.raffle?._id || displayName} className="border border-neutral-200 rounded-lg p-4">
+                        <motion.div
+                          key={group.raffle?._id || displayName}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="border border-neutral-200 rounded-lg p-4"
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold text-sm text-neutral-900">{displayName}</h3>
                             <span className="text-xs text-neutral-500">{group.tickets.length} {t('entries', 'participations')}</span>
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {group.tickets.map((ticket) => (
-                              <div key={ticket._id} className="text-center p-2 rounded-lg border border-neutral-200 hover:border-[#e2bd87]/30 transition-colors">
+                            {group.tickets.map((ticket, idx) => (
+                              <motion.div
+                                key={ticket._id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05, duration: 0.3 }}
+                                whileHover={{ scale: 1.03, borderColor: 'rgba(226, 189, 135, 0.5)' }}
+                                className="text-center p-2 rounded-lg border border-neutral-200 transition-colors cursor-default"
+                              >
                                 <p className="font-mono font-bold text-neutral-900 text-sm">{ticket.ticketNumber || '-'}</p>
                                 <p className="text-[10px] text-neutral-400 mt-0.5">
                                   {ticket.order?.orderNumber ? `${t('Order', 'Cmd')} #${ticket.order.orderNumber}` : ''}
@@ -604,10 +627,10 @@ export default function DashboardPage() {
                                 <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-semibold rounded-full">
                                   {t('Active', 'Actif')}
                                 </span>
-                              </div>
+                              </motion.div>
                             ))}
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>

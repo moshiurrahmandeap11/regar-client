@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Gift, Ticket, ShoppingCart, Package, Users, Trophy,
   CreditCard, BarChart3, FileText, Bell, Settings, MessageSquare, Activity,
-  Crown, Search, ChevronDown, Calendar, LogOut, User, X, CheckCircle
+  Crown, Search, ChevronDown, Calendar, LogOut, User, X, CheckCircle, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ const allMenuItems = [
   { id: 'products', label: 'Products (Caps)', icon: Package, href: '/admin/products' },
   { id: 'users', label: 'Users', icon: Users, href: '/admin/users' },
   { id: 'winners', label: 'Winners', icon: Trophy, href: '/admin/winners' },
+  { id: 'draw', label: 'Draw Winner', icon: Sparkles, href: '/admin/draw' },
   { id: 'payouts', label: 'Payouts', icon: CreditCard, href: '/admin/payments' },
   { id: 'reports', label: 'Reports', icon: BarChart3, href: '/admin/analytics' },
   { id: 'content', label: 'Pages & Content', icon: FileText, href: '/admin/content' },
