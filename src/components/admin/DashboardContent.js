@@ -128,8 +128,8 @@ const statusStyles = {
 
 function formatCurrency(value) {
   const num = Number(value);
-  if (!Number.isFinite(num)) return '$0.00';
-  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (!Number.isFinite(num)) return 'CHF 0.00';
+  return `CHF ${num.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function toNumber(value) {
@@ -205,12 +205,8 @@ export default function DashboardContent() {
   // Build chart data from real sales API
   const chartData = useMemo(() => {
     if (salesData.length === 0) {
-      // Fallback to last 30 days with sample data if no sales
-      const labels = ['20 May', '25 May', '30 May', '04 Jun', '09 Jun', '14 Jun', '20 Jun'];
-      const values = [800, 1200, 1800, 2200, 1600, 2800, 2400];
-      return labels.map((label, i) => ({ label, value: values[i], i }));
+      return [];
     }
-    // Use real sales data - map to revenue or orders
     return salesData.slice(-7).map((sale, i) => ({
       label: sale.month?.split(' ')[0] || `M${i + 1}`,
       value: toNumber(sale.revenue),
@@ -277,11 +273,11 @@ export default function DashboardContent() {
   const totalTicketsCount = allTickets.length;
 
   const statCards = [
-    { label: 'Total Entries', value: totalEntries.toLocaleString() || totalTicketsCount.toLocaleString(), sub: '+18.6%', subLabel: 'vs last 30 days', icon: Ticket, positive: true, color: 'text-amber-600' },
-    { label: 'Total Orders', value: stats.totalOrders.toLocaleString(), sub: '+12.4%', subLabel: 'vs last 30 days', icon: ShoppingCart, positive: true, color: 'text-emerald-600' },
-    { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), sub: '+22.8%', subLabel: 'vs last 30 days', icon: TrendingUp, positive: true, color: 'text-blue-600' },
+    { label: 'Total Entries', value: totalEntries.toLocaleString() || totalTicketsCount.toLocaleString(), sub: '-', subLabel: 'vs last 30 days', icon: Ticket, positive: true, color: 'text-amber-600' },
+    { label: 'Total Orders', value: stats.totalOrders.toLocaleString(), sub: '-', subLabel: 'vs last 30 days', icon: ShoppingCart, positive: true, color: 'text-emerald-600' },
+    { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), sub: '-', subLabel: 'vs last 30 days', icon: TrendingUp, positive: true, color: 'text-blue-600' },
     { label: 'Active Giveaways', value: stats.activeRaffles.toLocaleString(), sub: 'Running now', subLabel: '', icon: Ticket, positive: true, color: 'text-purple-600' },
-    { label: 'Total Users', value: stats.totalUsers.toLocaleString(), sub: '+10.8%', subLabel: 'vs last 30 days', icon: Users, positive: true, color: 'text-rose-600' },
+    { label: 'Total Users', value: stats.totalUsers.toLocaleString(), sub: '-', subLabel: 'vs last 30 days', icon: Users, positive: true, color: 'text-rose-600' },
   ];
 
   // Display data - use real data, fallback to empty states
@@ -321,10 +317,10 @@ export default function DashboardContent() {
             <div className="flex items-center gap-1 mt-1">
               {stat.sub && stat.sub.startsWith('+') ? (
                 <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" />
-              ) : stat.sub && stat.sub.startsWith('-') ? (
+              ) : stat.sub && stat.sub.startsWith('-') && stat.sub !== '-' ? (
                 <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />
               ) : null}
-              <span className={`text-xs font-medium ${stat.sub?.startsWith('+') ? 'text-emerald-600' : stat.sub?.startsWith('-') ? 'text-red-600' : 'text-neutral-500'}`}>
+              <span className={`text-xs font-medium ${stat.sub?.startsWith('+') ? 'text-emerald-600' : stat.sub && stat.sub.startsWith('-') && stat.sub !== '-' ? 'text-red-600' : 'text-neutral-500'}`}>
                 {stat.sub}
               </span>
               {stat.subLabel && <span className="text-xs text-neutral-400">{stat.subLabel}</span>}
@@ -335,7 +331,7 @@ export default function DashboardContent() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Entries Overview */}
+        {/* Revenue Overview */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -349,7 +345,14 @@ export default function DashboardContent() {
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
           </div>
-          <LineChart data={chartData} />
+          {chartData.length === 0 ? (
+            <div className="text-center py-12 text-neutral-400">
+              <TrendingUp className="w-8 h-8 mx-auto mb-2" />
+              <p className="text-sm">No sales data available</p>
+            </div>
+          ) : (
+            <LineChart data={chartData} />
+          )}
         </motion.div>
 
         {/* Giveaway Status */}
@@ -455,7 +458,7 @@ export default function DashboardContent() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-neutral-400">{entry.time}</p>
-                    <p className="text-xs font-medium text-emerald-600">+{entry.entries} Entries</p>
+                    <p className="text-xs font-medium text-emerald-600">1 Entry</p>
                   </div>
                 </div>
               ))}

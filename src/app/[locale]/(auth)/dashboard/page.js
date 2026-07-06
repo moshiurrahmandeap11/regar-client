@@ -41,9 +41,8 @@ function Sidebar({ user, locale, mobileOpen, setMobileOpen }) {
 
   const userId = useMemo(() => {
     if (!user) return 'CR-0000';
-    if (user.customerId) return user.customerId;
-    if (typeof user._id === 'string') return user._id.slice(-6).toUpperCase();
-    if (user._id && typeof user.$oid === 'string') return user.$oid.slice(-6).toUpperCase();
+    const idStr = user._id?.toString?.() || String(user._id) || '';
+    if (idStr) return idStr.slice(-6).toUpperCase();
     return 'CR-0000';
   }, [user]);
 
@@ -223,13 +222,43 @@ export default function DashboardPage() {
   // Compute ALL derived values with hooks BEFORE any conditional returns
   const wins = useMemo(() => tickets.filter((ticket) => ticket.isWinner).length, [tickets]);
   const recentOrders = useMemo(() => orders.slice(0, 3), [orders]);
-  const recentTickets = useMemo(() => tickets.slice(0, 4), [tickets]);
   const totalEntries = tickets.length;
   const activeRafflesCount = useMemo(() => new Set(tickets.map(t => t.raffle?._id || t.raffle)).size, [tickets]);
+
+  // Group tickets by raffle for "My Entries" section
+  const ticketsByRaffle = useMemo(() => {
+    const groups = {};
+    tickets.forEach(ticket => {
+      const raffleId = ticket.raffle?._id || ticket.raffle;
+      if (!raffleId) return;
+      if (!groups[raffleId]) {
+        groups[raffleId] = {
+          raffle: ticket.raffle,
+          tickets: [],
+        };
+      }
+      groups[raffleId].tickets.push(ticket);
+    });
+    return groups;
+  }, [tickets]);
 
   const activeRaffle = raffles[0] || null;
   const raffleEndDate = activeRaffle?.endDate || null;
   const raffleName = activeRaffle ? (locale === 'fr' ? activeRaffle.name : activeRaffle.nameEn || activeRaffle.name) : '';
+
+  // Per-raffle progress: use first active raffle's ticketCount and product.maxTickets
+  const progressRaffle = activeRaffle;
+  const progressRaffleTicketCount = progressRaffle?.ticketCount || 0;
+  const progressRaffleMaxTickets = progressRaffle?.product?.maxTickets || 1000;
+  const progressPercent = useMemo(() => {
+    if (progressRaffleMaxTickets > 0) {
+      return Math.round((progressRaffleTicketCount / progressRaffleMaxTickets) * 100);
+    }
+    return 0;
+  }, [progressRaffleTicketCount, progressRaffleMaxTickets]);
+
+  // Participant count: SUM of all ticket counts across raffles
+  const totalSoldTickets = useMemo(() => raffles.reduce((sum, r) => sum + (r.ticketCount || 0), 0), [raffles]);
 
   const rafflePrizes = useMemo(() => {
     const prizes = [];
@@ -244,10 +273,6 @@ export default function DashboardPage() {
     });
     return prizes.slice(0, 5);
   }, [raffles, locale]);
-
-  const totalSoldTickets = useMemo(() => raffles.reduce((sum, r) => sum + (r.ticketCount || r.product?.soldTickets || 0), 0), [raffles]);
-  const totalMaxTickets = useMemo(() => raffles.reduce((sum, r) => sum + (r.product?.maxTickets || 1000), 0), [raffles]);
-  const progressPercent = useMemo(() => totalMaxTickets > 0 ? Math.round((totalSoldTickets / totalMaxTickets) * 100) : 0, [totalSoldTickets, totalMaxTickets]);
 
   const latestWinner = winners[0] || null;
 
@@ -434,11 +459,11 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Progress */}
+                      {/* Progress - per-raffle using first active raffle */}
                       <div className="mt-4">
                         <div className="flex items-center justify-between text-xs mb-1.5">
                           <span className="text-neutral-500">
-                            {totalSoldTickets.toLocaleString()} / {totalMaxTickets.toLocaleString()} {t('Entries', 'Participations')}
+                            {progressRaffleTicketCount.toLocaleString()} / {progressRaffleMaxTickets.toLocaleString()} {t('Entries', 'Participations')}
                           </span>
                           <span className="text-[#b88238] font-semibold">{progressPercent}% {t('Completed', 'Complété')}</span>
                         </div>
@@ -455,7 +480,7 @@ export default function DashboardPage() {
                       )}
                     </div>
 
-                    {/* Prize Grid */}
+                    {/* Prize Grid - actual prizes from API */}
                     {rafflePrizes.length > 0 && (
                       <div className="border-t border-neutral-200 p-4">
                         <div className="grid grid-cols-5 gap-2">
@@ -501,8 +526,8 @@ export default function DashboardPage() {
                   <div className="space-y-3">
                     {recentOrders.map((order) => {
                       const orderState = getOrderState(order, locale);
-                      const productImage = order.items?.[0]?.product?.image || order.items?.[0]?.image;
-                      const productName = order.items?.[0]?.product?.name || order.items?.[0]?.name || t('Premium Cap', 'Casquette premium');
+                      const productImage = order.items?.[0]?.image;
+                      const productName = order.items?.[0]?.name || t('Premium Cap', 'Casquette premium');
                       return (
                         <div key={order._id} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-100 hover:border-neutral-200 transition-colors">
                           <div className="w-14 h-14 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 flex-shrink-0">
@@ -541,36 +566,50 @@ export default function DashboardPage() {
 
           {/* My Entries + Winner Updates */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-            {/* My Entries in Current Raffle */}
+            {/* My Entries - ALL tickets grouped by raffle */}
             <FadeIn>
               <div className="bg-white rounded-xl border border-neutral-200 p-5 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-neutral-900">{t('My Entries in Current Raffle', 'Mes participations au tirage actuel')}</h2>
+                  <h2 className="text-lg font-bold text-neutral-900">{t('My Entries', 'Mes participations')}</h2>
                   <span className="text-sm text-[#b88238] font-semibold">{t('Total', 'Total')} {totalEntries} {t('Entries', 'Participations')}</span>
                 </div>
 
-                {recentTickets.length === 0 ? (
+                {tickets.length === 0 ? (
                   <div className="text-center py-8 text-neutral-400">
                     <Ticket className="w-8 h-8 mx-auto mb-2" />
                     <p className="text-sm">{t('No tickets yet', 'Aucun ticket')}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {recentTickets.map((ticket, i) => (
-                      <div key={ticket._id || i} className="text-center p-3 rounded-lg border border-neutral-200 hover:border-[#e2bd87]/30 transition-colors">
-                        <p className="font-mono font-bold text-neutral-900 text-sm">{ticket.ticketNumber || `#CR-100${i + 1}`}</p>
-                        <p className="text-[10px] text-neutral-400 mt-1">{new Date(ticket.createdAt || Date.now()).toLocaleDateString('fr-CH')}</p>
-                        <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-semibold rounded-full">
-                          {t('Active', 'Actif')}
-                        </span>
-                      </div>
-                    ))}
-                    {totalEntries > 4 && (
-                      <Link href="/tickets" className="flex flex-col items-center justify-center p-3 rounded-lg border border-dashed border-neutral-300 hover:border-[#e2bd87]/50 hover:bg-[#e2bd87]/5 transition-colors">
-                        <span className="text-lg font-bold text-[#b88238]">+{totalEntries - 4}</span>
-                        <span className="text-[10px] text-neutral-500">{t('More Entries', 'Plus de participations')}</span>
-                      </Link>
-                    )}
+                  <div className="space-y-4">
+                    {Object.values(ticketsByRaffle).map((group) => {
+                      const raffleNameDisplay = group.raffle?.name || t('Unknown Raffle', 'Raffle inconnu');
+                      const raffleNameEn = group.raffle?.nameEn || raffleNameDisplay;
+                      const displayName = locale === 'fr' ? raffleNameDisplay : raffleNameEn;
+                      return (
+                        <div key={group.raffle?._id || displayName} className="border border-neutral-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-sm text-neutral-900">{displayName}</h3>
+                            <span className="text-xs text-neutral-500">{group.tickets.length} {t('entries', 'participations')}</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {group.tickets.map((ticket) => (
+                              <div key={ticket._id} className="text-center p-2 rounded-lg border border-neutral-200 hover:border-[#e2bd87]/30 transition-colors">
+                                <p className="font-mono font-bold text-neutral-900 text-sm">{ticket.ticketNumber || '-'}</p>
+                                <p className="text-[10px] text-neutral-400 mt-0.5">
+                                  {ticket.order?.orderNumber ? `${t('Order', 'Cmd')} #${ticket.order.orderNumber}` : ''}
+                                </p>
+                                <p className="text-[10px] text-neutral-400">
+                                  {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString('fr-CH') : '-'}
+                                </p>
+                                <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-semibold rounded-full">
+                                  {t('Active', 'Actif')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

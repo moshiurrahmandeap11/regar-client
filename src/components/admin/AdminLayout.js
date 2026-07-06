@@ -12,7 +12,8 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 
-const menuItems = [
+// Only include menu items for pages that actually exist in the app
+const allMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
   { id: 'giveaways', label: 'Giveaways', icon: Gift, href: '/admin/raffles' },
   { id: 'entries', label: 'Entries', icon: Ticket, href: '/admin/tickets' },
@@ -53,6 +54,24 @@ export default function AdminLayoutClient({ children }) {
   // Active raffles for sidebar promo
   const [activeRaffles, setActiveRaffles] = useState([]);
 
+  // Load persisted read state from localStorage
+  const getReadState = () => {
+    try {
+      const stored = localStorage.getItem('admin_notifications_read');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const saveReadState = (readMap) => {
+    try {
+      localStorage.setItem('admin_notifications_read', JSON.stringify(readMap));
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (!loading && !user?.isAdmin) {
       router.push('/fr/login');
@@ -78,16 +97,18 @@ export default function AdminLayoutClient({ children }) {
         
         // Build notifications from real data
         const notifs = [];
+        const readState = getReadState();
         
-        orders.forEach((order, i) => {
+        orders.forEach((order) => {
           if (order.status === 'awaiting_payment') {
+            const id = `order-${order._id}`;
             notifs.push({
-              id: `order-${order._id}`,
+              id,
               type: 'order',
               title: 'New Order',
               message: `Order ${order.orderNumber} awaiting payment`,
               time: new Date(order.createdAt).toLocaleDateString(),
-              read: i > 1,
+              read: !!readState[id],
               link: '/admin/orders',
             });
           }
@@ -95,13 +116,14 @@ export default function AdminLayoutClient({ children }) {
         
         raffles.forEach((raffle) => {
           if (raffle.canDraw) {
+            const id = `raffle-${raffle._id}`;
             notifs.push({
-              id: `raffle-${raffle._id}`,
+              id,
               type: 'raffle',
               title: 'Raffle Ready to Draw',
               message: `${raffle.name} is eligible for winner draw`,
               time: 'Now',
-              read: false,
+              read: !!readState[id],
               link: '/admin/draw',
             });
           }
@@ -134,10 +156,9 @@ export default function AdminLayoutClient({ children }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Search handler
+  // Search handler - navigates to relevant page based on query
   const handleSearch = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
-      // Route to relevant page based on search query
       const q = searchQuery.toLowerCase().trim();
       if (q.includes('order')) router.push('/admin/orders');
       else if (q.includes('product') || q.includes('cap')) router.push('/admin/products');
@@ -145,23 +166,34 @@ export default function AdminLayoutClient({ children }) {
       else if (q.includes('raffle') || q.includes('giveaway')) router.push('/admin/raffles');
       else if (q.includes('ticket') || q.includes('entry')) router.push('/admin/tickets');
       else if (q.includes('winner')) router.push('/admin/winners');
-      else if (q.includes('payment')) router.push('/admin/payments');
+      else if (q.includes('payment') || q.includes('payout')) router.push('/admin/payments');
+      else if (q.includes('report') || q.includes('analytic')) router.push('/admin/analytics');
+      else if (q.includes('content') || q.includes('page')) router.push('/admin/content');
+      else if (q.includes('contact') || q.includes('support') || q.includes('ticket')) router.push('/admin/contacts');
+      else if (q.includes('setting')) router.push('/admin/settings');
+      else if (q.includes('log') || q.includes('history') || q.includes('activity')) router.push('/admin/draw-history');
       else router.push('/admin/dashboard');
       setSearchQuery('');
       setSearchFocused(false);
     }
   };
 
-  // Mark notification as read
+  // Mark notification as read and persist
   const markAsRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setNotifUnread(prev => Math.max(0, prev - 1));
+    const readState = getReadState();
+    readState[id] = true;
+    saveReadState(readState);
   };
 
-  // Mark all as read
+  // Mark all as read and persist
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setNotifUnread(0);
+    const readState = getReadState();
+    notifications.forEach(n => { readState[n.id] = true; });
+    saveReadState(readState);
   };
 
   if (loading) {
@@ -174,9 +206,17 @@ export default function AdminLayoutClient({ children }) {
 
   if (!user?.isAdmin) return null;
 
-  const activeTab = menuItems.find(item => pathname.includes(item.href))?.id || 'dashboard';
+  const activeTab = allMenuItems.find(item => pathname.includes(item.href))?.id || 'dashboard';
   
   const activeRaffle = activeRaffles[0];
+
+  // Date range: last 30 days
+  const today = new Date();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const dateRangeText = `${thirtyDaysAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+  // Admin label based on user.isAdmin
+  const adminLabel = user?.isAdmin ? 'Admin' : 'User';
 
   return (
     <div className="min-h-screen bg-neutral-50 flex">
@@ -193,7 +233,7 @@ export default function AdminLayoutClient({ children }) {
 
           {/* Navigation */}
           <nav className="space-y-0.5">
-            {menuItems.map((item) => (
+            {allMenuItems.map((item) => (
               <Link
                 key={item.id}
                 href={item.href}
@@ -222,7 +262,7 @@ export default function AdminLayoutClient({ children }) {
               {activeRaffle ? activeRaffle.name : 'No active raffle'}
             </p>
             <Link 
-              href={activeRaffle ? `/admin/raffles` : '/admin/raffles'}
+              href="/admin/raffles"
               className="block w-full bg-[#b88238] hover:bg-[#a07030] text-white text-xs font-medium py-2 rounded-lg transition-colors text-center"
             >
               View Giveaway
@@ -240,7 +280,7 @@ export default function AdminLayoutClient({ children }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user.firstName || 'Admin'} {user.lastName || 'User'}</p>
-              <p className="text-xs text-neutral-400 truncate">Super Admin</p>
+              <p className="text-xs text-neutral-400 truncate">{adminLabel}</p>
             </div>
             <button
               onClick={() => { logout(); router.push('/fr/login'); }}
@@ -279,7 +319,7 @@ export default function AdminLayoutClient({ children }) {
             </button>
           </div>
           <nav className="space-y-0.5 flex-1 overflow-y-auto">
-            {menuItems.map((item) => (
+            {allMenuItems.map((item) => (
               <Link
                 key={item.id}
                 href={item.href}
@@ -320,7 +360,7 @@ export default function AdminLayoutClient({ children }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.firstName || 'Admin'} {user.lastName || 'User'}</p>
-                <p className="text-xs text-neutral-400 truncate">Super Admin</p>
+                <p className="text-xs text-neutral-400 truncate">{adminLabel}</p>
               </div>
               <button
                 onClick={() => { logout(); router.push('/fr/login'); }}
@@ -347,7 +387,7 @@ export default function AdminLayoutClient({ children }) {
               </svg>
             </button>
             <h1 className="text-lg font-semibold text-neutral-900 capitalize">
-              {menuItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
+              {allMenuItems.find(i => i.id === activeTab)?.label || 'Dashboard'}
             </h1>
           </div>
 
@@ -379,12 +419,11 @@ export default function AdminLayoutClient({ children }) {
               )}
             </div>
 
-            {/* Date Range */}
+            {/* Date Range - Last 30 days */}
             <div className="hidden md:flex items-center gap-2 bg-neutral-100 rounded-lg px-3 py-2">
               <Calendar className="w-4 h-4 text-neutral-500" />
               <span className="text-sm text-neutral-600">
-                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
-                {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {dateRangeText}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
             </div>
@@ -470,7 +509,7 @@ export default function AdminLayoutClient({ children }) {
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-neutral-900 leading-tight">{user.firstName || 'Admin'} {user.lastName || 'User'}</p>
-                  <p className="text-xs text-neutral-500 leading-tight">Super Admin</p>
+                  <p className="text-xs text-neutral-500 leading-tight">{adminLabel}</p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
