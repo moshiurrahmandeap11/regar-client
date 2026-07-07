@@ -156,7 +156,7 @@ export default function DashboardContent() {
 
   const chartData = useMemo(() => {
     if (salesData.length === 0) return [];
-    return salesData.slice(-7).map((sale, i) => ({ label: sale.month?.split(' ')[0] || `M${i + 1}`, value: toNumber(sale.revenue), i }));
+    return salesData.slice(-7).map((sale, i) => ({ label: sale.month?.split(' ')[0] || `M${i + 1}`, value: toNumber(sale.orders), i }));
   }, [salesData]);
 
   const donutData = useMemo(() => {
@@ -178,12 +178,13 @@ export default function DashboardContent() {
       const max = r.product?.maxTickets || 1000;
       const progress = max > 0 ? Math.round((sold / max) * 100) : 0;
       const prizeNames = (r.prizes || []).map(p => p.name).join(', ') || 'Grand Prize';
+      const prizeImage = r.prizes?.[0]?.image || r.product?.images?.[0] || '';
       return {
         _id: r._id, name: r.name, prize: prizeNames,
         entries: `${sold.toLocaleString()} / ${max.toLocaleString()}`,
         startDate: r.startDate ? new Date(r.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
         endDate: r.endDate ? new Date(r.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-',
-        status: r.status, progress,
+        status: r.status, progress, prizeImage,
       };
     });
   }, [allRaffles]);
@@ -269,10 +270,14 @@ export default function DashboardContent() {
           <div className="space-y-3">
             {displayGiveaways.map((giveaway) => (
               <div key={giveaway._id} className="flex items-center gap-3 p-3 rounded-lg border border-neutral-100 hover:bg-neutral-50/50">
-                <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                  </svg>
+                <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                  {giveaway.prizeImage ? (
+                    <img src={giveaway.prizeImage} alt={giveaway.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <svg className="w-6 h-6 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -312,8 +317,12 @@ export default function DashboardContent() {
           <div className="space-y-3">
             {displayOrders.map((order) => (
               <div key={order._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50/50">
-                <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600 shrink-0">
-                  {order.user?.firstName?.[0] || '?'}
+                <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600 shrink-0 overflow-hidden">
+                  {order.user?.avatar ? (
+                    <img src={order.user.avatar} alt={order.user.firstName || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{order.user?.firstName?.[0] || '?'}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-neutral-900">{order.user?.firstName ? `${order.user.firstName} ${order.user.lastName}` : 'Unknown'}</p>

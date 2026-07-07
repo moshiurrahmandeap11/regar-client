@@ -88,6 +88,9 @@ export default function DashboardPage() {
   const raffleEndDate = activeRaffle?.endDate || null;
   const raffleName = activeRaffle ? (locale === 'fr' ? activeRaffle.name : activeRaffle.nameEn || activeRaffle.name) : '';
 
+  // Running raffle image: first prize image, then product image, then fallback
+  const runningRaffleImage = activeRaffle?.prizes?.[0]?.image || activeRaffle?.product?.images?.[0] || activeRaffle?.product?.colors?.find(c => c.image)?.image || '';
+
   const progressRaffle = activeRaffle;
   const progressRaffleTicketCount = progressRaffle?.ticketCount || 0;
   const progressRaffleMaxTickets = progressRaffle?.product?.maxTickets || 1000;
@@ -98,6 +101,21 @@ export default function DashboardPage() {
     raffles.forEach((raffle) => { (raffle.prizes || []).forEach((prize) => prizes.push({ ...prize, raffleName: locale === 'fr' ? raffle.name : raffle.nameEn || raffle.name, raffleId: raffle._id })); });
     return prizes.slice(0, 5);
   }, [raffles, locale]);
+
+  // Get product images for giveaways that don't have prize images
+  const giveawayImages = useMemo(() => {
+    const images = [];
+    raffles.forEach((raffle) => {
+      const prizeImages = (raffle.prizes || []).map(p => p.image).filter(Boolean);
+      const productImage = raffle.product?.images?.[0] || raffle.product?.colors?.find(c => c.image)?.image;
+      if (prizeImages.length > 0) {
+        images.push(...prizeImages);
+      } else if (productImage) {
+        images.push(productImage);
+      }
+    });
+    return images.slice(0, 3);
+  }, [raffles]);
 
   const latestWinner = winners[0] || null;
   const t = (en, fr) => (locale === 'fr' ? fr : en);
@@ -134,6 +152,14 @@ export default function DashboardPage() {
             ) : (
               <p className="text-center text-sm text-white/60">{t('No active raffle.', 'Aucun raffle actif.')}</p>
             )}
+            {/* Running Raffle Image */}
+            {runningRaffleImage && (
+              <div className="mt-4 flex justify-center">
+                <div className="w-20 h-20 rounded-xl overflow-hidden border border-white/20 bg-white/10">
+                  <img src={runningRaffleImage} alt={raffleName || 'Raffle'} className="w-full h-full object-cover" />
+                </div>
+              </div>
+            )}
           </div>
         </FadeIn>
 
@@ -166,7 +192,13 @@ export default function DashboardPage() {
                   <div className="flex gap-2 mb-3">
                     {rafflePrizes.slice(0, 3).map((prize, i) => (
                       <div key={i} className="w-16 h-16 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200">
-                        {prize.image ? <img src={prize.image} alt={prize.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Trophy className="w-5 h-5 text-neutral-400" /></div>}
+                        {prize.image ? <img src={prize.image} alt={prize.name} className="w-full h-full object-cover" /> : giveawayImages[i] ? <img src={giveawayImages[i]} alt={raffleName} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Trophy className="w-5 h-5 text-neutral-400" /></div>}
+                      </div>
+                    ))}
+                    {/* Fill remaining slots with product images if fewer prizes */}
+                    {rafflePrizes.length === 0 && giveawayImages.slice(0, 3).map((img, i) => (
+                      <div key={`fallback-${i}`} className="w-16 h-16 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200">
+                        <img src={img} alt={raffleName} className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>

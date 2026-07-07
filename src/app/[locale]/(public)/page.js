@@ -83,6 +83,9 @@ export default function HomePage() {
   const heroName = heroRaffle ? (isFr ? heroRaffle.name : heroRaffle.nameEn || heroRaffle.name) : '';
   const participantCount = Math.max(0, ...raffles.map((raffle) => Number(raffle.ticketCount || raffle.product?.soldTickets || 0)));
 
+  // Running raffle image for the countdown section (first prize image or product image)
+  const runningRaffleImage = heroRaffle?.prizes?.[0]?.image || heroImage || '';
+
   const handleNewsletter = async (event) => {
     event.preventDefault();
     try {
@@ -168,6 +171,14 @@ export default function HomePage() {
                 </div>
               ) : (
                 <p className="mt-3 text-center text-sm text-white/60">{isFr ? 'Date a confirmer' : 'Date to be confirmed'}</p>
+              )}
+              {/* Running Raffle Image */}
+              {runningRaffleImage && (
+                <div className="mt-4 flex justify-center">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border border-white/20 bg-white/10">
+                    <img src={runningRaffleImage} alt={heroName || 'Raffle'} className="w-full h-full object-cover" />
+                  </div>
+                </div>
               )}
             </div>
           </div>
