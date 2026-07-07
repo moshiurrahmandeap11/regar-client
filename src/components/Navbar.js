@@ -6,12 +6,14 @@ import { Link, usePathname } from '@/i18n/routing';
 import NextLink from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ShoppingBag, User, LogOut, ChevronDown,
   Package, Ticket, Trophy, HelpCircle, Mail, LayoutDashboard,
-  Home, Gift, Bell, Crown
+  Home, Gift, Bell, Crown, BellRing, Trash2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 function FlagIcon({ locale }) {
   if (locale === 'fr') {
@@ -47,12 +49,15 @@ export default function Navbar() {
   const t = useTranslations('Nav');
   const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
-  const [notifUnread, setNotifUnread] = useState(3);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
 
   const navLinks = [
     { href: '/products', label: t('products'), icon: Package },
@@ -81,10 +86,20 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const currentLocaleLabel = locale === 'fr' ? 'FR' : 'EN';
 
-  // Check if we're on an auth page (dashboard, orders, tickets, profile)
-  const authPages = ['/dashboard', '/orders', '/tickets', '/profile', '/order-detail'];
+  // Check if we're on an auth page (dashboard, orders, tickets, profile, notifications)
+  const authPages = ['/dashboard', '/orders', '/tickets', '/profile', '/order-detail', '/notifications'];
   const isAuthPage = authPages.some(p => pathname === p || pathname.startsWith(p + '/'));
 
   // Show user bottom nav when logged in AND on auth pages
@@ -113,6 +128,24 @@ export default function Navbar() {
 
   // Mobile header content based on page type
   const isFr = locale === 'fr';
+
+  const handleNotifClick = (notif) => {
+    if (!notif.read) markAsRead(notif._id);
+    setNotifOpen(false);
+    if (notif.link) {
+      router.push(notif.link);
+    }
+  };
+
+  const formatTime = (date) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return isFr ? 'Il y a quelques secondes' : 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ${isFr ? 'ago' : 'ago'}`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ${isFr ? 'ago' : 'ago'}`;
+    return d.toLocaleDateString(isFr ? 'fr-CH' : 'en-US', { month: 'short', day: 'numeric' });
+  };
 
   return (
     <>
@@ -163,55 +196,119 @@ export default function Navbar() {
             </Link>
 
             {user ? (
-              <div ref={userMenuRef} className="relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-white/15 flex items-center justify-center">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-4 h-4 text-white" />
+              <div className="flex items-center gap-2">
+                {/* Desktop Notification Bell */}
+                <div className="relative" ref={notifRef}>
+                  <button onClick={() => setNotifOpen(!notifOpen)} className="relative p-2 rounded-lg text-white hover:bg-white/10 transition-colors">
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
                     )}
-                  </div>
-                  <ChevronDown className="w-4 h-4 hidden sm:block" />
-                </button>
-                <AnimatePresence>
-                  {userMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-neutral-200 py-1"
-                    >
-                      <div className="px-4 py-2 border-b border-neutral-100">
-                        <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
-                        <p className="text-xs text-neutral-500">{user.email}</p>
-                      </div>
-                      <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
-                        <LayoutDashboard className="w-4 h-4" /> {t('dashboard')}
-                      </Link>
-                      <Link href="/orders" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
-                        <Package className="w-4 h-4" /> {t('orders')}
-                      </Link>
-                      <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
-                        <User className="w-4 h-4" /> {t('profile')}
-                      </Link>
-                      {user.isAdmin && (
-                        <NextLink href="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
-                          <LayoutDashboard className="w-4 h-4" /> Admin
-                        </NextLink>
-                      )}
-                      <button
-                        onClick={() => { logout(); setUserMenuOpen(false); }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                  </button>
+                  <AnimatePresence>
+                    {notifOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-neutral-200 z-50 overflow-hidden"
                       >
-                        <LogOut className="w-4 h-4" /> {t('logout')}
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+                          <h3 className="font-semibold text-sm text-neutral-900">{isFr ? 'Notifications' : 'Notifications'}</h3>
+                          {unreadCount > 0 && (
+                            <button onClick={markAllAsRead} className="text-xs text-[#b88238] hover:text-[#a07030] font-medium">
+                              {isFr ? 'Tout marquer comme lu' : 'Mark all read'}
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="px-4 py-6 text-center text-neutral-400">
+                              <BellRing className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                              <p className="text-sm">{isFr ? 'Aucune notification' : 'No notifications'}</p>
+                            </div>
+                          ) : (
+                            notifications.slice(0, 6).map((notif) => (
+                              <div key={notif._id} className={`px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 cursor-pointer transition-colors ${!notif.read ? 'bg-amber-50/50' : ''}`}>
+                                <div className="flex items-start gap-3" onClick={() => handleNotifClick(notif)}>
+                                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.read ? 'bg-neutral-300' : 'bg-amber-500'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-neutral-900">{notif.title}</p>
+                                    <p className="text-xs text-neutral-500 mt-0.5">{notif.message}</p>
+                                    <p className="text-xs text-neutral-400 mt-1">{formatTime(notif.createdAt)}</p>
+                                  </div>
+                                </div>
+                                <div className="flex justify-end mt-1">
+                                  <button onClick={(e) => { e.stopPropagation(); deleteNotification(notif._id); }} className="text-neutral-400 hover:text-red-500 transition-colors">
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <div className="px-4 py-2 border-t border-neutral-100">
+                          <Link href="/notifications" onClick={() => setNotifOpen(false)} className="text-xs text-[#b88238] hover:text-[#a07030] font-medium text-center block">
+                            {isFr ? 'Voir toutes les notifications' : 'View all notifications'}
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div ref={userMenuRef} className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-white/15 flex items-center justify-center">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 text-white" />
+                      )}
+                    </div>
+                    <ChevronDown className="w-4 h-4 hidden sm:block" />
+                  </button>
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-neutral-200 py-1"
+                      >
+                        <div className="px-4 py-2 border-b border-neutral-100">
+                          <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
+                          <p className="text-xs text-neutral-500">{user.email}</p>
+                        </div>
+                        <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
+                          <LayoutDashboard className="w-4 h-4" /> {t('dashboard')}
+                        </Link>
+                        <Link href="/orders" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
+                          <Package className="w-4 h-4" /> {t('orders')}
+                        </Link>
+                        <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
+                          <User className="w-4 h-4" /> {t('profile')}
+                        </Link>
+                        {user.isAdmin && (
+                          <NextLink href="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50">
+                            <LayoutDashboard className="w-4 h-4" /> Admin
+                          </NextLink>
+                        )}
+                        <button
+                          onClick={() => { logout(); setUserMenuOpen(false); }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                        >
+                          <LogOut className="w-4 h-4" /> {t('logout')}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             ) : (
               <Link
@@ -258,14 +355,66 @@ export default function Navbar() {
           <Crown className="w-5 h-5 text-[#e2bd87]" />
           <span className="font-bold text-lg tracking-wider text-white">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
         </Link>
-        <button className="relative text-white p-1">
-          <Bell className="w-6 h-6" />
-          {notifUnread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {notifUnread}
-            </span>
-          )}
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">
+            <Bell className="w-6 h-6" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          <AnimatePresence>
+            {notifOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-neutral-200 z-50 overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+                  <h3 className="font-semibold text-sm text-neutral-900">{isFr ? 'Notifications' : 'Notifications'}</h3>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllAsRead} className="text-xs text-[#b88238] hover:text-[#a07030] font-medium">
+                      {isFr ? 'Tout marquer comme lu' : 'Mark all read'}
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-neutral-400">
+                      <BellRing className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">{isFr ? 'Aucune notification' : 'No notifications'}</p>
+                    </div>
+                  ) : (
+                    notifications.slice(0, 6).map((notif) => (
+                      <div key={notif._id} className={`px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 cursor-pointer transition-colors ${!notif.read ? 'bg-amber-50/50' : ''}`}>
+                        <div className="flex items-start gap-3" onClick={() => handleNotifClick(notif)}>
+                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.read ? 'bg-neutral-300' : 'bg-amber-500'}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-neutral-900">{notif.title}</p>
+                            <p className="text-xs text-neutral-500 mt-0.5">{notif.message}</p>
+                            <p className="text-xs text-neutral-400 mt-1">{formatTime(notif.createdAt)}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-end mt-1">
+                          <button onClick={(e) => { e.stopPropagation(); deleteNotification(notif._id); }} className="text-neutral-400 hover:text-red-500 transition-colors">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="px-4 py-2 border-t border-neutral-100">
+                  <Link href="/notifications" onClick={() => setNotifOpen(false)} className="text-xs text-[#b88238] hover:text-[#a07030] font-medium text-center block">
+                    {isFr ? 'Voir toutes les notifications' : 'View all notifications'}
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     )}
 
