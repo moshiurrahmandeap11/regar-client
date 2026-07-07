@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Instagram, Facebook, Twitter } from 'lucide-react';
 import useSiteSettings from '@/hooks/useSiteSettings';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function Footer() {
   const t = useTranslations('Footer');
@@ -17,7 +18,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="font-bold text-xl text-white">Regar</span>
+              <BrandLogo locale={locale} className="text-white" size="md" />
             </div>
             <p className="text-sm text-neutral-400 mb-4">
               {locale === 'fr' ? 'Rafflites de sneakers, casquettes et accessoires de luxe.' : 'Raffles for sneakers, caps and luxury accessories.'}

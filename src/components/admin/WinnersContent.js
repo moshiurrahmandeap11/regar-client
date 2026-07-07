@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Search, Package, ChevronLeft, ChevronRight, Truck, CheckCircle } from 'lucide-react';
+import { Trophy, Search, Package, ChevronLeft, ChevronRight, Truck, CheckCircle, Trash2, UserPlus } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -42,6 +42,37 @@ export default function WinnersContent() {
       });
       if (!res.ok) throw new Error('Failed to update');
       toast.success('Status updated');
+      fetchWinners();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const addSampleWinners = async () => {
+    try {
+      const res = await fetch(`${API}/api/tickets/winners/admin/seed`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to add sample winners');
+      toast.success(data?.created?.length ? 'Sample winners added' : 'Sample winners already exist');
+      fetchWinners();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const deleteWinner = async (id) => {
+    if (!confirm('Delete this winner?')) return;
+    try {
+      const res = await fetch(`${API}/api/tickets/winners/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || 'Failed to delete winner');
+      toast.success('Winner deleted');
       fetchWinners();
     } catch (error) {
       toast.error(error.message);
@@ -89,6 +120,13 @@ export default function WinnersContent() {
             <option key={key} value={key}>{config.label}</option>
           ))}
         </select>
+        <button
+          onClick={addSampleWinners}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add sample winners
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
@@ -122,11 +160,18 @@ export default function WinnersContent() {
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center">
-                              <Trophy className="w-4 h-4 text-amber-600" />
+                            <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center overflow-hidden">
+                              {winner.user?.avatar ? (
+                                <img src={winner.user.avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <Trophy className="w-4 h-4 text-amber-600" />
+                              )}
                             </div>
                             <div>
-                              <p className="font-medium">{winner.user?.firstName} {winner.user?.lastName}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{winner.user?.firstName} {winner.user?.lastName}</p>
+                                {winner.isSeeded ? <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-medium">Sample</span> : null}
+                              </div>
                               <p className="text-xs text-neutral-500">{winner.user?.email}</p>
                             </div>
                           </div>
@@ -156,6 +201,10 @@ export default function WinnersContent() {
                             {winner.claimStatus === 'shipped' && (
                               <button onClick={() => updateStatus(winner._id, 'delivered')} className="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors">Mark Delivered</button>
                             )}
+                            <button onClick={() => deleteWinner(winner._id)} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                              <Trash2 className="w-3 h-3" />
+                              Delete
+                            </button>
                           </div>
                           {winner.trackingNumber && (
                             <p className="text-xs text-neutral-500 mt-1">Tracking: {winner.trackingNumber}</p>

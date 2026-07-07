@@ -7,6 +7,7 @@ import NextLink from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNotifications } from '@/hooks/useNotifications';
+import BrandLogo from '@/components/BrandLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ShoppingBag, User, LogOut, ChevronDown,
@@ -154,7 +155,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center">
-            <span className="font-bold text-xl tracking-[0.2em] uppercase text-white">{isFr ? 'Regar' : 'LOOK'}</span>
+            <BrandLogo locale={locale} className="text-white" size="md" />
           </Link>
 
           <nav className="flex items-center gap-2">
@@ -330,9 +331,7 @@ export default function Navbar() {
           <Menu className="w-6 h-6" />
         </button>
         <Link href="/" className="flex items-center gap-2">
-          <span className="font-black text-xl tracking-wider text-white">
-            {isFr ? 'R' : 'L'} <span className="text-white/80 font-bold tracking-[0.3em] text-sm">{isFr ? 'REGAR' : 'LOOK'}</span>
-          </span>
+          <BrandLogo locale={locale} className="text-white" size="md" />
         </Link>
         <Link href="/cart" className="relative text-white p-1">
           <ShoppingBag className="w-6 h-6" />
@@ -439,7 +438,7 @@ export default function Navbar() {
               {isAuthPage ? (
                 <span className="font-bold text-lg tracking-wider">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
               ) : (
-                <span className="font-bold text-lg tracking-wider">{isFr ? 'REGAR' : 'LOOK'}</span>
+                <BrandLogo locale={locale} className="text-white" size="sm" />
               )}
               <button onClick={() => setMobileOpen(false)} className="text-neutral-400">
                 <X className="w-5 h-5" />

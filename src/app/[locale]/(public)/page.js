@@ -497,6 +497,63 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Recent Winners */}
+      {winners.length > 0 && (
+        <section className="py-8 sm:py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">
+                  {isFr ? 'Gagnants recents' : 'Recent winners'}
+                </p>
+                <h2 className="mt-1 text-2xl font-black">
+                  {isFr ? 'Les derniers gagnants Regar' : 'Latest Regar winners'}
+                </h2>
+              </div>
+              <Link href="/winners" className="inline-flex w-fit items-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-xs font-black uppercase text-neutral-900">
+                {isFr ? 'Voir tous' : 'View all'} <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {winners.slice(0, 3).map((winner) => {
+                const avatar = winner.user?.avatar;
+                return (
+                  <div key={winner._id} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238]">
+                        {avatar ? (
+                          <img src={avatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Trophy className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-black text-sm">
+                          {winner.user?.firstName} {winner.user?.lastName?.charAt(0)}.
+                        </p>
+                        <p className="mt-0.5 text-xs text-neutral-500">
+                          {winner.raffle ? (isFr ? winner.raffle.name : winner.raffle.nameEn || winner.raffle.name) : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-lg bg-neutral-50 p-4">
+                      <p className="text-sm font-bold text-neutral-800">
+                        {isFr ? winner.prize : winner.prizeEn || winner.prize}
+                      </p>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {winner.ticket?.ticketNumber}
+                        {winner.prizeValue ? ` • ${winner.prizeValue} CHF` : ''}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Participant Reviews */}
       {reviews.length > 0 && (
         <section className="py-8 sm:py-12">
