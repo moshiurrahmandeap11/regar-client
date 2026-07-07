@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import BrandLogo from '@/components/BrandLogo';
+import CapRaffleLogo from '@/components/CapRaffleLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ShoppingBag, User, LogOut, ChevronDown,
@@ -351,8 +352,7 @@ export default function Navbar() {
           <Menu className="w-6 h-6" />
         </button>
         <Link href="/dashboard" className="flex items-center gap-1.5">
-          <Crown className="w-5 h-5 text-[#e2bd87]" />
-          <span className="font-bold text-lg tracking-wider text-white">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
+          <CapRaffleLogo size="sm" />
         </Link>
         <div className="relative" ref={notifRef}>
           <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">
@@ -436,7 +436,7 @@ export default function Navbar() {
           >
             <div className="flex items-center justify-between mb-6">
               {isAuthPage ? (
-                <span className="font-bold text-lg tracking-wider">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
+                <CapRaffleLogo size="sm" />
               ) : (
                 <BrandLogo locale={locale} className="text-white" size="sm" />
               )}
