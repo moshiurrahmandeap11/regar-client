@@ -41,6 +41,42 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d99600 #f1eee8;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1eee8;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e2bd87, #b88238);
+  border: 2px solid #f1eee8;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e8c997, #a07030);
+}
+
+.dashboard-scrollbar {
+  scrollbar-color: #d99600 #07090c;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-track {
+  background: #07090c;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb {
+  border-color: #07090c;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
