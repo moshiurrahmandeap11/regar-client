@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingCart, Users, Ticket, TrendingUp, ArrowUpRight,
-  Search, Eye, Pencil, MoreVertical, ChevronDown, Gift
+  ShoppingCart, Users, Ticket, TrendingUp, ArrowUpRight, ArrowDownRight,
+  Search, Eye, Pencil, MoreVertical, ChevronDown, Gift, X, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 /* ─── Simple SVG Line Chart ─── */
 function LineChart({ data }) {
@@ -31,10 +33,10 @@ function LineChart({ data }) {
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40">
       {yTicks.map((t, i) => (
-        <text key={i} x={padding.left - 6} y={yFor(t) + 4} textAnchor="end" className="text-[10px] fill-neutral-400">{Math.round(t / 1000)}K</text>
+        <text key={i} x={padding.left - 6} y={yFor(t) + 4} textAnchor="end" className="text-[10px] fill-neutral-400">{Math.round(t)}</text>
       ))}
-      {data.filter((_, i) => i % 2 === 0 || i === data.length - 1).map((d, i) => (
-        <text key={`x-${i}`} x={xFor(d.i || i * 2)} y={height - 4} textAnchor="middle" className="text-[10px] fill-neutral-400">{d.label}</text>
+      {data.filter((_, i) => i % 4 === 0 || i === data.length - 1).map((d, i) => (
+        <text key={`x-${i}`} x={xFor(d.i || i * 4)} y={height - 4} textAnchor="middle" className="text-[10px] fill-neutral-400">{d.label}</text>
       ))}
       {yTicks.map((t, i) => (
         <line key={`grid-${i}`} x1={padding.left} y1={yFor(t)} x2={width - padding.right} y2={yFor(t)} className="stroke-neutral-100" strokeWidth={1} />
@@ -127,14 +129,37 @@ function timeAgo(date) {
 }
 
 export default function DashboardContent() {
+  const router = useRouter();
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, activeRaffles: 0 });
+  const [changes, setChanges] = useState({ revenue: 0, orders: 0, users: 0, tickets: 0 });
   const [recentOrders, setRecentOrders] = useState([]);
   const [salesData, setSalesData] = useState([]);
   const [allTickets, setAllTickets] = useState([]);
   const [allRaffles, setAllRaffles] = useState([]);
+  const [dailyData, setDailyData] = useState({ entries: [], orders: [], users: [] });
   const [loading, setLoading] = useState(true);
+  const [chartFilter, setChartFilter] = useState('7'); // '7' | '14' | '30'
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef(null);
+  const [giveawayMenuOpen, setGiveawayMenuOpen] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editRaffle, setEditRaffle] = useState(null);
 
   useEffect(() => { fetchDashboardData(); }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -143,7 +168,9 @@ export default function DashboardContent() {
       ]);
       const data = analyticsRes.data || {};
       setStats({ totalRevenue: toNumber(data.totalRevenue), totalOrders: toNumber(data.totalOrders), totalUsers: toNumber(data.totalUsers), activeRaffles: toNumber(data.activeRaffles) });
+      setChanges(data.changes || { revenue: 0, orders: 0, users: 0, tickets: 0 });
       setRecentOrders(data.recentOrders || []);
+      setDailyData(data.dailyData || { entries: [], orders: [], users: [] });
       setSalesData(salesRes.data || []);
       setAllTickets((ticketsRes.data || []).slice(0, 5));
       setAllRaffles(rafflesRes.data || []);
@@ -154,10 +181,72 @@ export default function DashboardContent() {
     }
   };
 
+  // Real-time search across dashboard data
+  const handleSearch = (e) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+    if (!q.trim()) {
+      setShowSearchResults(false);
+      return;
+    }
+    const lower = q.toLowerCase();
+    const results = [];
+    // Search orders
+    recentOrders.forEach(o => {
+      if ((o.orderNumber || '').toLowerCase().includes(lower) || (o.user?.firstName || '').toLowerCase().includes(lower)) {
+        results.push({ type: 'order', title: `Order #${o.orderNumber}`, subtitle: `${o.user?.firstName || ''} ${o.user?.lastName || ''}`, id: o._id, link: '/admin/orders' });
+      }
+    });
+    // Search raffles
+    allRaffles.forEach(r => {
+      if ((r.name || '').toLowerCase().includes(lower)) {
+        results.push({ type: 'raffle', title: r.name, subtitle: 'Giveaway', id: r._id, link: '/admin/raffles' });
+      }
+    });
+    // Search tickets
+    allTickets.forEach(t => {
+      if ((t.ticketNumber || '').toLowerCase().includes(lower)) {
+        results.push({ type: 'ticket', title: `Ticket ${t.ticketNumber}`, subtitle: t.user?.firstName || '', id: t._id, link: '/admin/tickets' });
+      }
+    });
+    setSearchResults(results.slice(0, 8));
+    setShowSearchResults(true);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      const lower = searchQuery.toLowerCase().trim();
+      if (lower.includes('order')) router.push('/admin/orders');
+      else if (lower.includes('product') || lower.includes('cap')) router.push('/admin/products');
+      else if (lower.includes('user')) router.push('/admin/users');
+      else if (lower.includes('raffle') || lower.includes('giveaway')) router.push('/admin/raffles');
+      else if (lower.includes('ticket') || lower.includes('entry')) router.push('/admin/tickets');
+      else if (lower.includes('winner')) router.push('/admin/winners');
+      else if (lower.includes('payment') || lower.includes('payout')) router.push('/admin/payments');
+      else if (lower.includes('report') || lower.includes('analytic')) router.push('/admin/analytics');
+      else if (lower.includes('content') || lower.includes('page')) router.push('/admin/content');
+      else if (lower.includes('contact') || lower.includes('support')) router.push('/admin/contacts');
+      else if (lower.includes('setting')) router.push('/admin/settings');
+      else if (lower.includes('log') || lower.includes('history') || lower.includes('activity')) router.push('/admin/draw-history');
+      else router.push('/admin/dashboard');
+      setShowSearchResults(false);
+      setSearchQuery('');
+    }
+  };
+
+  const applyDateRange = () => {
+    if (dateRange.start && dateRange.end) {
+      toast.success(`Date range: ${dateRange.start} to ${dateRange.end}`);
+      setShowDatePicker(false);
+    }
+  };
+
   const chartData = useMemo(() => {
-    if (salesData.length === 0) return [];
-    return salesData.slice(-7).map((sale, i) => ({ label: sale.month?.split(' ')[0] || `M${i + 1}`, value: toNumber(sale.orders), i }));
-  }, [salesData]);
+    const days = parseInt(chartFilter, 10);
+    const data = dailyData.entries || [];
+    if (data.length === 0) return [];
+    return data.slice(-days).map((d, i) => ({ label: d.label, value: toNumber(d.value), i }));
+  }, [dailyData, chartFilter]);
 
   const donutData = useMemo(() => {
     const active = allRaffles.filter(r => r.status === 'active').length;
@@ -195,7 +284,7 @@ export default function DashboardContent() {
       const user = ticket.user;
       const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
       const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : '??';
-      return { _id: ticket._id, name: name || 'Unknown', ticket: ticket.ticketNumber || '-', time: timeAgo(ticket.createdAt), entries: 1, avatar: initials || '??' };
+      return { _id: ticket._id, name: name || 'Unknown', ticket: ticket.ticketNumber || '-', time: timeAgo(ticket.createdAt), entries: 1, avatar: initials || '??', userAvatar: user?.avatar };
     });
   }, [allTickets]);
 
@@ -203,34 +292,97 @@ export default function DashboardContent() {
   const totalTicketsCount = allTickets.length;
 
   const statCards = [
-    { label: 'Total Entries', value: totalEntries.toLocaleString() || totalTicketsCount.toLocaleString(), sub: '+18.6%', icon: Ticket, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Total Orders', value: stats.totalOrders.toLocaleString(), sub: '+12.4%', icon: ShoppingCart, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), sub: '+22.8%', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Active Giveaways', value: stats.activeRaffles.toLocaleString(), sub: 'Running now', icon: Gift, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Total Entries', value: totalEntries.toLocaleString() || totalTicketsCount.toLocaleString(), change: changes.tickets, icon: Ticket, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Total Orders', value: stats.totalOrders.toLocaleString(), change: changes.orders, icon: ShoppingCart, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), change: changes.revenue, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Active Giveaways', value: stats.activeRaffles.toLocaleString(), change: null, icon: Gift, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   const displayOrders = recentOrders.length > 0 ? recentOrders.slice(0, 3) : [];
   const displayEntries = recentEntries.length > 0 ? recentEntries : [];
   const displayGiveaways = activeGiveaways.length > 0 ? activeGiveaways : [];
 
+  const handleViewRaffle = (id) => router.push(`/admin/raffles`);
+  const handleEditRaffle = (raffle) => { setEditRaffle(raffle); setEditModalOpen(true); setGiveawayMenuOpen(null); };
+  const handleSaveEdit = async () => {
+    if (!editRaffle) return;
+    try {
+      await api.put(`/api/raffles/${editRaffle._id}`, editRaffle);
+      toast.success('Giveaway updated');
+      setEditModalOpen(false);
+      fetchDashboardData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update');
+    }
+  };
+
   if (loading) return <div className="h-40 flex items-center justify-center text-neutral-500">Loading dashboard...</div>;
 
   return (
     <div className="space-y-5">
+      {/* Search Bar */}
+      <div className="relative" ref={searchRef}>
+        <div className="flex items-center rounded-lg px-3 py-2 w-full max-w-md bg-neutral-100 border border-neutral-200">
+          <Search className="w-4 h-4 text-neutral-400 mr-2 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search orders, raffles, tickets..."
+            value={searchQuery}
+            onChange={handleSearch}
+            onKeyDown={handleSearchKeyDown}
+            onFocus={() => searchQuery.trim() && setShowSearchResults(true)}
+            className="bg-transparent text-sm text-neutral-700 placeholder-neutral-400 outline-none w-full"
+          />
+          {searchQuery && (
+            <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="ml-1 text-neutral-400 hover:text-neutral-600">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        <AnimatePresence>
+          {showSearchResults && searchResults.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="absolute left-0 mt-1 w-full max-w-md bg-white rounded-xl border border-neutral-200 shadow-lg z-50 overflow-hidden"
+            >
+              {searchResults.map((result, i) => (
+                <div
+                  key={i}
+                  onClick={() => { router.push(result.link); setShowSearchResults(false); setSearchQuery(''); }}
+                  className="px-4 py-2.5 hover:bg-neutral-50 cursor-pointer border-b border-neutral-50 last:border-0"
+                >
+                  <p className="text-sm font-medium text-neutral-900">{result.title}</p>
+                  <p className="text-xs text-neutral-500">{result.subtitle}</p>
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {statCards.map((stat, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-white rounded-xl border border-neutral-200 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-4 h-4" />
+        {statCards.map((stat, i) => {
+          const isPositive = stat.change !== null && stat.change >= 0;
+          const changeText = stat.change !== null ? `${isPositive ? '+' : ''}${stat.change}%` : 'Running now';
+          return (
+            <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-white rounded-xl border border-neutral-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center ${stat.color}`}>
+                  <stat.icon className="w-4 h-4" />
+                </div>
+                <span className={`text-[10px] font-medium flex items-center gap-0.5 ${stat.change !== null ? (isPositive ? 'text-emerald-600' : 'text-red-500') : 'text-neutral-500'}`}>
+                  {stat.change !== null ? (isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />) : null}
+                  {changeText}
+                </span>
               </div>
-              <span className={`text-[10px] font-medium ${stat.sub.startsWith('+') ? 'text-emerald-600' : 'text-neutral-500'}`}>{stat.sub}</span>
-            </div>
-            <p className="text-xl font-bold text-neutral-900">{stat.value}</p>
-            <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
-          </motion.div>
-        ))}
+              <p className="text-xl font-bold text-neutral-900">{stat.value}</p>
+              <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Charts Row */}
@@ -239,12 +391,37 @@ export default function DashboardContent() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm text-neutral-900">Entries Overview</h3>
-            <button className="flex items-center gap-1 text-[10px] text-neutral-500 bg-neutral-50 px-2 py-1 rounded-lg border border-neutral-200">
-              Last 30 Days <ChevronDown className="w-3 h-3" />
-            </button>
+            <div className="relative">
+              <button onClick={() => setShowDatePicker(!showDatePicker)} className="flex items-center gap-1 text-[10px] text-neutral-500 bg-neutral-50 px-2 py-1 rounded-lg border border-neutral-200">
+                Last {chartFilter} Days <ChevronDown className="w-3 h-3" />
+              </button>
+              <AnimatePresence>
+                {showDatePicker && (
+                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="absolute right-0 mt-1 w-48 bg-white rounded-xl border border-neutral-200 shadow-lg z-50 p-3">
+                    <div className="space-y-2">
+                      {['7', '14', '30'].map((days) => (
+                        <button
+                          key={days}
+                          onClick={() => { setChartFilter(days); setShowDatePicker(false); }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs ${chartFilter === days ? 'bg-amber-50 text-amber-700 font-medium' : 'text-neutral-600 hover:bg-neutral-50'}`}
+                        >
+                          Last {days} Days
+                        </button>
+                      ))}
+                      <div className="border-t border-neutral-100 pt-2">
+                        <p className="text-[10px] text-neutral-400 mb-1">Custom range</p>
+                        <input type="date" value={dateRange.start} onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })} className="w-full text-xs border border-neutral-200 rounded px-2 py-1 mb-1" />
+                        <input type="date" value={dateRange.end} onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })} className="w-full text-xs border border-neutral-200 rounded px-2 py-1 mb-2" />
+                        <button onClick={applyDateRange} className="w-full text-xs bg-neutral-900 text-white rounded-lg py-1.5">Apply</button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
           {chartData.length === 0 ? (
-            <div className="text-center py-8 text-neutral-400"><TrendingUp className="w-6 h-6 mx-auto mb-1" /><p className="text-xs">No sales data</p></div>
+            <div className="text-center py-8 text-neutral-400"><TrendingUp className="w-6 h-6 mx-auto mb-1" /><p className="text-xs">No entries data</p></div>
           ) : <LineChart data={chartData} />}
         </motion.div>
 
@@ -252,17 +429,49 @@ export default function DashboardContent() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm text-neutral-900">Giveaway Status</h3>
-            <button className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
+            <button onClick={() => router.push('/admin/raffles')} className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
           </div>
           <DonutChart data={donutData} />
         </motion.div>
       </div>
 
+      {/* Recent Entries */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="bg-white rounded-xl border border-neutral-200 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-sm text-neutral-900">Recent Entries</h3>
+          <button onClick={() => router.push('/admin/tickets')} className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
+        </div>
+        {displayEntries.length === 0 ? (
+          <div className="text-center py-6 text-neutral-400"><Ticket className="w-6 h-6 mx-auto mb-1" /><p className="text-xs">No recent entries</p></div>
+        ) : (
+          <div className="space-y-3">
+            {displayEntries.map((entry) => (
+              <div key={entry._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50/50">
+                <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600 shrink-0 overflow-hidden">
+                  {entry.userAvatar ? (
+                    <img src={entry.userAvatar} alt={entry.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{entry.avatar}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-neutral-900">{entry.name}</p>
+                  <p className="text-[10px] text-neutral-500">{entry.ticket}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] text-neutral-400">{entry.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
       {/* Active Giveaways */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white rounded-xl border border-neutral-200 p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-sm text-neutral-900">Active Giveaways</h3>
-          <button className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
+          <button onClick={() => router.push('/admin/raffles')} className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
         </div>
         {displayGiveaways.length === 0 ? (
           <div className="text-center py-6 text-neutral-400"><Ticket className="w-6 h-6 mx-auto mb-1" /><p className="text-xs">No active giveaways</p></div>
@@ -299,6 +508,34 @@ export default function DashboardContent() {
                 <div className="text-right shrink-0">
                   <p className="text-[10px] text-neutral-400">{giveaway.endDate}</p>
                 </div>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => handleViewRaffle(giveaway._id)} className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-400 hover:text-neutral-600 transition-colors" title="View">
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => handleEditRaffle(giveaway)} className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-400 hover:text-neutral-600 transition-colors" title="Edit">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="relative">
+                    <button onClick={() => setGiveawayMenuOpen(giveawayMenuOpen === giveaway._id ? null : giveaway._id)} className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-400 hover:text-neutral-600 transition-colors" title="More">
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                    <AnimatePresence>
+                      {giveawayMenuOpen === giveaway._id && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="absolute right-0 mt-1 w-36 bg-white rounded-lg border border-neutral-200 shadow-lg z-50 py-1"
+                        >
+                          <button onClick={() => { router.push(`/admin/raffles`); setGiveawayMenuOpen(null); }} className="w-full text-left px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50">Manage Details</button>
+                          <button onClick={() => { router.push('/admin/draw'); setGiveawayMenuOpen(null); }} className="w-full text-left px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50">Draw Winner</button>
+                          <button onClick={() => { setGiveawayMenuOpen(null); }} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50">Close Giveaway</button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -309,14 +546,14 @@ export default function DashboardContent() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white rounded-xl border border-neutral-200 p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-sm text-neutral-900">Recent Orders</h3>
-          <button className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
+          <button onClick={() => router.push('/admin/orders')} className="text-[10px] text-neutral-500 hover:text-neutral-700 font-medium">View All</button>
         </div>
         {displayOrders.length === 0 ? (
           <div className="text-center py-6 text-neutral-400"><ShoppingCart className="w-6 h-6 mx-auto mb-1" /><p className="text-xs">No orders yet</p></div>
         ) : (
           <div className="space-y-3">
             {displayOrders.map((order) => (
-              <div key={order._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50/50">
+              <div key={order._id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-50/50 cursor-pointer" onClick={() => router.push('/admin/orders')}>
                 <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center text-xs font-medium text-neutral-600 shrink-0 overflow-hidden">
                   {order.user?.avatar ? (
                     <img src={order.user.avatar} alt={order.user.firstName || ''} className="w-full h-full object-cover" />
@@ -337,6 +574,43 @@ export default function DashboardContent() {
           </div>
         )}
       </motion.div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editModalOpen && editRaffle && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-xl border border-neutral-200 shadow-lg w-full max-w-md p-5 mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm text-neutral-900">Edit Giveaway</h3>
+                <button onClick={() => setEditModalOpen(false)} className="p-1 text-neutral-400 hover:text-neutral-600"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">Name</label>
+                  <input value={editRaffle.name || ''} onChange={(e) => setEditRaffle({ ...editRaffle, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm outline-none focus:ring-2 focus:ring-amber-200" />
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">End Date</label>
+                  <input type="date" value={editRaffle.endDate ? new Date(editRaffle.endDate).toISOString().split('T')[0] : ''} onChange={(e) => setEditRaffle({ ...editRaffle, endDate: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm outline-none focus:ring-2 focus:ring-amber-200" />
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">Status</label>
+                  <select value={editRaffle.status || 'draft'} onChange={(e) => setEditRaffle({ ...editRaffle, status: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm outline-none focus:ring-2 focus:ring-amber-200">
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="closed">Closed</option>
+                    <option value="drawn">Drawn</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setEditModalOpen(false)} className="flex-1 px-4 py-2 rounded-lg border border-neutral-200 text-sm text-neutral-600 hover:bg-neutral-50">Cancel</button>
+                <button onClick={handleSaveEdit} className="flex-1 px-4 py-2 rounded-lg bg-neutral-900 text-white text-sm hover:bg-neutral-800">Save</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

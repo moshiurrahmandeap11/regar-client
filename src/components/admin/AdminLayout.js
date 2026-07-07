@@ -55,6 +55,7 @@ export default function AdminLayoutClient({ children }) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef(null);
   const [activeRaffles, setActiveRaffles] = useState([]);
+  const [sidebarRaffleImage, setSidebarRaffleImage] = useState('');
 
   const getReadState = () => {
     try { const stored = localStorage.getItem('admin_notifications_read'); return stored ? JSON.parse(stored) : {}; } catch { return {}; }
@@ -69,13 +70,18 @@ export default function AdminLayoutClient({ children }) {
     if (!user?.isAdmin) return;
     const fetchData = async () => {
       try {
-        const [ordersRes, rafflesRes] = await Promise.all([
+        const [ordersRes, rafflesRes, notifRes] = await Promise.all([
           api.get('/api/orders').catch(() => ({ data: [] })),
           api.get('/api/raffles?status=active').catch(() => ({ data: [] })),
+          api.get('/api/notifications/all?limit=10').catch(() => ({ data: [] })),
         ]);
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data.slice(0, 5) : [];
         const raffles = Array.isArray(rafflesRes.data) ? rafflesRes.data : [];
         setActiveRaffles(raffles);
+        // Set sidebar raffle image
+        const firstRaffle = raffles[0];
+        const img = firstRaffle?.prizes?.[0]?.image || firstRaffle?.product?.images?.[0] || '';
+        setSidebarRaffleImage(img);
         const notifs = [];
         const readState = getReadState();
         orders.forEach((order) => {
@@ -89,6 +95,19 @@ export default function AdminLayoutClient({ children }) {
             const id = `raffle-${raffle._id}`;
             notifs.push({ id, type: 'raffle', title: 'Ready to Draw', message: `${raffle.name} is eligible`, time: 'Now', read: !!readState[id], link: '/admin/draw' });
           }
+        });
+        // Add real notifications from API
+        const apiNotifs = Array.isArray(notifRes.data) ? notifRes.data : [];
+        apiNotifs.forEach((n) => {
+          notifs.push({
+            id: n._id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            time: new Date(n.createdAt).toLocaleDateString(),
+            read: n.read,
+            link: n.link || '/admin/dashboard',
+          });
         });
         setNotifications(notifs.slice(0, 6));
         setNotifUnread(notifs.filter(n => !n.read).length);
@@ -179,8 +198,12 @@ export default function AdminLayoutClient({ children }) {
         </div>
         <div className="p-4 border-t border-white/10 space-y-3">
           <div className="bg-neutral-800 rounded-xl p-3.5">
-            <div className="w-10 h-10 bg-neutral-700 rounded-lg flex items-center justify-center mb-2.5">
-              <Crown className="w-5 h-5 text-amber-400" />
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-2.5 overflow-hidden">
+              {sidebarRaffleImage ? (
+                <img src={sidebarRaffleImage} alt="Raffle" className="w-full h-full object-cover" />
+              ) : (
+                <Crown className="w-5 h-5 text-amber-400" />
+              )}
             </div>
             <p className="text-sm font-semibold text-white mb-0.5">Raffle is Live!</p>
             <p className="text-xs text-neutral-400 mb-3">{activeRaffle ? activeRaffle.name : 'No active raffle'}</p>
