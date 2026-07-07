@@ -41,6 +41,7 @@ const uniqueById = (items = []) => {
 };
 
 const pickImage = (item) => item?.images?.[0] || item?.colors?.find((color) => color.image)?.image || '';
+const HERO_BANNER_IMAGE = '/images/regar-hero-banner.jpeg';
 
 export default function HomePage() {
   const locale = useLocale();
@@ -149,18 +150,19 @@ export default function HomePage() {
   return (
     <main className="bg-[#f8f5ef] text-[#171410] pb-20">
       {/* Hero Section */}
-      <section className="relative bg-black text-white overflow-hidden">
+      <section className="relative min-h-[620px] bg-black text-white overflow-hidden">
         <div className="absolute inset-0">
-          {heroImage ? (
-            <img src={heroImage} alt={heroProduct?.name || 'Regar raffle'} className="h-full w-full object-cover opacity-40" />
-          ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_70%_25%,#4b392b_0,#171410_45%,#050505_100%)]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/40" />
+          <img
+            src={HERO_BANNER_IMAGE}
+            alt="Regar cap raffle campaign"
+            className="absolute inset-y-0 right-0 h-full w-auto max-w-none object-contain opacity-90 sm:opacity-95"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 via-45% to-black/10" />
+          <div className="absolute inset-0 bg-black/10" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24">
+        <div className="relative px-6 sm:px-8 lg:px-12 py-10 sm:py-16 lg:py-24">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -189,7 +191,7 @@ export default function HomePage() {
             </div>
 
             {/* Countdown Timer */}
-            <div className="mt-6 max-w-md rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur">
+            <div className="mt-6 max-w-md rounded-xl border border-white/10 bg-black/45 p-4 backdrop-blur">
               <p className="text-center text-[10px] font-bold uppercase tracking-[0.22em] text-white/50">
                 {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
               </p>
@@ -494,6 +496,63 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Participant Reviews */}
+      {reviews.length > 0 && (
+        <section className="py-8 sm:py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">
+                  {isFr ? 'Avis participants' : 'What participants say'}
+                </p>
+                <h2 className="mt-1 text-2xl font-black">
+                  {isFr ? 'Des acheteurs qui participent' : 'Cap owners joining the raffle'}
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm text-neutral-500">
+                {isFr ? 'Les avis approuves par admin apparaissent ici.' : 'Admin-approved owner stories appear here.'}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {reviews.slice(0, 3).map((review) => {
+                const avatar = review.avatar || review.user?.avatar;
+                return (
+                  <div key={review._id} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-sm font-black text-[#b88238]">
+                          {avatar ? (
+                            <img src={avatar} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            review.name?.charAt(0) || 'R'
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-black text-sm">{review.name}</p>
+                          <div className="mt-1 flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, index) => (
+                              <Star
+                                key={index}
+                                className={`h-3.5 w-3.5 ${index < Number(review.rating || 0) ? 'fill-[#e2bd87] text-[#e2bd87]' : 'text-neutral-200'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <Quote className="h-6 w-6 text-[#e2bd87]" />
+                    </div>
+                    <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+                      {isFr ? review.comment : review.commentEn || review.comment}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Newsletter */}
       <section className="pb-8 sm:pb-12">

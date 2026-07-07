@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Search, Eye, EyeOff, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Search, Eye, EyeOff, CheckCircle, ChevronLeft, ChevronRight, Trash2, UserPlus } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -46,6 +46,37 @@ export default function ReviewsContent() {
     }
   };
 
+  const addSampleOwners = async () => {
+    try {
+      const res = await fetch(`${API}/api/reviews/admin/seed`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to add sample owners');
+      toast.success(data?.created?.length ? 'Sample owners added' : 'Sample owners already exist');
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const deleteReview = async (id) => {
+    if (!confirm('Delete this review?')) return;
+    try {
+      const res = await fetch(`${API}/api/reviews/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || 'Failed to delete review');
+      toast.success('Review deleted');
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const filtered = reviews.filter(r => {
     const matchSearch = r.name?.toLowerCase().includes(search.toLowerCase()) ||
       r.comment?.toLowerCase().includes(search.toLowerCase());
@@ -80,6 +111,13 @@ export default function ReviewsContent() {
           <option value="approved">Approved</option>
           <option value="pending">Pending</option>
         </select>
+        <button
+          onClick={addSampleOwners}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add sample owners
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
@@ -111,11 +149,18 @@ export default function ReviewsContent() {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-neutral-200 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium">{review.name?.[0]}</span>
+                          <div className="w-9 h-9 bg-neutral-200 rounded-full flex items-center justify-center overflow-hidden">
+                            {(review.avatar || review.user?.avatar) ? (
+                              <img src={review.avatar || review.user.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm font-medium">{review.name?.[0]}</span>
+                            )}
                           </div>
                           <div>
-                            <p className="font-medium">{review.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{review.name}</p>
+                              {review.isSeeded ? <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-medium">Sample</span> : null}
+                            </div>
                             <p className="text-xs text-neutral-500">{review.user?.email}</p>
                           </div>
                         </div>
@@ -141,17 +186,26 @@ export default function ReviewsContent() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => toggleApproval(review._id, review.isApproved)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            review.isApproved
-                              ? 'text-amber-600 hover:bg-amber-50'
-                              : 'text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                        >
-                          {review.isApproved ? <EyeOff className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
-                          {review.isApproved ? 'Hide' : 'Approve'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleApproval(review._id, review.isApproved)}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                              review.isApproved
+                                ? 'text-amber-600 hover:bg-amber-50'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {review.isApproved ? <EyeOff className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                            {review.isApproved ? 'Hide' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => deleteReview(review._id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}
