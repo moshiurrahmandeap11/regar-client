@@ -151,26 +151,26 @@ export default function HomePage() {
   return (
     <main className="bg-[#f8f5ef] text-[#171410] pb-20">
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100svh-64px)] lg:min-h-[620px] bg-[#090806] text-white overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={HERO_BANNER_IMAGE}
-            alt="Regar cap raffle campaign"
-            className="absolute inset-y-0 right-0 h-full w-auto max-w-none object-cover object-[58%_center] opacity-95 sm:object-contain sm:object-right lg:opacity-100"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#080704] via-[#15100a]/88 via-40% to-black/8" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
-          <div className="absolute inset-y-0 left-0 w-[58%] bg-[radial-gradient(circle_at_30%_18%,rgba(226,189,135,0.14),transparent_32%),linear-gradient(90deg,rgba(0,0,0,0.55),transparent)]" />
-        </div>
+      <section className="bg-[#f8f5ef] text-white sm:px-4 lg:px-8">
+        <div className="relative mx-auto min-h-[620px] overflow-hidden bg-[#100d09] sm:max-w-7xl sm:min-h-[560px]">
+          <div className="absolute inset-0">
+            <img
+              src={HERO_BANNER_IMAGE}
+              alt="Regar cap raffle campaign"
+              className="h-full w-full object-cover object-[38%_center] opacity-100"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.78)_0%,rgba(0,0,0,0.50)_24%,rgba(0,0,0,0.18)_44%,rgba(0,0,0,0)_70%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0)_60%,rgba(0,0,0,0.18)_100%)]" />
+          </div>
 
-        <div className="relative min-h-[inherit] px-4 sm:px-8 lg:px-14 py-5 sm:py-10 lg:py-12">
-          <div className="max-w-[320px] sm:max-w-[470px] lg:max-w-[520px]">
-            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/35 bg-black/28 px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+          <div className="relative min-h-[inherit] px-6 py-11 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+            <div className="max-w-[320px] sm:max-w-[460px] lg:max-w-[500px]">
+            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#e2bd87]" />
               {heroRaffle ? (isFr ? 'Raffle en direct' : 'Live raffle') : (isFr ? 'Raffle bientot' : 'Raffle coming soon')}
             </div>
 
-            <h1 className="mt-3 sm:mt-4 text-[40px] sm:text-[56px] lg:text-[70px] font-black uppercase leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)]">
+            <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-black uppercase leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.42)]">
               {headline[0]}
               <span className="block text-[#e9c58c]">{headline[1]}</span>
             </h1>
@@ -179,12 +179,12 @@ export default function HomePage() {
               {isFr ? 'Achetez une casquette et obtenez une entree automatique pour gagner des prix de grande valeur.' : 'Purchase a cap and get automatic entry to win high-value prizes.'}
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link href="/products" className="inline-flex items-center gap-2 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              <Link href="/products" className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
                 {isFr ? 'Acheter et entrer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs font-black uppercase text-white">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9c58c]/45 bg-black/30">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9c58c]/65 bg-black/18">
                   <PlayCircle className="h-4 w-4 text-[#e9c58c]" />
                 </span>
                 {isFr ? 'Comment ca marche' : 'How it works'}
@@ -192,7 +192,7 @@ export default function HomePage() {
             </div>
 
             {/* Countdown Timer */}
-            <div className="mt-6 w-full max-w-[330px] sm:max-w-[470px] rounded-lg border border-white/10 bg-white/[0.075] px-4 py-4 sm:px-6 sm:py-5 shadow-[0_18px_45px_rgba(0,0,0,0.26)] backdrop-blur-md">
+            <div className="mt-8 w-full max-w-[330px] rounded-lg border border-white/10 bg-black/28 px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.24)] sm:max-w-[470px] sm:px-6 sm:py-5">
               <p className="text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-[#e9c58c]">
                 {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
               </p>
@@ -205,7 +205,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="mt-5 hidden sm:flex flex-wrap items-center gap-4 text-[11px] font-bold text-white/78">
+            <div className="mt-5 hidden sm:flex flex-wrap items-center gap-4 text-[11px] font-bold text-white/82">
               {trustItems.slice(0, 3).map((item, index) => (
                 <div key={item.title} className="flex items-center gap-2">
                   <item.icon className="h-4 w-4 text-white/70" />
@@ -216,22 +216,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Participants */}
-          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-8 lg:bottom-8 lg:right-10 w-[172px] sm:w-[250px] rounded-lg bg-white px-4 py-3 text-black shadow-[0_18px_45px_rgba(0,0,0,0.28)]">
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2 shrink-0">
-                {shopProducts.slice(0, 3).map((product) => (
-                  <span key={product._id} className="h-8 w-8 sm:h-9 sm:w-9 overflow-hidden rounded-full border-2 border-white bg-[#e8ded0]">
-                    {pickImage(product) ? <img src={pickImage(product)} alt="" className="h-full w-full object-cover" /> : null}
-                  </span>
-                ))}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm sm:text-lg font-black text-[#d29a4c] leading-none">{displayParticipantCount.toLocaleString()}+</p>
-                <p className="mt-1 text-[10px] sm:text-xs font-bold text-neutral-700">{isFr ? 'Participants' : 'Participants'}</p>
-                <p className="hidden sm:block mt-0.5 text-[10px] leading-snug text-neutral-500">
-                  {isFr ? 'Rejoignez des milliers de personnes qui gagnent gros.' : 'Join thousands of people winning big!'}
-                </p>
+            {/* Participants */}
+            <div className="absolute bottom-6 right-4 w-[172px] rounded-lg bg-white px-4 py-3 text-black shadow-[0_18px_45px_rgba(0,0,0,0.28)] sm:bottom-7 sm:right-8 sm:w-[250px] lg:right-8">
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2 shrink-0">
+                  {shopProducts.slice(0, 3).map((product) => (
+                    <span key={product._id} className="h-8 w-8 sm:h-9 sm:w-9 overflow-hidden rounded-full border-2 border-white bg-[#e8ded0]">
+                      {pickImage(product) ? <img src={pickImage(product)} alt="" className="h-full w-full object-cover" /> : null}
+                    </span>
+                  ))}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm sm:text-lg font-black text-[#d29a4c] leading-none">{displayParticipantCount.toLocaleString()}+</p>
+                  <p className="mt-1 text-[10px] sm:text-xs font-bold text-neutral-700">{isFr ? 'Participants' : 'Participants'}</p>
+                  <p className="hidden sm:block mt-0.5 text-[10px] leading-snug text-neutral-500">
+                    {isFr ? 'Rejoignez des milliers de personnes qui gagnent gros.' : 'Join thousands of people winning big!'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
