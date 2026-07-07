@@ -9,7 +9,8 @@ import { useCart } from '@/contexts/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ShoppingBag, User, LogOut, ChevronDown,
-  Package, Ticket, Trophy, HelpCircle, Mail, LayoutDashboard
+  Package, Ticket, Trophy, HelpCircle, Mail, LayoutDashboard,
+  Home, Gift, Bell, Crown
 } from 'lucide-react';
 
 function FlagIcon({ locale }) {
@@ -51,6 +52,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const [notifUnread, setNotifUnread] = useState(3);
 
   const navLinks = [
     { href: '/products', label: t('products'), icon: Package },
@@ -81,15 +83,48 @@ export default function Navbar() {
 
   const currentLocaleLabel = locale === 'fr' ? 'FR' : 'EN';
 
+  // Check if we're on an auth page (dashboard, orders, tickets, profile)
+  const authPages = ['/dashboard', '/orders', '/tickets', '/profile', '/order-detail'];
+  const isAuthPage = authPages.some(p => pathname === p || pathname.startsWith(p + '/'));
+
+  // Show user bottom nav when logged in AND on auth pages
+  const showUserNav = user && isAuthPage;
+
+  const publicNavItems = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: ShoppingBag, label: 'Shop', href: '/products' },
+    { icon: Gift, label: 'Raffles', href: '/raffles' },
+    { icon: User, label: 'Profile', href: '/login' },
+  ];
+
+  const userNavItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
+    { icon: Ticket, label: 'My Entries', href: '/tickets' },
+    { icon: ShoppingBag, label: 'My Orders', href: '/orders' },
+    { icon: User, label: 'Profile', href: '/profile' },
+  ];
+
+  const bottomNavItems = showUserNav ? userNavItems : publicNavItems;
+
+  const isBottomActive = (href) => {
+    if (href === '/') return pathname === '/' || pathname === '';
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
+  // Mobile header content based on page type
+  const isFr = locale === 'fr';
+
   return (
-    <header className="sticky top-0 z-50 bg-[#1b2f48] border-b border-white/10">
+    <>
+    {/* ===== DESKTOP HEADER ===== */}
+    <header className="hidden lg:block sticky top-0 z-50 bg-[#1b2f48] border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center">
-            <span className="font-bold text-xl tracking-[0.2em] uppercase text-white">Regar</span>
+            <span className="font-bold text-xl tracking-[0.2em] uppercase text-white">{isFr ? 'Regar' : 'LOOK'}</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-2">
+          <nav className="flex items-center gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -108,7 +143,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleLocale}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/15 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-full border border-white/15 bg-white/10 text-white hover:bg-white/15 transition-colors"
             >
               <FlagIcon locale={locale} />
               <span>{currentLocaleLabel}</span>
@@ -181,66 +216,167 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="hidden md:flex px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
+                className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
               >
                 {t('login')}
               </Link>
             )}
-
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 rounded-lg text-white hover:bg-white/10"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
       </div>
+    </header>
 
-      <AnimatePresence>
-        {mobileOpen && (
+    {/* ===== MOBILE HEADER - Public Pages (Home, Shop, etc) ===== */}
+    {!isAuthPage && (
+      <div className="lg:hidden sticky top-0 z-50 bg-[#0f1419] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => setMobileOpen(true)} className="text-white p-1">
+          <Menu className="w-6 h-6" />
+        </button>
+        <Link href="/" className="flex items-center gap-2">
+          <span className="font-black text-xl tracking-wider text-white">
+            {isFr ? 'R' : 'L'} <span className="text-white/80 font-bold tracking-[0.3em] text-sm">{isFr ? 'REGAR' : 'LOOK'}</span>
+          </span>
+        </Link>
+        <Link href="/cart" className="relative text-white p-1">
+          <ShoppingBag className="w-6 h-6" />
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#e2bd87] text-[#0f1419] text-[10px] font-bold rounded-full flex items-center justify-center">
+              {totalItems}
+            </span>
+          )}
+        </Link>
+      </div>
+    )}
+
+    {/* ===== MOBILE HEADER - Auth Pages (Dashboard, Orders, etc) ===== */}
+    {isAuthPage && (
+      <div className="lg:hidden sticky top-0 z-50 bg-[#0f1419] px-4 py-3 flex items-center justify-between">
+        <button onClick={() => setMobileOpen(true)} className="text-white p-1">
+          <Menu className="w-6 h-6" />
+        </button>
+        <Link href="/dashboard" className="flex items-center gap-1.5">
+          <Crown className="w-5 h-5 text-[#e2bd87]" />
+          <span className="font-bold text-lg tracking-wider text-white">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
+        </Link>
+        <button className="relative text-white p-1">
+          <Bell className="w-6 h-6" />
+          {notifUnread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {notifUnread}
+            </span>
+          )}
+        </button>
+      </div>
+    )}
+
+    {/* ===== MOBILE MENU OVERLAY ===== */}
+    <AnimatePresence>
+      {mobileOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 lg:hidden"
+        >
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-white/10 bg-[#1b2f48] overflow-hidden"
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            transition={{ type: 'spring', damping: 25 }}
+            className="absolute left-0 top-0 bottom-0 w-64 bg-[#0f1419] text-white p-5"
           >
-            <div className="px-4 py-3 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ${
-                    isActive(link.href) ? 'bg-white/10 text-white' : 'text-[#d5dde6]'
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.label}
-                </Link>
-              ))}
-              <div className="pt-2 border-t border-white/10 flex gap-2">
-                {!user && (
+            <div className="flex items-center justify-between mb-6">
+              {isAuthPage ? (
+                <span className="font-bold text-lg tracking-wider">CAP<span className="text-[#e2bd87]">RAFFLE</span></span>
+              ) : (
+                <span className="font-bold text-lg tracking-wider">{isFr ? 'REGAR' : 'LOOK'}</span>
+              )}
+              <button onClick={() => setMobileOpen(false)} className="text-neutral-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Auth page sidebar nav */}
+            {isAuthPage && user && (
+              <nav className="space-y-1">
+                {[
+                  { icon: LayoutDashboard, label: isFr ? 'Tableau de bord' : 'Dashboard', href: '/dashboard' },
+                  { icon: Ticket, label: isFr ? 'Mes participations' : 'My Entries', href: '/tickets' },
+                  { icon: ShoppingBag, label: isFr ? 'Mes commandes' : 'My Orders', href: '/orders' },
+                  { icon: Gift, label: isFr ? 'Giveaways' : 'Giveaways', href: '/raffles' },
+                  { icon: Trophy, label: isFr ? 'Gagnants' : 'Winners', href: '/winners' },
+                  { icon: User, label: isFr ? 'Profil' : 'Profile', href: '/profile' },
+                  { icon: HelpCircle, label: isFr ? 'Support' : 'Support', href: '/contact' },
+                ].map((item) => (
+                  <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5">
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </Link>
+                ))}
+                <button onClick={() => { logout(); setMobileOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 w-full">
+                  <LogOut className="w-5 h-5" />
+                  {isFr ? 'Déconnexion' : 'Logout'}
+                </button>
+              </nav>
+            )}
+
+            {/* Public page sidebar nav */}
+            {!isAuthPage && (
+              <nav className="space-y-1">
+                {[
+                  { icon: Home, label: isFr ? 'Accueil' : 'Home', href: '/' },
+                  { icon: ShoppingBag, label: isFr ? 'Boutique' : 'Shop', href: '/products' },
+                  { icon: Gift, label: isFr ? 'Raffles' : 'Raffles', href: '/raffles' },
+                  { icon: Trophy, label: isFr ? 'Gagnants' : 'Winners', href: '/winners' },
+                  { icon: HelpCircle, label: isFr ? 'FAQ' : 'FAQ', href: '/faq' },
+                  { icon: Mail, label: isFr ? 'Contact' : 'Contact', href: '/contact' },
+                  ...(!user ? [
+                    { icon: User, label: isFr ? 'Connexion' : 'Login', href: '/login' },
+                  ] : []),
+                ].map((item) => (
+                  <Link key={item.label} href={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5">
+                    <item.icon className="w-5 h-5" />
+                    {item.label}
+                  </Link>
+                ))}
+                {user && (
                   <>
-                    <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm border border-white/20 text-white rounded-lg">
-                      {t('login')}
+                    <div className="border-t border-white/10 my-2" />
+                    <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-neutral-400 hover:text-white hover:bg-white/5">
+                      <LayoutDashboard className="w-5 h-5" />
+                      {isFr ? 'Tableau de bord' : 'Dashboard'}
                     </Link>
-                    <Link href="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm bg-white text-[#1b2f48] rounded-lg">
-                      {t('signup')}
-                    </Link>
+                    <button onClick={() => { logout(); setMobileOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 w-full">
+                      <LogOut className="w-5 h-5" />
+                      {isFr ? 'Déconnexion' : 'Logout'}
+                    </button>
                   </>
                 )}
-                <button
-                  onClick={toggleLocale}
-                  className="px-3 py-2 text-xs font-medium rounded-lg border border-white/20 text-white"
-                >
-                  <span className="inline-flex items-center gap-1.5"><FlagIcon locale={locale} /> {currentLocaleLabel}</span>
-                </button>
-              </div>
-            </div>
+              </nav>
+            )}
           </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* ===== MOBILE BOTTOM NAVIGATION ===== */}
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-2 py-1.5">
+      <div className="flex items-center justify-around max-w-md mx-auto">
+        {bottomNavItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${
+              isBottomActive(item.href) ? 'text-[#b88238]' : 'text-neutral-400 hover:text-neutral-600'
+            }`}
+          >
+            <item.icon className="w-5 h-5" strokeWidth={isBottomActive(item.href) ? 2.5 : 2} />
+            <span className="text-[10px] font-medium">{item.label}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+    </>
   );
 }
