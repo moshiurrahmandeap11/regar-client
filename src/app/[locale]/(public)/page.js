@@ -17,11 +17,18 @@ import {
   Ticket,
   Trophy,
   Users,
+  X,
+  Gem,
+  Truck,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { productPath } from '@/lib/productPath';
 import CountdownTimer from '@/components/CountdownTimer';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const uniqueById = (items = []) => {
   const seen = new Set();
@@ -44,6 +51,8 @@ export default function HomePage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prizeModalOpen, setPrizeModalOpen] = useState(false);
+  const [prizePage, setPrizePage] = useState(0);
 
   const isFr = locale === 'fr';
 
@@ -74,10 +83,22 @@ export default function HomePage() {
   const shopProducts = useMemo(() => uniqueById([...raffleProducts, ...products]).slice(0, 3), [raffleProducts, products]);
   const heroProduct = heroRaffle?.product || shopProducts[0] || null;
   const heroImage = pickImage(heroProduct);
-  const prizeItems = useMemo(() => {
-    const activePrizes = raffles.flatMap((raffle) => (raffle.prizes || []).map((prize) => ({ ...prize, raffle })));
-    return activePrizes.slice(0, 3);
-  }, [raffles]);
+  
+  // All prizes from all active raffles for the modal
+  const allPrizes = useMemo(() => {
+    const prizes = [];
+    raffles.forEach((raffle) => {
+      (raffle.prizes || []).forEach((prize, idx) => {
+        prizes.push({ ...prize, raffleName: isFr ? raffle.name : raffle.nameEn || raffle.name, rank: idx + 1 });
+      });
+    });
+    return prizes;
+  }, [raffles, isFr]);
+
+  // Prize carousel items (show first 3 for the main display)
+  const prizeItems = useMemo(() => allPrizes.slice(0, 3), [allPrizes]);
+  const prizePages = Math.ceil(allPrizes.length / 3);
+  const modalPrizeItems = allPrizes.slice(prizePage * 3, prizePage * 3 + 3);
 
   const headline = isFr ? ['Achetez une casquette.', 'Gagnez gros.'] : ['Buy a cap.', 'Win big.'];
   const heroName = heroRaffle ? (isFr ? heroRaffle.name : heroRaffle.nameEn || heroRaffle.name) : '';
@@ -108,6 +129,12 @@ export default function HomePage() {
     { icon: ShoppingCart, title: isFr ? 'Acheter' : 'Buy a Cap', text: isFr ? 'Choisissez votre casquette et finalisez la commande.' : 'Choose your favorite cap and complete your purchase.' },
     { icon: Ticket, title: isFr ? 'Recevoir les tickets' : 'Get Entries', text: isFr ? 'Chaque casquette payee ajoute vos tickets au raffle.' : 'Every paid cap adds your entries to the current raffle.' },
     { icon: Trophy, title: isFr ? 'Gagner' : 'Win Big', text: isFr ? 'Attendez le tirage et devenez le gagnant.' : 'Wait for the draw and be the lucky winner.' },
+  ];
+
+  const shopBenefits = [
+    { icon: Gem, title: isFr ? 'Premium Quality' : 'Premium Quality', text: isFr ? 'High quality materials, built to last.' : 'High quality materials, built to last.' },
+    { icon: Ticket, title: isFr ? 'One Cap, Multiple Entries' : 'One Cap, Multiple Entries', text: isFr ? 'Every purchase gives you raffle entries.' : 'Every purchase gives you raffle entries.' },
+    { icon: Truck, title: isFr ? 'Worldwide Shipping' : 'Worldwide Shipping', text: isFr ? 'Fast & reliable delivery to your door.' : 'Fast & reliable delivery to your door.' },
   ];
 
   if (loading) {
@@ -200,75 +227,200 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Shop Caps Section */}
+      {/* Shop Caps Section - New Design */}
       <section id="shop-caps" className="py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Shop caps' : 'Shop caps'}</p>
-          <h2 className="mt-1 text-2xl font-black">{isFr ? 'Choisissez votre casquette' : 'Choose your cap'}</h2>
+          <h2 className="mt-1 text-2xl font-black">{isFr ? 'Choisissez votre casquette' : 'Choose Your Cap'}</h2>
 
-          {shopProducts.length ? (
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {shopProducts.map((product) => (
-                <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-                  <div className="aspect-[1.25] rounded-lg bg-[#f0ebe3] p-3">
-                    {pickImage(product) ? (
-                      <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
-                    )}
+          <div className="mt-6 flex flex-col lg:flex-row gap-6">
+            {/* Left: Benefits */}
+            <div className="lg:w-48 flex flex-col gap-4">
+              {shopBenefits.map((benefit) => (
+                <div key={benefit.title} className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0">
+                    <benefit.icon className="w-5 h-5 text-[#b88238]" />
                   </div>
-                  <h3 className="mt-3 text-sm font-black">{product.name}</h3>
-                  <p className="mt-1 text-sm font-bold">{Number(product.price || 0).toFixed(2)} CHF</p>
-                  <div className="mt-2 flex gap-1.5">
-                    {(product.colors || []).slice(0, 4).map((color, index) => (
-                      <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
-                    ))}
+                  <div>
+                    <p className="text-sm font-bold text-neutral-900">{benefit.title}</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">{benefit.text}</p>
                   </div>
-                  <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-black uppercase text-white">
-                    <ShoppingCart className="h-4 w-4" />
-                    {isFr ? 'Acheter et entrer' : 'Buy & enter'}
-                  </div>
-                </Link>
+                </div>
               ))}
             </div>
-          ) : (
-            <div className="mt-5 rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Aucun produit actif.' : 'No active products yet.'}</div>
-          )}
+
+            {/* Right: Product Cards */}
+            <div className="flex-1">
+              {shopProducts.length ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {shopProducts.map((product) => (
+                    <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow">
+                      <div className="aspect-square rounded-lg bg-[#f5f0e8] p-4 flex items-center justify-center">
+                        {pickImage(product) ? (
+                          <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
+                        )}
+                      </div>
+                      <h3 className="mt-3 text-sm font-bold text-neutral-900">{product.name}</h3>
+                      <p className="mt-1 text-sm font-bold text-neutral-900">${Number(product.price || 0).toFixed(2)}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        {(product.colors || []).slice(0, 3).map((color, index) => (
+                          <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
+                        ))}
+                      </div>
+                      <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-bold uppercase text-white hover:bg-neutral-800 transition-colors">
+                        <ShoppingCart className="h-4 w-4" />
+                        {isFr ? 'Acheter et entrer' : 'Buy & Enter'}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Aucun produit actif.' : 'No active products yet.'}</div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Prizes Section */}
+      {/* Prizes Section - New Design */}
       <section id="prizes" className="border-t border-black/5 py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Prix premium' : 'Amazing prizes'}</p>
-              <h2 className="mt-1 text-2xl font-black">{isFr ? 'Des prix qui changent la vie' : 'Win life-changing prizes'}</h2>
+              <h2 className="mt-1 text-2xl font-black">{isFr ? 'Des prix qui changent la vie' : 'Win Life-Changing Prizes'}</h2>
             </div>
+            <button 
+              onClick={() => setPrizeModalOpen(true)}
+              className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-xs font-bold uppercase text-neutral-700 hover:bg-neutral-50 transition-colors"
+            >
+              {isFr ? 'Voir tous les prix' : 'View All Prizes'} <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
 
           {prizeItems.length ? (
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               {prizeItems.map((prize, index) => (
-                <div key={`${prize.raffle?._id}-${index}`} className="relative rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="absolute left-4 top-0 rounded-b bg-[#b88238] px-3 py-2 text-[10px] font-black uppercase text-white">
-                    {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : 'rd'} Prize
+                <div key={`${prize.raffle?._id || index}-${index}`} className="relative rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
+                  {/* Prize Badge */}
+                  <div className="absolute left-4 top-0 bg-[#b88238] px-3 py-2 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
+                    {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
                   </div>
                   {prize.image ? (
-                    <img src={prize.image} alt={prize.name} className="mx-auto h-32 w-full object-contain" />
+                    <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-40 w-full object-contain mt-4" />
                   ) : (
-                    <div className="mx-auto flex h-32 items-center justify-center text-[#b88238]"><Trophy className="h-12 w-12" /></div>
+                    <div className="mx-auto flex h-40 items-center justify-center text-[#b88238] mt-4"><Trophy className="h-12 w-12" /></div>
                   )}
-                  <h3 className="mt-3 text-sm font-black">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
-                  {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: {Number(prize.value).toLocaleString()} CHF</p> : null}
+                  <h3 className="mt-4 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
+                  {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
                 </div>
               ))}
             </div>
           ) : (
             <div className="mt-5 rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Ajoutez des prix.' : 'Add raffle prizes from admin.'}</div>
           )}
+
+          {/* Mobile View All Button */}
+          <div className="mt-4 sm:hidden">
+            <button 
+              onClick={() => setPrizeModalOpen(true)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-4 py-2.5 text-xs font-bold uppercase text-neutral-700"
+            >
+              {isFr ? 'Voir tous les prix' : 'View All Prizes'} <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          {/* Prize Dots Indicator */}
+          {prizeItems.length > 0 && (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {[0, 1, 2].map((dot) => (
+                <span key={dot} className={`h-2 w-2 rounded-full ${dot === 0 ? 'bg-[#b88238]' : 'bg-neutral-300'}`} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Prize Modal */}
+      <AnimatePresence>
+        {prizeModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setPrizeModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-y-auto p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Prix premium' : 'Amazing prizes'}</p>
+                  <h2 className="mt-1 text-xl font-black">{isFr ? 'Tous les prix' : 'All Prizes'}</h2>
+                </div>
+                <button onClick={() => setPrizeModalOpen(false)} className="p-2 hover:bg-neutral-100 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-neutral-500" />
+                </button>
+              </div>
+
+              {allPrizes.length > 0 ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {modalPrizeItems.map((prize, index) => (
+                      <div key={`modal-${prize.raffleName || ''}-${index}`} className="relative rounded-xl bg-neutral-50 p-4 text-center border border-neutral-100">
+                        <div className="absolute left-3 top-0 bg-[#b88238] px-2.5 py-1.5 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
+                          {prize.rank}{prize.rank === 1 ? 'st' : prize.rank === 2 ? 'nd' : prize.rank === 3 ? 'rd' : 'th'} Prize
+                        </div>
+                        {prize.image ? (
+                          <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-32 w-full object-contain mt-6" />
+                        ) : (
+                          <div className="mx-auto flex h-32 items-center justify-center text-[#b88238] mt-6"><Trophy className="h-10 w-10" /></div>
+                        )}
+                        <h3 className="mt-3 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
+                        {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
+                        <p className="mt-1 text-[10px] text-neutral-400">{prize.raffleName}</p>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  {prizePages > 1 && (
+                    <div className="flex items-center justify-center gap-3 mt-6">
+                      <button 
+                        onClick={() => setPrizePage(p => Math.max(0, p - 1))}
+                        disabled={prizePage === 0}
+                        className="p-2 rounded-lg border border-neutral-200 hover:bg-neutral-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-sm text-neutral-600">{prizePage + 1} / {prizePages}</span>
+                      <button 
+                        onClick={() => setPrizePage(p => Math.min(prizePages - 1, p + 1))}
+                        disabled={prizePage >= prizePages - 1}
+                        className="p-2 rounded-lg border border-neutral-200 hover:bg-neutral-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12 text-neutral-400">
+                  <Trophy className="w-10 h-10 mx-auto mb-3" />
+                  <p className="text-sm">{isFr ? 'Aucun prix disponible.' : 'No prizes available.'}</p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* How It Works */}
       <section id="how-it-works" className="py-8 sm:py-12">
@@ -315,22 +467,38 @@ export default function HomePage() {
       {/* Newsletter */}
       <section className="pb-8 sm:pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl bg-[#e8d3b6] p-5">
-            <h2 className="text-xl font-black">{isFr ? 'Ne manquez rien !' : "Don't miss out!"}</h2>
-            <p className="mt-1 text-xs text-black/65">{isFr ? 'Recevez les nouveaux raffles et offres exclusives.' : 'Get exclusive updates on new raffles and special offers.'}</p>
-            <form onSubmit={handleNewsletter} className="mt-4 flex gap-2">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={isFr ? 'Votre email' : 'Enter your email'}
-                className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2.5 text-sm outline-none"
-              />
-              <button type="submit" className="rounded-lg bg-black px-4 py-2.5 text-xs font-black uppercase text-white">
-                {isFr ? 'Subscribe' : 'Subscribe'}
-              </button>
-            </form>
+          <div className="rounded-xl bg-[#e8d3b6] p-5 flex flex-col sm:flex-row items-center gap-6">
+            {/* Left: Running Raffle Image */}
+            {runningRaffleImage && (
+              <div className="w-full sm:w-40 shrink-0">
+                <div className="aspect-square rounded-xl overflow-hidden bg-white/50 border border-black/10">
+                  <img 
+                    src={runningRaffleImage} 
+                    alt={heroName || 'Raffle'} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Right: Content */}
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-xl font-black">{isFr ? 'Ne manquez rien !' : "Don't miss out!"}</h2>
+              <p className="mt-1 text-xs text-black/65">{isFr ? 'Recevez les nouveaux raffles et offres exclusives.' : 'Get exclusive updates on new raffles and special offers.'}</p>
+              <form onSubmit={handleNewsletter} className="mt-4 flex gap-2 max-w-md">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={isFr ? 'Votre email' : 'Enter your email'}
+                  className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2.5 text-sm outline-none"
+                />
+                <button type="submit" className="rounded-lg bg-black px-4 py-2.5 text-xs font-black uppercase text-white">
+                  {isFr ? 'Subscribe' : 'Subscribe'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </section>

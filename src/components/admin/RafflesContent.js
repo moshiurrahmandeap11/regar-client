@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone, Trash2 } from 'lucide-react';
+import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone, Trash2, Upload, ImageIcon } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
@@ -23,6 +23,10 @@ export default function RafflesContent() {
     name: '', nameEn: '', product: '', startDate: '', endDate: '',
     prizes: [{ name: '', nameEn: '', value: '', image: '' }]
   });
+  
+  // Prize image files and previews
+  const [prizeImageFiles, setPrizeImageFiles] = useState([]);
+  const [prizeImagePreviews, setPrizeImagePreviews] = useState([]);
 
   const API = process.env.NEXT_PUBLIC_API_URL;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
@@ -54,13 +58,41 @@ export default function RafflesContent() {
     }
   };
 
+  const handlePrizeImageChange = (index, file) => {
+    if (!file) return;
+
+    const nextFiles = [...prizeImageFiles];
+    nextFiles[index] = file;
+    setPrizeImageFiles(nextFiles);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const nextPreviews = [...prizeImagePreviews];
+      nextPreviews[index] = reader.result;
+      setPrizeImagePreviews(nextPreviews);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('nameEn', form.nameEn || '');
+      formData.append('product', form.product);
+      formData.append('startDate', form.startDate);
+      formData.append('endDate', form.endDate);
+      formData.append('prizes', JSON.stringify(form.prizes));
+
+      prizeImageFiles.forEach((file, index) => {
+        if (file) formData.append(`prizeImage_${index}`, file);
+      });
+
       const res = await fetch(`${API}/api/raffles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       if (!res.ok) throw new Error('Failed to create');
       toast.success('Raffle created');
@@ -141,8 +173,18 @@ export default function RafflesContent() {
     }
   };
 
-  const addPrize = () => setForm({ ...form, prizes: [...form.prizes, { name: '', nameEn: '', value: '', image: '' }] });
-  const removePrize = (i) => setForm({ ...form, prizes: form.prizes.filter((_, idx) => idx !== i) });
+  const addPrize = () => {
+    setForm({ ...form, prizes: [...form.prizes, { name: '', nameEn: '', value: '', image: '' }] });
+    setPrizeImageFiles((prev) => [...prev, null]);
+    setPrizeImagePreviews((prev) => [...prev, null]);
+  };
+  
+  const removePrize = (i) => {
+    setForm({ ...form, prizes: form.prizes.filter((_, idx) => idx !== i) });
+    setPrizeImageFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPrizeImagePreviews((prev) => prev.filter((_, idx) => idx !== i));
+  };
+  
   const updatePrize = (i, field, val) => {
     const newPrizes = [...form.prizes];
     newPrizes[i][field] = val;
@@ -152,6 +194,8 @@ export default function RafflesContent() {
   const resetForm = () => {
     setShowForm(false);
     setForm({ name: '', nameEn: '', product: '', startDate: '', endDate: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
+    setPrizeImageFiles([]);
+    setPrizeImagePreviews([]);
   };
 
   const filtered = raffles.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
@@ -230,15 +274,46 @@ export default function RafflesContent() {
 
                 <div>
                   <label className="text-sm font-medium text-neutral-700 mb-2 block">Prizes</label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {form.prizes.map((prize, i) => (
-                      <div key={i} className="flex gap-2 items-center">
-                        <input value={prize.name} onChange={e => updatePrize(i, 'name', e.target.value)} placeholder="Prize name (FR)" className="flex-1 px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
-                        <input value={prize.nameEn} onChange={e => updatePrize(i, 'nameEn', e.target.value)} placeholder="Prize name (EN)" className="flex-1 px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
-                        <input type="number" value={prize.value} onChange={e => updatePrize(i, 'value', e.target.value)} placeholder="Value" className="w-24 px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
-                        {form.prizes.length > 1 && (
-                          <button type="button" onClick={() => removePrize(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
-                        )}
+                      <div key={i} className="flex flex-wrap gap-2 items-start bg-neutral-50 rounded-lg p-3">
+                        <div className="flex flex-wrap gap-2 flex-1">
+                          <input value={prize.name} onChange={e => updatePrize(i, 'name', e.target.value)} placeholder="Prize name (FR)" className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
+                          <input value={prize.nameEn} onChange={e => updatePrize(i, 'nameEn', e.target.value)} placeholder="Prize name (EN)" className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
+                          <input type="number" value={prize.value} onChange={e => updatePrize(i, 'value', e.target.value)} placeholder="Value" className="w-24 px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
+                        </div>
+                        
+                        {/* Prize Image Upload */}
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 px-3 py-2 border border-neutral-200 rounded-lg cursor-pointer bg-white hover:bg-neutral-50 transition-colors">
+                            <Upload className="w-4 h-4 text-neutral-500" />
+                            <span className="text-xs text-neutral-600">
+                              {prizeImageFiles[i]?.name || (prize.image ? 'Change' : 'Image')}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handlePrizeImageChange(i, e.target.files?.[0])}
+                              className="hidden"
+                            />
+                          </label>
+                          
+                          {(prizeImagePreviews[i] || prize.image) ? (
+                            <img
+                              src={prizeImagePreviews[i] || prize.image}
+                              alt={prize.name || `prize-${i}`}
+                              className="w-10 h-10 rounded-lg object-cover border border-neutral-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-neutral-200 flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-neutral-400" />
+                            </div>
+                          )}
+                          
+                          {form.prizes.length > 1 && (
+                            <button type="button" onClick={() => removePrize(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><X className="w-4 h-4" /></button>
+                          )}
+                        </div>
                       </div>
                     ))}
                     <button type="button" onClick={addPrize} className="px-4 py-2 bg-neutral-100 rounded-xl text-sm font-medium hover:bg-neutral-200 transition-colors">+ Add Prize</button>
