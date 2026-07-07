@@ -53,6 +53,7 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prizeModalOpen, setPrizeModalOpen] = useState(false);
   const [prizePage, setPrizePage] = useState(0);
+  const [prizeSlide, setPrizeSlide] = useState(0);
 
   const isFr = locale === 'fr';
 
@@ -250,12 +251,12 @@ export default function HomePage() {
             </div>
 
             {/* Right: Product Cards */}
-            <div className="flex-1">
+            <div className="flex-1 lg:self-start">
               {shopProducts.length ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {shopProducts.map((product) => (
                     <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow">
-                      <div className="aspect-square rounded-lg bg-[#f5f0e8] p-4 flex items-center justify-center">
+                      <div className="aspect-[4/3] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
                         {pickImage(product) ? (
                           <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
                         ) : (
@@ -301,22 +302,48 @@ export default function HomePage() {
           </div>
 
           {prizeItems.length ? (
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {prizeItems.map((prize, index) => (
-                <div key={`${prize.raffle?._id || index}-${index}`} className="relative rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-                  {/* Prize Badge */}
-                  <div className="absolute left-4 top-0 bg-[#b88238] px-3 py-2 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
-                    {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
-                  </div>
-                  {prize.image ? (
-                    <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-40 w-full object-contain mt-4" />
-                  ) : (
-                    <div className="mx-auto flex h-40 items-center justify-center text-[#b88238] mt-4"><Trophy className="h-12 w-12" /></div>
-                  )}
-                  <h3 className="mt-4 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
-                  {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
+            <div className="mt-5 relative">
+              {/* Slider Container */}
+              <div className="overflow-hidden">
+                <div 
+                  className="flex transition-transform duration-300 ease-out sm:grid sm:grid-cols-3 sm:gap-4"
+                  style={{ transform: `translateX(-${prizeSlide * 100}%)` }}
+                >
+                  {prizeItems.map((prize, index) => (
+                    <div key={`${prize.raffle?._id || index}-${index}`} className="w-full flex-shrink-0 px-1 sm:px-0">
+                      <div className="relative rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5 h-full">
+                        {/* Prize Badge */}
+                        <div className="absolute left-4 top-0 bg-[#b88238] px-3 py-2 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
+                          {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
+                        </div>
+                        {prize.image ? (
+                          <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-40 w-full object-contain mt-4" />
+                        ) : (
+                          <div className="mx-auto flex h-40 items-center justify-center text-[#b88238] mt-4"><Trophy className="h-12 w-12" /></div>
+                        )}
+                        <h3 className="mt-4 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
+                        {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Mobile Navigation Arrows */}
+              <button 
+                onClick={() => setPrizeSlide(prev => Math.max(0, prev - 1))}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                disabled={prizeSlide === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => setPrizeSlide(prev => Math.min(prizeItems.length - 1, prev + 1))}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                disabled={prizeSlide >= prizeItems.length - 1}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           ) : (
             <div className="mt-5 rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Ajoutez des prix.' : 'Add raffle prizes from admin.'}</div>
@@ -333,10 +360,14 @@ export default function HomePage() {
           </div>
 
           {/* Prize Dots Indicator */}
-          {prizeItems.length > 0 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
-              {[0, 1, 2].map((dot) => (
-                <span key={dot} className={`h-2 w-2 rounded-full ${dot === 0 ? 'bg-[#b88238]' : 'bg-neutral-300'}`} />
+          {prizeItems.length > 1 && (
+            <div className="mt-4 flex items-center justify-center gap-2 sm:hidden">
+              {prizeItems.map((_, dot) => (
+                <button
+                  key={dot}
+                  onClick={() => setPrizeSlide(dot)}
+                  className={`h-2 w-2 rounded-full transition-colors ${dot === prizeSlide ? 'bg-[#b88238]' : 'bg-neutral-300'}`}
+                />
               ))}
             </div>
           )}
