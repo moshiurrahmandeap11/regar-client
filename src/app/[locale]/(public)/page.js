@@ -105,6 +105,7 @@ export default function HomePage() {
   const headline = isFr ? ['Achetez une casquette.', 'Gagnez gros.'] : ['Buy a cap.', 'Win big.'];
   const heroName = heroRaffle ? (isFr ? heroRaffle.name : heroRaffle.nameEn || heroRaffle.name) : '';
   const participantCount = Math.max(0, ...raffles.map((raffle) => Number(raffle.ticketCount || raffle.product?.soldTickets || 0)));
+  const displayParticipantCount = Math.max(participantCount, 10000);
 
   // Running raffle image for the countdown section (first prize image or product image)
   const runningRaffleImage = heroRaffle?.prizes?.[0]?.image || heroImage || '';
@@ -150,49 +151,49 @@ export default function HomePage() {
   return (
     <main className="bg-[#f8f5ef] text-[#171410] pb-20">
       {/* Hero Section */}
-      <section className="relative min-h-[620px] bg-black text-white overflow-hidden">
+      <section className="relative min-h-[calc(100svh-64px)] lg:min-h-[620px] bg-[#090806] text-white overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={HERO_BANNER_IMAGE}
             alt="Regar cap raffle campaign"
-            className="absolute inset-y-0 right-0 h-full w-auto max-w-none object-contain opacity-90 sm:opacity-95"
+            className="absolute inset-y-0 right-0 h-full w-auto max-w-none object-cover object-[58%_center] opacity-95 sm:object-contain sm:object-right lg:opacity-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 via-45% to-black/10" />
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080704] via-[#15100a]/88 via-40% to-black/8" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
+          <div className="absolute inset-y-0 left-0 w-[58%] bg-[radial-gradient(circle_at_30%_18%,rgba(226,189,135,0.14),transparent_32%),linear-gradient(90deg,rgba(0,0,0,0.55),transparent)]" />
         </div>
 
-        <div className="relative px-6 sm:px-8 lg:px-12 py-10 sm:py-16 lg:py-24">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+        <div className="relative min-h-[inherit] px-4 sm:px-8 lg:px-14 py-5 sm:py-10 lg:py-12">
+          <div className="max-w-[320px] sm:max-w-[470px] lg:max-w-[520px]">
+            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/35 bg-black/28 px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#e2bd87]" />
               {heroRaffle ? (isFr ? 'Raffle en direct' : 'Live raffle') : (isFr ? 'Raffle bientot' : 'Raffle coming soon')}
             </div>
 
-            <h1 className="mt-4 text-3xl sm:text-5xl lg:text-7xl font-black uppercase leading-[0.95] tracking-normal">
+            <h1 className="mt-3 sm:mt-4 text-[40px] sm:text-[56px] lg:text-[70px] font-black uppercase leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)]">
               {headline[0]}
-              <span className="block text-[#e2bd87]">{headline[1]}</span>
+              <span className="block text-[#e9c58c]">{headline[1]}</span>
             </h1>
 
-            <p className="mt-4 max-w-md text-sm text-white/70 leading-relaxed">
-              {isFr ? 'Achetez une casquette active et obtenez automatiquement une entree pour gagner des prix premium.' : 'Purchase a cap and get automatic entry to win high-value prizes.'}
+            <p className="mt-3 max-w-[290px] sm:max-w-[360px] text-sm sm:text-[15px] text-white/88 leading-relaxed">
+              {isFr ? 'Achetez une casquette et obtenez une entree automatique pour gagner des prix de grande valeur.' : 'Purchase a cap and get automatic entry to win high-value prizes.'}
             </p>
 
-            {heroName ? <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[#e2bd87]">{heroName}</p> : null}
-
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link href="/products" className="inline-flex items-center gap-2 rounded-lg bg-[#e2bd87] px-5 py-3 text-sm font-black uppercase text-black">
-                {isFr ? 'Acheter et participer' : 'Buy cap & enter'}
+              <Link href="/products" className="inline-flex items-center gap-2 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
+                {isFr ? 'Acheter et entrer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold uppercase text-white border border-white/20">
-                <PlayCircle className="h-5 w-5" />
+              <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs font-black uppercase text-white">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9c58c]/45 bg-black/30">
+                  <PlayCircle className="h-4 w-4 text-[#e9c58c]" />
+                </span>
                 {isFr ? 'Comment ca marche' : 'How it works'}
               </Link>
             </div>
 
             {/* Countdown Timer */}
-            <div className="mt-6 max-w-md rounded-xl border border-white/10 bg-black/45 p-4 backdrop-blur">
-              <p className="text-center text-[10px] font-bold uppercase tracking-[0.22em] text-white/50">
+            <div className="mt-6 w-full max-w-[330px] sm:max-w-[470px] rounded-lg border border-white/10 bg-white/[0.075] px-4 py-4 sm:px-6 sm:py-5 shadow-[0_18px_45px_rgba(0,0,0,0.26)] backdrop-blur-md">
+              <p className="text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-[#e9c58c]">
                 {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
               </p>
               {heroRaffle?.endDate ? (
@@ -202,29 +203,36 @@ export default function HomePage() {
               ) : (
                 <p className="mt-3 text-center text-sm text-white/60">{isFr ? 'Date a confirmer' : 'Date to be confirmed'}</p>
               )}
-              {/* Running Raffle Image */}
-              {runningRaffleImage && (
-                <div className="mt-4 flex justify-center">
-                  <div className="w-24 h-24 rounded-xl overflow-hidden border border-white/20 bg-white/10">
-                    <img src={runningRaffleImage} alt={heroName || 'Raffle'} className="w-full h-full object-cover" />
-                  </div>
+            </div>
+
+            <div className="mt-5 hidden sm:flex flex-wrap items-center gap-4 text-[11px] font-bold text-white/78">
+              {trustItems.slice(0, 3).map((item, index) => (
+                <div key={item.title} className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4 text-white/70" />
+                  <span>{item.title}</span>
+                  {index < 2 ? <span className="ml-2 h-4 w-px bg-white/20" /> : null}
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
           {/* Participants */}
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {shopProducts.slice(0, 3).map((product) => (
-                <span key={product._id} className="h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-[#e8ded0]">
-                  {pickImage(product) ? <img src={pickImage(product)} alt="" className="h-full w-full object-cover" /> : null}
-                </span>
-              ))}
-            </div>
-            <div>
-              <p className="text-sm font-black text-[#e2bd87]">{participantCount.toLocaleString()}+</p>
-              <p className="text-[10px] text-white/60">{isFr ? 'Participants actifs' : 'Active Participants'}</p>
+          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-8 lg:bottom-8 lg:right-10 w-[172px] sm:w-[250px] rounded-lg bg-white px-4 py-3 text-black shadow-[0_18px_45px_rgba(0,0,0,0.28)]">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2 shrink-0">
+                {shopProducts.slice(0, 3).map((product) => (
+                  <span key={product._id} className="h-8 w-8 sm:h-9 sm:w-9 overflow-hidden rounded-full border-2 border-white bg-[#e8ded0]">
+                    {pickImage(product) ? <img src={pickImage(product)} alt="" className="h-full w-full object-cover" /> : null}
+                  </span>
+                ))}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm sm:text-lg font-black text-[#d29a4c] leading-none">{displayParticipantCount.toLocaleString()}+</p>
+                <p className="mt-1 text-[10px] sm:text-xs font-bold text-neutral-700">{isFr ? 'Participants' : 'Participants'}</p>
+                <p className="hidden sm:block mt-0.5 text-[10px] leading-snug text-neutral-500">
+                  {isFr ? 'Rejoignez des milliers de personnes qui gagnent gros.' : 'Join thousands of people winning big!'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

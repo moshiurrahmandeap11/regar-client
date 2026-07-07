@@ -58,14 +58,14 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
 
   if (variant === 'banner') {
     return (
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex w-full items-center justify-between">
         {units.map((unit, i) => (
-          <div key={i} className="flex items-center gap-3 sm:gap-5">
-            <div className="text-center min-w-10 sm:min-w-12">
-              <p className="text-white text-3xl sm:text-4xl font-extrabold leading-none">{String(unit.value).padStart(2, '0')}</p>
-              <p className="text-[10px] tracking-[0.18em] uppercase text-[#7eb6de] mt-2">{unit.label}</p>
+          <div key={unit.label} className="flex flex-1 items-center">
+            <div className="min-w-0 flex-1 text-center">
+              <p className="text-white text-2xl sm:text-3xl font-black leading-none tabular-nums">{String(unit.value).padStart(2, '0')}</p>
+              <p className="text-[9px] sm:text-[10px] tracking-[0.12em] uppercase text-white/70 mt-2 font-semibold">{unit.label}</p>
             </div>
-            {i < units.length - 1 ? <span className="text-[#7eb6de] text-2xl font-semibold">:</span> : null}
+            {i < units.length - 1 ? <span className="h-10 w-px bg-white/12" /> : null}
           </div>
         ))}
       </div>
