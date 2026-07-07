@@ -244,9 +244,9 @@ export default function HomePage() {
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Shop caps' : 'Shop caps'}</p>
           <h2 className="mt-1 text-2xl font-black">{isFr ? 'Choisissez votre casquette' : 'Choose Your Cap'}</h2>
 
-          <div className="mt-6 flex flex-col lg:flex-row gap-6">
+          <div className="mt-6 grid gap-6 lg:grid-cols-[200px_1fr] lg:items-start">
             {/* Left: Benefits */}
-            <div className="lg:w-48 flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
               {shopBenefits.map((benefit) => (
                 <div key={benefit.title} className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0">
@@ -261,26 +261,26 @@ export default function HomePage() {
             </div>
 
             {/* Right: Product Cards */}
-            <div className="flex-1 lg:self-start">
+            <div>
               {shopProducts.length ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {shopProducts.map((product) => (
-                    <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow">
-                      <div className="aspect-[4/3] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
+                    <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow flex flex-col">
+                      <div className="h-28 sm:h-32 lg:h-[132px] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
                         {pickImage(product) ? (
                           <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
                         )}
                       </div>
-                      <h3 className="mt-3 text-sm font-bold text-neutral-900">{product.name}</h3>
-                      <p className="mt-1 text-sm font-bold text-neutral-900">${Number(product.price || 0).toFixed(2)}</p>
-                      <div className="mt-2 flex items-center gap-2">
+                      <h3 className="mt-2 text-sm font-bold text-neutral-900 leading-tight">{product.name}</h3>
+                      <p className="mt-1 text-sm font-bold text-neutral-900 leading-tight">${Number(product.price || 0).toFixed(2)}</p>
+                      <div className="mt-1.5 flex min-h-4 items-center gap-2">
                         {(product.colors || []).slice(0, 3).map((color, index) => (
                           <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
                         ))}
                       </div>
-                      <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-bold uppercase text-white hover:bg-neutral-800 transition-colors">
+                      <div className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-bold uppercase text-white hover:bg-neutral-800 transition-colors">
                         <ShoppingCart className="h-4 w-4" />
                         {isFr ? 'Acheter et entrer' : 'Buy & Enter'}
                       </div>
@@ -464,26 +464,52 @@ export default function HomePage() {
       </AnimatePresence>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-8 sm:py-12">
+      <section id="how-it-works" className="py-10 sm:py-14 bg-[#fbfaf8]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Comment ca marche' : 'How it works'}</p>
-          <h2 className="mt-1 text-2xl font-black">{isFr ? 'Etapes simples pour gagner' : 'Simple steps to win'}</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c28a3d]">{isFr ? 'Comment ca marche' : 'How it works'}</p>
+          <h2 className="mt-1 text-[24px] sm:text-[28px] font-black leading-tight text-[#15120f]">{isFr ? 'Etapes simples pour gagner' : 'Simple steps to win'}</h2>
+
+          <div className="mt-8 hidden md:flex items-center justify-center">
             {steps.map((step, index) => (
-              <div key={step.title} className="rounded-xl bg-white p-5 text-left shadow-sm ring-1 ring-black/5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3eadb] text-[#b88238]">
-                    <step.icon className="h-5 w-5" />
+              <div key={step.title} className="flex items-center">
+                <div className="flex w-[188px] items-center gap-5 text-left">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] shadow-[0_12px_35px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]">
+                    <step.icon className={`h-9 w-9 ${index === 0 ? 'text-[#15120f]' : 'text-[#d29a4c]'}`} strokeWidth={1.7} />
                   </div>
-                  <span className="text-xs font-black text-[#b88238]">0{index + 1}</span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black text-[#c28a3d] leading-none">0{index + 1}</p>
+                    <h3 className="mt-2 text-sm font-black text-[#15120f] leading-tight">{step.title}</h3>
+                    <p className="mt-1.5 text-[11px] leading-[1.55] text-neutral-600">{step.text}</p>
+                  </div>
                 </div>
-                <h3 className="mt-4 font-black text-sm">{step.title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-neutral-500">{step.text}</p>
+                {index < steps.length - 1 ? (
+                  <div className="mx-7 flex w-12 items-center text-neutral-400">
+                    <span className="h-px flex-1 bg-neutral-300" />
+                    <span className="-ml-1 text-lg leading-none">→</span>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
-          <Link href="/products" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#e2bd87] px-5 py-2.5 text-sm font-black uppercase text-black">
-            {isFr ? 'Acheter et participer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
+
+          <div className="mt-7 md:hidden max-w-[260px] mx-auto text-left">
+            {steps.map((step, index) => (
+              <div key={step.title} className="relative flex gap-5 pb-7 last:pb-0">
+                {index < steps.length - 1 ? <span className="absolute left-9 top-[72px] h-[34px] w-px bg-neutral-200" /> : null}
+                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] shadow-[0_12px_35px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]">
+                  <step.icon className={`h-8 w-8 ${index === 0 ? 'text-[#15120f]' : 'text-[#d29a4c]'}`} strokeWidth={1.7} />
+                </div>
+                <div className="pt-1">
+                  <p className="text-[11px] font-black text-[#c28a3d] leading-none">0{index + 1}</p>
+                  <h3 className="mt-2 text-sm font-black text-[#15120f] leading-tight">{step.title}</h3>
+                  <p className="mt-1.5 text-[12px] leading-[1.55] text-neutral-600">{step.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link href="/products" className="mt-8 inline-flex h-12 min-w-[230px] items-center justify-center gap-3 rounded-md bg-[#dfb778] px-6 text-[12px] font-black uppercase text-black shadow-[0_10px_24px_rgba(194,138,61,0.2)] hover:bg-[#e7c48c] transition-colors">
+            {isFr ? 'Acheter et entrer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
