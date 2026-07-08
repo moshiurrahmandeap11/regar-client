@@ -2,8 +2,8 @@
 
 export default function CapRaffleLogo({ className = '', size = 'md' }) {
   const scale = size === 'sm' ? 0.84 : size === 'lg' ? 1.14 : 1;
-  const width = 185 * scale;
-  const height = 56 * scale;
+  const width = 210 * scale;
+  const height = 60 * scale;
 
   return (
     <span
@@ -11,33 +11,33 @@ export default function CapRaffleLogo({ className = '', size = 'md' }) {
       style={{ width, height }}
       aria-label="CapRaffle"
     >
-      <svg viewBox="0 0 185 56" width="100%" height="100%" role="img" aria-hidden="true" className="block">
-        <g fill="#d99600">
-          <path d="M82.8 1.8 90 9.7l6.9-9.7 7.6 9.6 7-7.1 2.7 22.7H80.4L82.8 1.8Z" />
-          <circle cx="82.8" cy="2.2" r="2.2" />
-          <circle cx="96.9" cy="2.2" r="2.2" />
-          <circle cx="111.5" cy="2.8" r="2.2" />
-          <path d="M82.7 28.3h29.2v4.1H82.7z" />
+      <svg viewBox="0 0 210 70" width="100%" height="100%" role="img" aria-hidden="true" className="block">
+        <g fill="#f5a623" stroke="#f5a623" strokeWidth="1" strokeLinejoin="round">
+          <path d="M108 4 L112 14 L120 6 L118 20 L127 20 L129 30 L91 30 L93 20 L102 20 L100 6 L108 14 Z" />
         </g>
+        <circle cx="108" cy="3" r="3.2" fill="#f5a623" />
+        <circle cx="129" cy="19" r="3" fill="#f5a623" />
+        <circle cx="91" cy="19" r="3" fill="#f5a623" />
+
         <text
-          x="0"
-          y="52"
+          x="6"
+          y="58"
           fill="#ffffff"
           fontFamily="Arial Black, Arial, Helvetica, sans-serif"
-          fontSize="31"
+          fontSize="34"
           fontWeight="900"
-          letterSpacing="-1.2"
+          letterSpacing="-1"
         >
           CAP
         </text>
-        <text
-          x="69"
-          y="52"
-          fill="#d99600"
+<text
+          x="78"
+          y="58"
+          fill="#f5a623"
           fontFamily="Arial Black, Arial, Helvetica, sans-serif"
-          fontSize="31"
+          fontSize="34"
           fontWeight="900"
-          letterSpacing="-1.2"
+          letterSpacing="-1"
         >
           RAFFLE
         </text>

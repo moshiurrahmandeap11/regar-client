@@ -151,19 +151,19 @@ export default function HomePage() {
   return (
     <main className="bg-[#f8f5ef] text-[#171410] pb-20">
       {/* Hero Section */}
-      <section className="bg-[#f8f5ef] text-white sm:px-4 lg:px-8">
-        <div className="relative mx-auto min-h-[620px] overflow-hidden bg-[#100d09] sm:max-w-7xl sm:min-h-[560px]">
+      <section className="bg-[#f8f5ef] text-white">
+        <div className="relative min-h-[680px] w-full overflow-hidden bg-[#100d09] sm:min-h-[640px] lg:min-h-[720px] 2xl:min-h-[760px]">
           <div className="absolute inset-0">
             <img
               src={HERO_BANNER_IMAGE}
               alt="Regar cap raffle campaign"
-              className="h-full w-full object-cover object-[38%_center] opacity-100"
+              className="absolute left-0 top-1/2 h-full w-full -translate-y-1/2 object-cover object-[42%_center] opacity-100 lg:h-auto lg:w-full lg:max-w-none"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.78)_0%,rgba(0,0,0,0.50)_24%,rgba(0,0,0,0.18)_44%,rgba(0,0,0,0)_70%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.54)_22%,rgba(0,0,0,0.20)_43%,rgba(0,0,0,0)_70%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0)_60%,rgba(0,0,0,0.18)_100%)]" />
           </div>
 
-          <div className="relative min-h-[inherit] px-6 py-11 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+          <div className="relative min-h-[inherit] px-6 py-12 sm:px-8 sm:py-12 lg:px-12 lg:py-14 xl:px-14">
             <div className="max-w-[320px] sm:max-w-[460px] lg:max-w-[500px]">
             <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#e2bd87]" />
