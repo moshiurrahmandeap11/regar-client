@@ -84,7 +84,17 @@ export default function BrandLogo({ locale = 'fr', className = '', size = 'md' }
         <g fill="currentColor" transform="translate(0 3)">
           {LETTERS.R}
         </g>
-        <Wordmark word={word} x={32} y={3} />
+        <text
+  x="32"
+  y="18.5"
+  fill="currentColor"
+  style={{ fontFamily: 'var(--font-montserrat), sans-serif' }}
+  fontSize="15"
+  fontWeight="600"
+  letterSpacing="4.5"
+>
+  {word}
+</text>
       </svg>
     </span>
   );
