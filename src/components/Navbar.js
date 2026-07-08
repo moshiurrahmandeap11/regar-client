@@ -334,14 +334,24 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo locale={locale} className="text-white" size="md" />
         </Link>
-        <Link href="/cart" className="relative text-white p-1">
-          <ShoppingBag className="w-6 h-6" />
-          {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#e2bd87] text-[#0f1419] text-[10px] font-bold rounded-full flex items-center justify-center">
-              {totalItems}
-            </span>
-          )}
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleLocale}
+            className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-bold text-white"
+            aria-label={isFr ? 'Switch to English' : 'Passer en francais'}
+          >
+            <FlagIcon locale={locale} />
+            {currentLocaleLabel}
+          </button>
+          <Link href="/cart" className="relative text-white p-1">
+            <ShoppingBag className="w-6 h-6" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#e2bd87] text-[#0f1419] text-[10px] font-bold rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </Link>
+        </div>
       </div>
     )}
 
@@ -354,6 +364,15 @@ export default function Navbar() {
         <Link href="/dashboard" className="flex items-center gap-1.5">
           <CapRaffleLogo size="sm" />
         </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleLocale}
+            className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 text-xs font-bold text-white"
+            aria-label={isFr ? 'Switch to English' : 'Passer en francais'}
+          >
+            <FlagIcon locale={locale} />
+            {currentLocaleLabel}
+          </button>
         <div className="relative" ref={notifRef}>
           <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">
             <Bell className="w-6 h-6" />
@@ -414,6 +433,7 @@ export default function Navbar() {
             )}
           </AnimatePresence>
         </div>
+        </div>
       </div>
     )}
 
@@ -444,6 +464,20 @@ export default function Navbar() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                toggleLocale();
+                setMobileOpen(false);
+              }}
+              className="mb-5 flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-bold text-white"
+            >
+              <span className="flex items-center gap-2">
+                <FlagIcon locale={locale} />
+                {isFr ? 'Francais' : 'English'}
+              </span>
+              <span className="text-xs text-[#e2bd87]">{isFr ? 'EN' : 'FR'}</span>
+            </button>
 
             {/* Auth page sidebar nav */}
             {isAuthPage && user && (

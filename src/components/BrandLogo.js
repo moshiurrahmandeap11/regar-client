@@ -63,16 +63,15 @@ function Wordmark({ word, x, y }) {
 }
 
 export default function BrandLogo({ locale = 'fr', className = '', size = 'md' }) {
-  const isFr = locale === 'fr';
-  const word = isFr ? 'REGAR' : 'LOOK';
-  const width = isFr ? 147 : 124;
+  const word = 'REGAR';
+  const width = 147;
   const scale = size === 'sm' ? 0.86 : size === 'lg' ? 1.16 : 1;
 
   return (
     <span
       className={`inline-flex items-center leading-none ${className}`}
       style={{ width: `${width * scale}px`, height: `${24 * scale}px` }}
-      aria-label={isFr ? 'Regar' : 'Look'}
+      aria-label="Regar"
     >
       <svg
         viewBox={`0 0 ${width} 24`}
@@ -83,9 +82,9 @@ export default function BrandLogo({ locale = 'fr', className = '', size = 'md' }
         className="block"
       >
         <g fill="currentColor" transform="translate(0 3)">
-          {isFr ? LETTERS.R : LETTERS.L}
+          {LETTERS.R}
         </g>
-        <Wordmark word={word} x={isFr ? 32 : 31} y={3} />
+        <Wordmark word={word} x={32} y={3} />
       </svg>
     </span>
   );
