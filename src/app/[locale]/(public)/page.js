@@ -157,7 +157,7 @@ export default function HomePage() {
             <img
               src={HERO_BANNER_IMAGE}
               alt="Regar cap raffle campaign"
-              className="absolute left-0 top-1/2 h-full w-full -translate-y-1/2 object-cover object-[42%_center] opacity-100 lg:h-auto lg:w-full lg:max-w-none"
+              className="absolute left-0 top-[56%] h-full w-full -translate-y-1/2 object-cover object-[42%_center] opacity-100 lg:top-[58%] lg:h-auto lg:w-full lg:max-w-none 2xl:top-[57%]"
             />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.54)_22%,rgba(0,0,0,0.20)_43%,rgba(0,0,0,0)_70%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_0%,rgba(0,0,0,0)_60%,rgba(0,0,0,0.18)_100%)]" />
