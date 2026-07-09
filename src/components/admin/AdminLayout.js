@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
-import CapRaffleLogo from '@/components/CapRaffleLogo';
+import BrandLogo from '@/components/BrandLogo';
 
 const allMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
@@ -186,7 +186,7 @@ export default function AdminLayoutClient({ children }) {
       <aside className="hidden lg:flex flex-col w-64 bg-[#0f0f0f] text-white fixed inset-y-0 left-0 z-50">
         <div className="p-5 flex-1 overflow-y-auto">
           <div className="flex items-center justify-center mb-8">
-            <CapRaffleLogo size="sm" />
+            <BrandLogo size="sm" />
           </div>
           <nav className="space-y-0.5">
             {allMenuItems.map((item) => (
@@ -229,7 +229,7 @@ export default function AdminLayoutClient({ children }) {
       <motion.aside initial={{ x: -280 }} animate={{ x: sidebarOpen ? 0 : -280 }} transition={{ type: 'spring', damping: 25 }} className="fixed inset-y-0 left-0 z-50 w-64 bg-[#0f0f0f] text-white lg:hidden">
         <div className="p-5 h-full flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <CapRaffleLogo size="sm" />
+            <BrandLogo size="sm" />
             <button onClick={() => setSidebarOpen(false)} className="p-1 text-neutral-400"><X className="w-5 h-5" /></button>
           </div>
           <nav className="space-y-0.5 flex-1 overflow-y-auto">
@@ -267,7 +267,7 @@ export default function AdminLayoutClient({ children }) {
             <Menu className="w-6 h-6" />
           </button>
           <Link href="/admin/dashboard" className="flex items-center gap-1.5">
-            <CapRaffleLogo size="sm" />
+            <BrandLogo size="sm" />
           </Link>
           <div className="relative" ref={notifRef}>
             <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">

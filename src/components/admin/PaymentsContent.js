@@ -24,9 +24,10 @@ export default function PaymentsContent() {
   const fetchList = async () => {
     try {
       const res = await api.get('/api/payments');
-      setList(res.data);
+      setList(Array.isArray(res.data) ? res.data : []);
     } catch {
       toast.error('Failed to load payments');
+      setList([]);
     } finally {
       setLoading(false);
     }

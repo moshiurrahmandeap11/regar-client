@@ -18,7 +18,7 @@ import {
 import { Link } from '@/i18n/routing';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
-import CapRaffleLogo from '@/components/CapRaffleLogo';
+import BrandLogo from '@/components/BrandLogo';
 
 const shellRoutes = ['/dashboard', '/tickets', '/orders', '/order-detail', '/notifications', '/profile'];
 
@@ -70,7 +70,7 @@ export default function UserDashboardShell({ children }) {
       <aside className="hidden lg:flex fixed left-0 top-16 bottom-0 z-40 w-[260px] flex-col border-r border-white/10 bg-[#07090c] text-white">
         <div className="dashboard-scrollbar flex-1 overflow-y-auto px-4 py-5">
           <div className="flex justify-center py-2">
-            <CapRaffleLogo size="sm" />
+            <BrandLogo size="sm" />
           </div>
 
           <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
