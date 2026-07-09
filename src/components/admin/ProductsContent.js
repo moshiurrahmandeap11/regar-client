@@ -16,7 +16,7 @@ export default function ProductsContent() {
   const [editing, setEditing] = useState(null);
   const [colorImagePreviews, setColorImagePreviews] = useState([]);
   const [form, setForm] = useState({
-    name: '', nameEn: '', description: '', descriptionEn: '', price: '', originalPrice: '',
+    name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
     stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
     featured: false, isActive: true
   });
@@ -119,7 +119,8 @@ export default function ProductsContent() {
   const handleEdit = (product) => {
     setEditing(product._id);
     setForm({
-      name: product.name, nameEn: product.nameEn || '', description: product.description || '',
+      name: product.name, nameEn: product.nameEn || '', slug: product.slug || '',
+      description: product.description || '',
       descriptionEn: product.descriptionEn || '', price: product.price, originalPrice: product.originalPrice || '',
       stock: product.stock, maxTickets: product.maxTickets, category: product.category,
       colors: product.colors?.length
@@ -140,7 +141,7 @@ export default function ProductsContent() {
     setColorImagePreviews([]);
     setColorImageFiles([]);
     setForm({
-      name: '', nameEn: '', description: '', descriptionEn: '', price: '', originalPrice: '',
+      name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
       stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
       featured: false, isActive: true
     });
@@ -225,6 +226,11 @@ export default function ProductsContent() {
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-1 block">Name (EN)</label>
                     <input value={form.nameEn} onChange={e => setForm({...form, nameEn: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-sm font-medium text-neutral-700 mb-1 block">URL Slug <span className="text-neutral-400 font-normal">(optional, auto-generated if empty)</span></label>
+                    <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="e.g. casquette-signature" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+                    <p className="text-xs text-neutral-400 mt-1">Used in product URL: /products/your-slug</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-1 block">Price (CHF)</label>

@@ -22,7 +22,7 @@ export default function RafflesContent() {
   const [editingRaffle, setEditingRaffle] = useState(null); // null or raffle object
 
   const [form, setForm] = useState({
-    name: '', nameEn: '', product: '', startDate: '', endDate: '',
+    name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '',
     prizes: [{ name: '', nameEn: '', value: '', image: '' }]
   });
   
@@ -82,6 +82,7 @@ export default function RafflesContent() {
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('nameEn', form.nameEn || '');
+      formData.append('slug', form.slug || '');
       formData.append('product', form.product);
       formData.append('startDate', form.startDate);
       formData.append('endDate', form.endDate);
@@ -137,12 +138,15 @@ export default function RafflesContent() {
 
   const updateStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API}/api/raffles/${id}`, {
-        method: 'PUT',
+      const res = await fetch(`${API}/api/raffles/${id}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error('Failed to update');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to update' }));
+        throw new Error(err.message);
+      }
       toast.success('Status updated');
       fetchRaffles();
     } catch (error) {
@@ -199,7 +203,7 @@ export default function RafflesContent() {
   const resetForm = () => {
     setShowForm(false);
     setEditingRaffle(null);
-    setForm({ name: '', nameEn: '', product: '', startDate: '', endDate: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
+    setForm({ name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
     setPrizeImageFiles([]);
     setPrizeImagePreviews([]);
   };
@@ -209,6 +213,7 @@ export default function RafflesContent() {
     setForm({
       name: raffle.name || '',
       nameEn: raffle.nameEn || '',
+      slug: raffle.slug || '',
       product: raffle.product?._id || raffle.product || '',
       startDate: raffle.startDate ? new Date(raffle.startDate).toISOString().slice(0, 16) : '',
       endDate: raffle.endDate ? new Date(raffle.endDate).toISOString().slice(0, 16) : '',
@@ -274,6 +279,11 @@ export default function RafflesContent() {
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-1 block">Name (EN)</label>
                     <input value={form.nameEn} onChange={e => setForm({...form, nameEn: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-sm font-medium text-neutral-700 mb-1 block">URL Slug <span className="text-neutral-400 font-normal">(optional, auto-generated if empty)</span></label>
+                    <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="e.g. summer-giveaway-2024" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+                    <p className="text-xs text-neutral-400 mt-1">Used in raffle URL: /raffles/your-slug</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-1 block">Product</label>

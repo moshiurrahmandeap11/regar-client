@@ -272,21 +272,21 @@ export default function ProductDetailPage() {
                 ))}
               </div>
 
-              {/* Tickets sold progress */}
-              {typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0 && (
+              {/* Tickets sold progress - show active raffle ticket count if available */}
+              {(activeRaffle?.ticketCount !== undefined || (typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0)) && (
                 <div className="mt-6">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-neutral-600 font-medium">
                       {locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}
                     </span>
                     <span className="font-semibold text-neutral-900">
-                      {product.soldTickets} / {product.maxTickets}
+                      {activeRaffle?.ticketCount !== undefined ? `${activeRaffle.ticketCount} / ${activeRaffle.maxTickets || product.maxTickets}` : `${product.soldTickets} / ${product.maxTickets}`}
                     </span>
                   </div>
                   <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min((product.soldTickets / product.maxTickets) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((activeRaffle?.ticketCount !== undefined ? activeRaffle.ticketCount : product.soldTickets) / (activeRaffle?.maxTickets || product.maxTickets)) * 100, 100)}%` }}
                     />
                   </div>
                 </div>

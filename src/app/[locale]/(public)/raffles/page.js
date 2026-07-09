@@ -105,17 +105,19 @@ export default function RafflesPage() {
                       </div>
                     )}
 
-                    {/* Tickets sold progress */}
-                    {typeof raffle.product?.soldTickets === 'number' && typeof raffle.product?.maxTickets === 'number' && raffle.product.maxTickets > 0 && (
+                    {/* Tickets sold progress - per-raffle */}
+                    {(raffle.ticketCount !== undefined || (typeof raffle.product?.soldTickets === 'number' && typeof raffle.product?.maxTickets === 'number' && raffle.product.maxTickets > 0)) && (
                       <div className="mt-4">
                         <div className="flex items-center justify-between text-xs mb-1.5">
                           <span className="text-neutral-500">{locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}</span>
-                          <span className="font-semibold text-neutral-700">{raffle.product.soldTickets} / {raffle.product.maxTickets}</span>
+                          <span className="font-semibold text-neutral-700">
+                            {raffle.ticketCount !== undefined ? `${raffle.ticketCount} / ${raffle.maxTickets || raffle.product?.maxTickets || 100}` : `${raffle.product.soldTickets} / ${raffle.product.maxTickets}`}
+                          </span>
                         </div>
                         <div className="w-full h-2 bg-neutral-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
-                            style={{ width: `${Math.min((raffle.product.soldTickets / raffle.product.maxTickets) * 100, 100)}%` }}
+                            style={{ width: `${Math.min(((raffle.ticketCount !== undefined ? raffle.ticketCount : raffle.product.soldTickets) / (raffle.maxTickets || raffle.product?.maxTickets || 100)) * 100, 100)}%` }}
                           />
                         </div>
                       </div>
