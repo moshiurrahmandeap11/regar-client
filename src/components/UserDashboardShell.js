@@ -19,6 +19,7 @@ import { Link } from '@/i18n/routing';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import BrandLogo from '@/components/BrandLogo';
+import { routing } from '@/i18n/routing';
 
 const shellRoutes = ['/dashboard', '/tickets', '/orders', '/order-detail', '/notifications', '/profile'];
 
@@ -31,6 +32,18 @@ export default function UserDashboardShell({ children }) {
 
   const showShell = shellRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`) || pathname === `/${locale}${route}`);
   const t = (en, fr) => (locale === 'fr' ? fr : en);
+
+  useEffect(() => {
+    // Check saved locale preference and redirect if needed
+    if (typeof window === 'undefined') return;
+    const savedLocale = localStorage.getItem('user-locale');
+    if (savedLocale && savedLocale !== locale && routing.locales.includes(savedLocale)) {
+      const newPath = pathname.replace(new RegExp(`^/${locale}(/|$)`), `/${savedLocale}$1`);
+      if (newPath !== pathname) {
+        window.location.href = newPath;
+      }
+    }
+  }, [locale, pathname]);
 
   useEffect(() => {
     if (!showShell || !user) return;

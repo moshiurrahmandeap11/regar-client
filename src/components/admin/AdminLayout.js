@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 import BrandLogo from '@/components/BrandLogo';
+import { routing } from '@/i18n/routing';
 
 const allMenuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
@@ -66,6 +67,24 @@ export default function AdminLayoutClient({ children }) {
   };
 
   useEffect(() => { if (!loading && !user?.isAdmin) router.push('/fr/login'); }, [loading, user, router]);
+
+  useEffect(() => {
+    // Check saved locale preference and redirect if needed
+    if (typeof window === 'undefined') return;
+    const savedLocale = localStorage.getItem('user-locale');
+    if (savedLocale && routing.locales.includes(savedLocale)) {
+      // Admin pages are at /admin/*, but user came from /fr/admin or /en/admin
+      // We need to check the referrer or just ensure consistency
+      const currentPath = pathname;
+      const localeMatch = currentPath.match(/^\/(fr|en)\/admin/);
+      if (localeMatch && localeMatch[1] !== savedLocale) {
+        const newPath = currentPath.replace(/^\/(fr|en)(\/admin)/, `/${savedLocale}$2`);
+        if (newPath !== currentPath) {
+          window.location.href = newPath;
+        }
+      }
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (!user?.isAdmin) return;

@@ -19,6 +19,17 @@ export function proxy(request) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('token')?.value;
 
+  // Check for saved locale preference in cookie
+  const savedLocale = request.cookies.get('user-locale')?.value;
+  const firstSegment = pathname.split('/').filter(Boolean)[0];
+  const currentLocale = routing.locales.includes(firstSegment) ? firstSegment : null;
+
+  // If user has a saved locale and current URL doesn't match, redirect
+  if (savedLocale && routing.locales.includes(savedLocale) && currentLocale && currentLocale !== savedLocale) {
+    const newPath = pathname.replace(new RegExp(`^/${currentLocale}(/|$)`), `/${savedLocale}$1`);
+    return NextResponse.redirect(new URL(newPath, request.url));
+  }
+
   const adminLocaleMatch = pathname.match(/^\/(en|fr)\/admin(\/.*)?$/);
   const adminPath = adminLocaleMatch ? `/admin${adminLocaleMatch[2] || ''}` : null;
 
@@ -29,8 +40,7 @@ export function proxy(request) {
   });
 
   if (isProtected && !token) {
-    const firstSegment = pathname.split('/').filter(Boolean)[0];
-    const locale = routing.locales.includes(firstSegment) ? firstSegment : routing.defaultLocale;
+    const locale = currentLocale || routing.defaultLocale;
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 

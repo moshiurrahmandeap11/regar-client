@@ -16,6 +16,7 @@ import {
   Home, Gift, Bell, Crown, BellRing, Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { routing } from '@/i18n/routing';
 
 function FlagIcon({ locale }) {
   if (locale === 'fr') {
@@ -73,8 +74,25 @@ export default function Navbar() {
 
   const toggleLocale = () => {
     const newLocale = locale === 'fr' ? 'en' : 'fr';
+    // Save preference to localStorage and cookie
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user-locale', newLocale);
+      document.cookie = `user-locale=${newLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    }
     window.location.href = `/${newLocale}${pathname}`;
   };
+
+  useEffect(() => {
+    // Check saved locale preference and redirect if needed
+    if (typeof window === 'undefined') return;
+    const savedLocale = localStorage.getItem('user-locale');
+    if (savedLocale && savedLocale !== locale && routing.locales.includes(savedLocale)) {
+      const newPath = pathname.replace(new RegExp(`^/${locale}(/|$)`), `/${savedLocale}$1`);
+      if (newPath !== pathname) {
+        window.location.href = newPath;
+      }
+    }
+  }, [locale, pathname]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
