@@ -67,7 +67,7 @@ export default function UserDashboardShell({ children }) {
     { icon: Trophy, label: t('Prizes Won', 'Prix gagnes'), href: '/winners' },
     { icon: Bell, label: t('Winner Updates', 'Updates gagnants'), href: '/notifications' },
     { icon: User, label: t('Profile Settings', 'Profil'), href: '/profile' },
-    { icon: CreditCard, label: t('Payment Methods', 'Paiements'), href: '/orders' },
+    { icon: CreditCard, label: t('Payment Methods', 'Paiements'), href: '/payment-methods' },
     { icon: HelpCircle, label: t('Support', 'Support'), href: '/contact' },
   ]), [locale]);
 
