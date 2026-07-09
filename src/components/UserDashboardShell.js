@@ -68,7 +68,7 @@ export default function UserDashboardShell({ children }) {
     { icon: Bell, label: t('Winner Updates', 'Updates gagnants'), href: '/notifications' },
     { icon: User, label: t('Profile Settings', 'Profil'), href: '/profile' },
     { icon: CreditCard, label: t('Payment Methods', 'Paiements'), href: '/payment-methods' },
-    { icon: HelpCircle, label: t('Support', 'Support'), href: '/contact' },
+    { icon: HelpCircle, label: t('Support', 'Support'), href: '/support' },
   ]), [locale]);
 
   const isActive = (href) => {

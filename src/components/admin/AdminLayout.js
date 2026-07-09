@@ -29,7 +29,7 @@ const allMenuItems = [
   { id: 'content', label: 'Content', icon: FileText, href: '/admin/content' },
   { id: 'notifications', label: 'Notif', icon: Bell, href: '/admin/notifications' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
-  { id: 'support', label: 'Support', icon: MessageSquare, href: '/admin/contacts' },
+  { id: 'support', label: 'Support', icon: MessageSquare, href: '/admin/support' },
   { id: 'logs', label: 'Logs', icon: Activity, href: '/admin/draw-history' },
 ];
 
@@ -161,7 +161,7 @@ export default function AdminLayoutClient({ children }) {
       else if (q.includes('payment') || q.includes('payout')) router.push('/admin/payments');
       else if (q.includes('report') || q.includes('analytic')) router.push('/admin/analytics');
       else if (q.includes('content') || q.includes('page')) router.push('/admin/content');
-      else if (q.includes('contact') || q.includes('support')) router.push('/admin/contacts');
+      else if (q.includes('contact') || q.includes('support')) router.push('/admin/support');
       else if (q.includes('setting')) router.push('/admin/settings');
       else if (q.includes('log') || q.includes('history') || q.includes('activity')) router.push('/admin/draw-history');
       else router.push('/admin/dashboard');
