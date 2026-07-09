@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   Eye, Package, Search, ChevronLeft, ChevronRight,
   Truck, CheckCircle, XCircle, Clock, Ticket, CreditCard,
-  Image as ImageIcon, ExternalLink, QrCode,
+  Image as ImageIcon, ExternalLink, QrCode, ThumbsUp, ThumbsDown, FileText,
 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
@@ -38,6 +38,7 @@ export default function OrdersContent() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [currentPage, setCurrentPage]   = useState(1);
   const [proofOpen, setProofOpen]       = useState(false);
+  const [orderNote, setOrderNote]       = useState('');
   const itemsPerPage = 10;
 
   const API   = process.env.NEXT_PUBLIC_API_URL;
@@ -76,7 +77,37 @@ export default function OrdersContent() {
     }
   };
 
-  // search also matches ticket numbers
+  const handleApprovePayment = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/orders/${id}/payment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ paymentStatus: 'completed' }),
+      });
+      if (!res.ok) throw new Error('Failed to approve');
+      toast.success('Payment approved, tickets generated');
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeclinePayment = async (id) => {
+    try {
+      const res = await fetch(`${API}/api/orders/${id}/payment`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ paymentStatus: 'failed' }),
+      });
+      if (!res.ok) throw new Error('Failed to decline');
+      toast.success('Payment declined, order cancelled');
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
   const filtered = orders.filter((o) => {
     const q = search.toLowerCase();
     const ticketMatch = Array.isArray(o.tickets) && o.tickets.some((t) => t.toLowerCase().includes(q));
@@ -419,6 +450,43 @@ export default function OrdersContent() {
                   </div>
                 </div>
               </section>
+
+              {/* Payment Moderation */}
+              {selectedOrder.paymentStatus !== 'completed' && selectedOrder.paymentStatus !== 'failed' && selectedOrder.paymentMethod === 'manual' && (
+                <section className="border-t border-neutral-200 pt-4">
+                  <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" /> Payment Moderation
+                  </h3>
+
+                  <div className="mb-3">
+                    <label className="text-sm text-neutral-600 mb-1 block">Admin note (optional)</label>
+                    <textarea
+                      value={orderNote}
+                      onChange={(e) => setOrderNote(e.target.value)}
+                      placeholder="Add a note about this decision..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleApprovePayment(selectedOrder._id)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                      Approve Payment
+                    </button>
+                    <button
+                      onClick={() => handleDeclinePayment(selectedOrder._id)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                      Decline Payment
+                    </button>
+                  </div>
+                </section>
+              )}
 
               {/* Status Update */}
               <section className="border-t border-neutral-200 pt-4">

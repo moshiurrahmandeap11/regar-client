@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, ExternalLink, Clock, CreditCard, Receipt, Image } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CheckCircle, XCircle, ExternalLink, Clock, CreditCard, Receipt, Image,
+  Eye, X, User, Package, FileText, AlertCircle
+} from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -17,7 +20,9 @@ export default function PaymentsContent() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [expanded, setExpanded] = useState(null); // payment _id with proof open
+  const [expanded, setExpanded] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [note, setNote] = useState('');
 
   useEffect(() => { fetchList(); }, []);
 
@@ -35,25 +40,35 @@ export default function PaymentsContent() {
 
   const handleApprove = async (id) => {
     try {
-      await api.post(`/api/payments/${id}/approve`);
+      await api.post(`/api/payments/${id}/approve`, { note });
       toast.success('Payment approved');
+      setSelected(null);
+      setNote('');
       fetchList();
-    } catch {
-      toast.error('Failed to approve');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve');
     }
   };
 
   const handleDecline = async (id) => {
     try {
-      await api.post(`/api/payments/${id}/decline`);
+      await api.post(`/api/payments/${id}/decline`, { note });
       toast.success('Payment declined');
+      setSelected(null);
+      setNote('');
       fetchList();
-    } catch {
-      toast.error('Failed to decline');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to decline');
     }
   };
 
   const filters = ['all', 'pending', 'approved', 'declined', 'paid'];
+
+  const counts = useMemo(() => {
+    const c = { all: list.length, pending: 0, approved: 0, declined: 0, paid: 0 };
+    list.forEach((p) => { if (c[p.status] !== undefined) c[p.status]++; });
+    return c;
+  }, [list]);
 
   const filtered = filter === 'all'
     ? list
@@ -81,7 +96,7 @@ export default function PaymentsContent() {
                 : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'
             }`}
           >
-            {f}
+            {f} {counts[f] > 0 && <span className="ml-1 opacity-70">({counts[f]})</span>}
           </button>
         ))}
       </div>
@@ -156,6 +171,15 @@ export default function PaymentsContent() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0">
+                      {/* View details */}
+                      <button
+                        onClick={() => setSelected(p)}
+                        className="p-1.5 text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+
                       {/* Toggle screenshot */}
                       {p.proofUrl && (
                         <button
@@ -166,7 +190,9 @@ export default function PaymentsContent() {
                           <Image className="w-4 h-4" />
                         </button>
                       )}
-                      {canModerate ? (
+
+                      {/* Quick approve/decline (only for pending real payments) */}
+                      {canModerate && (
                         <>
                           <button
                             onClick={() => handleApprove(p._id)}
@@ -183,18 +209,19 @@ export default function PaymentsContent() {
                             Decline
                           </button>
                         </>
-                      ) : (
-                        p.proofUrl && (
-                          <a
-                            href={p.proofUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Proof
-                          </a>
-                        )
+                      )}
+
+                      {/* For non-moderatable with proof, show proof link */}
+                      {!canModerate && p.proofUrl && (
+                        <a
+                          href={p.proofUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Proof
+                        </a>
                       )}
                     </div>
                   </div>
@@ -260,6 +287,165 @@ export default function PaymentsContent() {
           })}
         </div>
       )}
+
+      {/* ── Detail Modal ── */}
+      <AnimatePresence>
+        {selected && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-neutral-200 flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold">Payment Details</h2>
+                  <p className="text-sm text-neutral-500">
+                    {selected.orderId?.orderNumber || 'N/A'} · {new Date(selected.createdAt).toLocaleString('fr-CH')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="p-2 hover:bg-neutral-100 rounded-lg shrink-0"
+                >
+                  <X className="w-5 h-5 text-neutral-500" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Status badge */}
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-lg text-sm font-medium ${STATUS_STYLES[selected.status] || 'bg-neutral-100 text-neutral-600'}`}>
+                    {selected.status}
+                  </span>
+                  {selected.synthetic && (
+                    <span className="px-2 py-1 rounded-lg text-xs bg-neutral-100 text-neutral-500">from order</span>
+                  )}
+                </div>
+
+                {/* Customer */}
+                <section>
+                  <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" /> Customer
+                  </h3>
+                  <div className="bg-neutral-50 rounded-xl p-4">
+                    <p className="font-medium">{selected.userId?.firstName} {selected.userId?.lastName}</p>
+                    <p className="text-sm text-neutral-500">{selected.userId?.email}</p>
+                  </div>
+                </section>
+
+                {/* Order */}
+                <section>
+                  <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5" /> Order
+                  </h3>
+                  <div className="bg-neutral-50 rounded-xl p-4 text-sm space-y-1">
+                    <p><span className="text-neutral-500">Order Number:</span> <span className="font-medium">{selected.orderId?.orderNumber || 'N/A'}</span></p>
+                    <p><span className="text-neutral-500">Amount:</span> <span className="font-bold text-neutral-900">{Number(selected.amount).toFixed(2)} {selected.currency || 'CHF'}</span></p>
+                    <p><span className="text-neutral-500">Method:</span> <span className="capitalize">{selected.paymentMethodName || selected.method}</span></p>
+                    {selected.txId && (
+                      <p><span className="text-neutral-500">TX ID:</span> <code className="bg-white border border-neutral-200 px-2 py-0.5 rounded font-mono text-xs">{selected.txId}</code></p>
+                    )}
+                    {selected.providerPaymentId && (
+                      <p><span className="text-neutral-500">Provider ID:</span> <code className="bg-white border border-neutral-200 px-2 py-0.5 rounded font-mono text-xs">{selected.providerPaymentId}</code></p>
+                    )}
+                  </div>
+                </section>
+
+                {/* Payment Proof */}
+                {selected.proofUrl && (
+                  <section>
+                    <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" /> Payment Proof
+                    </h3>
+                    <div className="bg-neutral-50 rounded-xl p-4">
+                      <img
+                        src={selected.proofUrl}
+                        alt="Payment proof"
+                        className="max-w-xs w-full rounded-xl border border-neutral-200 object-contain bg-white mb-3"
+                      />
+                      <a
+                        href={selected.proofUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Open full size
+                      </a>
+                    </div>
+                  </section>
+                )}
+
+                {/* Admin Note */}
+                {selected.adminNote && (
+                  <section>
+                    <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" /> Admin Note
+                    </h3>
+                    <div className="bg-neutral-50 rounded-xl p-4 text-sm text-neutral-700">
+                      {selected.adminNote}
+                    </div>
+                  </section>
+                )}
+
+                {/* Moderation */}
+                {!selected.synthetic && selected.status === 'pending' && (
+                  <section className="border-t border-neutral-200 pt-4">
+                    <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
+                      Moderation
+                    </h3>
+
+                    {/* Note input */}
+                    <div className="mb-4">
+                      <label className="text-sm text-neutral-600 mb-1 block">Admin note (optional)</label>
+                      <textarea
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Add a note about this decision..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleApprove(selected._id)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" /> Approve Payment
+                      </button>
+                      <button
+                        onClick={() => handleDecline(selected._id)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" /> Decline
+                      </button>
+                    </div>
+                  </section>
+                )}
+
+                {/* Already moderated message */}
+                {!selected.synthetic && selected.status !== 'pending' && (
+                  <div className="border-t border-neutral-200 pt-4">
+                    <p className="text-sm text-neutral-500">
+                      This payment has already been <span className="font-medium capitalize">{selected.status}</span>.
+                      {selected.adminNote && (
+                        <span className="block mt-1">Note: {selected.adminNote}</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -99,7 +99,14 @@ export default function CheckoutPage() {
 
       if (paymentMethod === 'stripe') {
         const sessionRes = await api.post('/api/payments/stripe/session', { orderId: res.data._id, amount: total });
-        if (sessionRes.data.url) { window.location.href = sessionRes.data.url; return; }
+        if (sessionRes.data?.url) {
+          window.location.href = sessionRes.data.url;
+          return;
+        }
+        // If no URL returned, Stripe session failed — show error and don't proceed
+        toast.error(sessionRes.data?.message || (locale === 'fr' ? 'Erreur de paiement Stripe' : 'Stripe payment error'));
+        setOrderLoading(false);
+        return;
       }
 
       if (paymentMethod === 'manual') {
