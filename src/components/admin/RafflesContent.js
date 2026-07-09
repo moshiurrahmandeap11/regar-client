@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone, Trash2, Upload, ImageIcon } from 'lucide-react';
+import { Plus, Ticket, Trophy, Calendar, Search, X, ChevronLeft, ChevronRight, Sparkles, Megaphone, Trash2, Upload, ImageIcon, Pencil } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
@@ -18,6 +18,8 @@ export default function RafflesContent() {
 
   // Marketing modal state
   const [marketingTarget, setMarketingTarget] = useState(null); // { name, url }
+
+  const [editingRaffle, setEditingRaffle] = useState(null); // null or raffle object
 
   const [form, setForm] = useState({
     name: '', nameEn: '', product: '', startDate: '', endDate: '',
@@ -89,13 +91,16 @@ export default function RafflesContent() {
         if (file) formData.append(`prizeImage_${index}`, file);
       });
 
-      const res = await fetch(`${API}/api/raffles`, {
-        method: 'POST',
+      const url = editingRaffle ? `${API}/api/raffles/${editingRaffle._id}` : `${API}/api/raffles`;
+      const method = editingRaffle ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      if (!res.ok) throw new Error('Failed to create');
-      toast.success('Raffle created');
+      if (!res.ok) throw new Error(editingRaffle ? 'Failed to update' : 'Failed to create');
+      toast.success(editingRaffle ? 'Raffle updated' : 'Raffle created');
       resetForm();
       fetchRaffles();
     } catch (error) {
@@ -193,9 +198,26 @@ export default function RafflesContent() {
 
   const resetForm = () => {
     setShowForm(false);
+    setEditingRaffle(null);
     setForm({ name: '', nameEn: '', product: '', startDate: '', endDate: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
     setPrizeImageFiles([]);
     setPrizeImagePreviews([]);
+  };
+
+  const startEdit = (raffle) => {
+    setEditingRaffle(raffle);
+    setForm({
+      name: raffle.name || '',
+      nameEn: raffle.nameEn || '',
+      product: raffle.product?._id || raffle.product || '',
+      startDate: raffle.startDate ? new Date(raffle.startDate).toISOString().slice(0, 16) : '',
+      endDate: raffle.endDate ? new Date(raffle.endDate).toISOString().slice(0, 16) : '',
+      prizes: raffle.prizes?.length ? raffle.prizes.map(p => ({ name: p.name || '', nameEn: p.nameEn || '', value: p.value || '', image: p.image || '' })) : [{ name: '', nameEn: '', value: '', image: '' }],
+    });
+    setPrizeImageFiles(raffle.prizes?.map(() => null) || []);
+    setPrizeImagePreviews(raffle.prizes?.map(p => p.image || null) || []);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filtered = raffles.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
@@ -242,7 +264,7 @@ export default function RafflesContent() {
             className="overflow-hidden"
           >
             <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-              <h2 className="text-lg font-semibold mb-4">Create New Raffle</h2>
+              <h2 className="text-lg font-semibold mb-4">{editingRaffle ? 'Edit Raffle' : 'Create New Raffle'}</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -281,6 +303,16 @@ export default function RafflesContent() {
                           <input value={prize.name} onChange={e => updatePrize(i, 'name', e.target.value)} placeholder="Prize name (FR)" className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
                           <input value={prize.nameEn} onChange={e => updatePrize(i, 'nameEn', e.target.value)} placeholder="Prize name (EN)" className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
                           <input type="number" value={prize.value} onChange={e => updatePrize(i, 'value', e.target.value)} placeholder="Value" className="w-24 px-4 py-2 rounded-xl border border-neutral-200 text-sm" />
+                          {form.prizes.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removePrize(i)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove prize"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                         
                         {/* Prize Image Upload */}
@@ -321,7 +353,7 @@ export default function RafflesContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">Create Raffle</motion.button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">{editingRaffle ? 'Update Raffle' : 'Create Raffle'}</motion.button>
                   <button type="button" onClick={resetForm} className="px-6 py-2.5 border border-neutral-200 rounded-xl text-sm hover:bg-neutral-50">Cancel</button>
                 </div>
               </form>
@@ -425,6 +457,13 @@ export default function RafflesContent() {
                               Ready to draw
                             </span>
                           ) : null}
+                          <button
+                            onClick={() => startEdit(raffle)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit raffle"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleDelete(raffle)}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

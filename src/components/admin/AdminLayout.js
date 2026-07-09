@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Gift, Ticket, ShoppingCart, Package, Users, Trophy,
   CreditCard, BarChart3, FileText, Bell, Settings, MessageSquare, Activity,
   Crown, Search, ChevronDown, Calendar, LogOut, User, X, CheckCircle, Sparkles,
-  Menu, Home, Construction
+  Menu, Home, Construction, Mail
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -29,6 +29,7 @@ const allMenuItems = [
   { id: 'content', label: 'Content', icon: FileText, href: '/admin/content' },
   { id: 'notifications', label: 'Notif', icon: Bell, href: '/admin/notifications' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
+  { id: 'contacts', label: 'Contacts', icon: Mail, href: '/admin/contacts' },
   { id: 'support', label: 'Support', icon: MessageSquare, href: '/admin/support' },
   { id: 'logs', label: 'Logs', icon: Activity, href: '/admin/draw-history' },
 ];
