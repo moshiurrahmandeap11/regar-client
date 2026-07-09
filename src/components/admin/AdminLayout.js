@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Gift, Ticket, ShoppingCart, Package, Users, Trophy,
   CreditCard, BarChart3, FileText, Bell, Settings, MessageSquare, Activity,
   Crown, Search, ChevronDown, Calendar, LogOut, User, X, CheckCircle, Sparkles,
-  Menu, Home
+  Menu, Home, Construction
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -58,6 +58,7 @@ export default function AdminLayoutClient({ children }) {
   const userDropdownRef = useRef(null);
   const [activeRaffles, setActiveRaffles] = useState([]);
   const [sidebarRaffleImage, setSidebarRaffleImage] = useState('');
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   const getReadState = () => {
     try { const stored = localStorage.getItem('admin_notifications_read'); return stored ? JSON.parse(stored) : {}; } catch { return {}; }
@@ -90,10 +91,11 @@ export default function AdminLayoutClient({ children }) {
     if (!user?.isAdmin) return;
     const fetchData = async () => {
       try {
-        const [ordersRes, rafflesRes, notifRes] = await Promise.all([
+        const [ordersRes, rafflesRes, notifRes, settingsRes] = await Promise.all([
           api.get('/api/orders').catch(() => ({ data: [] })),
           api.get('/api/raffles?status=active').catch(() => ({ data: [] })),
           api.get('/api/notifications/all?limit=10').catch(() => ({ data: [] })),
+          api.get('/api/content/settings').catch(() => ({ data: {} })),
         ]);
         const orders = Array.isArray(ordersRes.data) ? ordersRes.data.slice(0, 5) : [];
         const raffles = Array.isArray(rafflesRes.data) ? rafflesRes.data : [];
@@ -131,6 +133,7 @@ export default function AdminLayoutClient({ children }) {
         });
         setNotifications(notifs.slice(0, 6));
         setNotifUnread(notifs.filter(n => !n.read).length);
+        setMaintenanceMode(settingsRes.data?.maintenanceMode === true);
       } catch (error) { console.error('Admin layout error:', error); }
     };
     fetchData();
@@ -288,40 +291,48 @@ export default function AdminLayoutClient({ children }) {
           <Link href="/admin/dashboard" className="flex items-center gap-1.5">
             <BrandLogo size="sm" />
           </Link>
-          <div className="relative" ref={notifRef}>
-            <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">
-              <Bell className="w-6 h-6" />
-              {notifUnread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{notifUnread}</span>}
-            </button>
-            {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-neutral-200 shadow-lg z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
-                  <h3 className="font-semibold text-sm text-neutral-900">Notifications</h3>
-                  {notifUnread > 0 && <button onClick={markAllRead} className="text-xs text-amber-600 hover:text-amber-700 font-medium">Mark all read</button>}
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-neutral-400"><Bell className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-sm">No notifications</p></div>
-                  ) : (
-                    notifications.map((notif) => (
-                      <div key={notif.id} onClick={() => { markAsRead(notif.id); router.push(notif.link); setNotifOpen(false); }} className={`px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 cursor-pointer transition-colors ${!notif.read ? 'bg-amber-50/50' : ''}`}>
-                        <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.read ? 'bg-neutral-300' : 'bg-amber-500'}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-neutral-900">{notif.title}</p>
-                            <p className="text-xs text-neutral-500 mt-0.5">{notif.message}</p>
-                            <p className="text-xs text-neutral-400 mt-1">{notif.time}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="px-4 py-2 border-t border-neutral-100">
-                  <Link href="/admin/notifications" onClick={() => setNotifOpen(false)} className="text-xs text-amber-600 hover:text-amber-700 font-medium text-center block">View all notifications</Link>
-                </div>
+          <div className="flex items-center gap-2">
+            {maintenanceMode && (
+              <div className="flex items-center gap-1 bg-amber-500/20 text-amber-400 rounded px-2 py-1 text-[10px] font-medium">
+                <Construction className="w-3 h-3" />
+                <span>MAINT</span>
               </div>
             )}
+            <div className="relative" ref={notifRef}>
+              <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-white p-1">
+                <Bell className="w-6 h-6" />
+                {notifUnread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{notifUnread}</span>}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-neutral-200 shadow-lg z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+                    <h3 className="font-semibold text-sm text-neutral-900">Notifications</h3>
+                    {notifUnread > 0 && <button onClick={markAllRead} className="text-xs text-amber-600 hover:text-amber-700 font-medium">Mark all read</button>}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-neutral-400"><Bell className="w-8 h-8 mx-auto mb-2 opacity-50" /><p className="text-sm">No notifications</p></div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div key={notif.id} onClick={() => { markAsRead(notif.id); router.push(notif.link); setNotifOpen(false); }} className={`px-4 py-3 border-b border-neutral-50 hover:bg-neutral-50 cursor-pointer transition-colors ${!notif.read ? 'bg-amber-50/50' : ''}`}>
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.read ? 'bg-neutral-300' : 'bg-amber-500'}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-neutral-900">{notif.title}</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">{notif.message}</p>
+                              <p className="text-xs text-neutral-400 mt-1">{notif.time}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="px-4 py-2 border-t border-neutral-100">
+                    <Link href="/admin/notifications" onClick={() => setNotifOpen(false)} className="text-xs text-amber-600 hover:text-amber-700 font-medium text-center block">View all notifications</Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -330,6 +341,13 @@ export default function AdminLayoutClient({ children }) {
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-neutral-900 capitalize">{allMenuItems.find(i => i.id === activeTab)?.label || 'Dashboard'}</h1>
           </div>
+
+          {maintenanceMode && (
+            <div className="hidden md:flex items-center gap-2 bg-amber-100 text-amber-800 rounded-lg px-3 py-2 text-xs font-medium">
+              <Construction className="w-3.5 h-3.5" />
+              Maintenance Mode Active
+            </div>
+          )}
 
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Search */}

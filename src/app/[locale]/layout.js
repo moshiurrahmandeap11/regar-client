@@ -6,14 +6,12 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-
+import MaintenanceCheck from '@/components/MaintenanceCheck';
 
 export const metadata = {
   title: 'Regar - Raffles de Luxe',
   description: 'Gagnez des sneakers, casquettes et accessoires de luxe',
 };
-
-
 
 export default async function RootLayout({ children, params }) {
   const { locale } = await params;
@@ -23,9 +21,11 @@ export default async function RootLayout({ children, params }) {
     <NextIntlClientProvider messages={messages} locale={locale} >
       <AuthProvider>
         <CartProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <MaintenanceCheck>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </MaintenanceCheck>
           <Toaster position="top-center" />
         </CartProvider>
       </AuthProvider>
