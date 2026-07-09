@@ -58,16 +58,7 @@ export default function ProfilePage() {
       }));
       if (avatarFile) formData.append('avatar', avatarFile);
 
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!res.ok) throw new Error('Failed to update');
-      const updatedUser = await res.json();
-      // Update local user state
-      window.dispatchEvent(new CustomEvent('user-updated', { detail: updatedUser }));
+      await updateProfile(formData);
       toast.success(locale === 'fr' ? 'Profil mis a jour' : 'Profile updated');
     } catch (error) {
       toast.error(error.message || 'Error');
