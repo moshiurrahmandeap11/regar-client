@@ -277,7 +277,7 @@ export default function HomePage() {
                       <h3 className="mt-2 text-sm font-bold text-neutral-900 leading-tight">{product.name}</h3>
                       <p className="mt-1 text-sm font-bold text-neutral-900 leading-tight">${Number(product.price || 0).toFixed(2)}</p>
                       <div className="mt-1.5 flex min-h-4 items-center gap-2">
-                        {(product.colors || []).slice(0, 3).map((color, index) => (
+                        {(product.colors || []).slice(0, 4).map((color, index) => (
                           <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
                         ))}
                       </div>
