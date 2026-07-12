@@ -264,7 +264,7 @@ export default function HomePage() {
             {/* Right: Product Cards */}
             <div>
               {shopProducts.length ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {shopProducts.map((product) => (
                     <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow flex flex-col">
                       <div className="h-28 sm:h-32 lg:h-[132px] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
