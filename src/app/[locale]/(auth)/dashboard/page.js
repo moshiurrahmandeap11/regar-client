@@ -232,19 +232,30 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {recentOrders.map((order) => {
                   const orderState = getOrderState(order, locale);
-                  const productImage = order.items?.[0]?.image;
-                  const productName = order.items?.[0]?.name || t('Premium Cap', 'Casquette');
+                  const firstItem = order.items?.[0];
+                  const hasMultipleItems = (order.items?.length || 0) > 1;
+                  const ticketCount = (order.tickets || []).length;
                   return (
                     <div key={order._id} className="flex items-center gap-3">
                       <div className="w-14 h-14 rounded-lg bg-neutral-100 overflow-hidden border border-neutral-200 flex-shrink-0">
-                        {productImage ? <img src={productImage} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-neutral-400" /></div>}
+                        {firstItem?.image ? <img src={firstItem.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-neutral-400" /></div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">{productName}</p>
+                        <p className="text-sm font-medium text-neutral-900 truncate">{firstItem?.name || t('Premium Cap', 'Casquette')}</p>
                         <p className="text-[10px] text-neutral-500">{t('Order', 'Cmd')} #{order.orderNumber}</p>
+                        {firstItem?.raffleNumber && (
+                          <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">
+                            {isFr ? 'Tombola' : 'Raffle'} #{String(firstItem.raffleNumber).padStart(3, '0')}
+                          </p>
+                        )}
                         <p className="text-[10px] text-neutral-400">{new Date(order.createdAt).toLocaleDateString('fr-CH')}</p>
                       </div>
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${orderState.tone}`}>{orderState.label}</span>
+                      <div className="text-right shrink-0">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${orderState.tone}`}>{orderState.label}</span>
+                        {ticketCount > 0 && (
+                          <p className="text-[10px] text-neutral-500 mt-1">{ticketCount} {t('tickets', 'tickets')}</p>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

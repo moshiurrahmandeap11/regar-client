@@ -16,20 +16,34 @@ export default function CartPage() {
   const router = useRouter();
   const { cart, removeFromCart, updateQuantity, subtotal, totalItems } = useCart();
   const [drawnProductIds, setDrawnProductIds] = useState(new Set());
+  const [cartRaffles, setCartRaffles] = useState({});
   const [checkingRaffles, setCheckingRaffles] = useState(true);
   const shipping = subtotal > 100 ? 0 : 9.90;
   const total = subtotal + shipping;
 
   // Check if any cart item's product is linked to a drawn raffle
+  // Also fetch active raffle info for each cart item
   useEffect(() => {
     const checkRaffles = async () => {
       if (cart.length === 0) {
         setCheckingRaffles(false);
+        setCartRaffles({});
         return;
       }
       try {
         const res = await api.get('/api/raffles');
         const raffles = Array.isArray(res.data) ? res.data : [];
+        
+        // Map productId -> active raffle info
+        const raffleMap = {};
+        raffles.forEach(r => {
+          const pid = String(r.product?._id || r.product);
+          if (r.status === 'active' && !raffleMap[pid]) {
+            raffleMap[pid] = r;
+          }
+        });
+        setCartRaffles(raffleMap);
+
         const drawn = new Set(
           raffles
             .filter(r => r.status === 'drawn' || r.status === 'closed')
@@ -101,6 +115,7 @@ export default function CartPage() {
             )}
             {cart.map((item, index) => {
               const isBlocked = drawnProductIds.has(String(item.productId));
+              const raffle = cartRaffles[String(item.productId)];
               return (
                 <FadeIn key={`${item.productId}-${item.color}-${item.size}`} delay={index * 0.05}>
                   <div className={`flex gap-4 bg-white rounded-2xl border p-4 ${isBlocked ? 'border-amber-300 bg-amber-50/30' : 'border-neutral-200'}`}>
@@ -112,6 +127,16 @@ export default function CartPage() {
                           <p className="text-sm text-neutral-500 mt-1">
                             {item.color} / {item.size}
                           </p>
+                          {raffle && (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded">
+                                {locale === 'fr' ? 'Tombola' : 'Raffle'} #{String(raffle.raffleNumber || 0).padStart(3, '0')}
+                              </span>
+                              <span className="text-xs text-neutral-500 truncate max-w-[140px]">
+                                {locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}
+                              </span>
+                            </div>
+                          )}
                           {isBlocked && (
                             <p className="text-xs text-amber-600 mt-1 font-medium">
                               {locale === 'fr' ? 'Tombola terminee — non disponible' : 'Raffle ended — unavailable'}
@@ -143,7 +168,14 @@ export default function CartPage() {
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="font-bold text-neutral-900">{(item.price * item.quantity).toFixed(2)} CHF</p>
+                        <div className="text-right">
+                          <p className="font-bold text-neutral-900">{(item.price * item.quantity).toFixed(2)} CHF</p>
+                          {raffle && (
+                            <p className="text-[10px] text-neutral-400">
+                              {item.quantity} {locale === 'fr' ? 'ticket' : 'ticket'}{item.quantity > 1 ? 's' : ''} {locale === 'fr' ? 'par article' : 'per item'}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

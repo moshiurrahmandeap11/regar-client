@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { CreditCard, Truck, Shield, Check } from 'lucide-react';
+import { CreditCard, Truck, Shield, Check, Ticket } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [order, setOrder] = useState(null);
+  const [cartRaffles, setCartRaffles] = useState({});
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
     street: '', city: '', zip: '', country: 'Suisse',
@@ -34,7 +35,7 @@ export default function CheckoutPage() {
     }
   }, [user, loading, router, locale]);
 
-  // Pre-fill form when user data loads
+  // Pre-fill form when user data loads + fetch raffle info for cart items
   useEffect(() => {
     if (user) {
       setForm({
@@ -49,6 +50,28 @@ export default function CheckoutPage() {
       });
     }
   }, [user]);
+
+  // Fetch active raffle info for cart items
+  useEffect(() => {
+    const loadRaffles = async () => {
+      if (cart.length === 0) return;
+      try {
+        const res = await api.get('/api/raffles');
+        const raffles = Array.isArray(res.data) ? res.data : [];
+        const raffleMap = {};
+        raffles.forEach(r => {
+          const pid = String(r.product?._id || r.product);
+          if (r.status === 'active' && !raffleMap[pid]) {
+            raffleMap[pid] = r;
+          }
+        });
+        setCartRaffles(raffleMap);
+      } catch {
+        // silently fail
+      }
+    };
+    loadRaffles();
+  }, [cart]);
 
   const shipping = subtotal > 100 ? 0 : 9.90;
   const total = subtotal + shipping;
@@ -286,24 +309,48 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold mb-4">
                 {locale === 'fr' ? 'Resume de la commande' : 'Order summary'}
               </h2>
-              <div className="space-y-2 text-sm">
-                {cart.map(item => (
-                  <div key={`${item.productId}-${item.color}-${item.size}`} className="flex justify-between">
-                    <span className="text-neutral-600">{item.name} x{item.quantity}</span>
-                    <span className="font-medium">{(item.price * item.quantity).toFixed(2)} CHF</span>
+              <div className="space-y-4 text-sm">
+                {cart.map(item => {
+                  const raffle = cartRaffles[String(item.productId)];
+                  return (
+                    <div key={`${item.productId}-${item.color}-${item.size}`} className="flex gap-3 pb-4 border-b border-neutral-100 last:border-0 last:pb-0">
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-neutral-100" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-neutral-900 truncate">{item.name}</p>
+                        <p className="text-xs text-neutral-500">{item.color} / {item.size}</p>
+                        {raffle && (
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <Ticket className="w-3 h-3 text-emerald-600" />
+                            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                              {locale === 'fr' ? 'Tombola' : 'Raffle'} #{String(raffle.raffleNumber || 0).padStart(3, '0')}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 truncate max-w-[100px]">
+                              {locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-xs text-neutral-500 mt-1">Qty: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{(item.price * item.quantity).toFixed(2)} CHF</p>
+                        <p className="text-[10px] text-neutral-400">{item.price.toFixed(2)} CHF / unit</p>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="border-t border-neutral-200 pt-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">{locale === 'fr' ? 'Sous-total' : 'Subtotal'}</span>
+                    <span>{subtotal.toFixed(2)} CHF</span>
                   </div>
-                ))}
-                <div className="border-t border-neutral-200 pt-2 flex justify-between">
-                  <span className="text-neutral-500">{locale === 'fr' ? 'Sous-total' : 'Subtotal'}</span>
-                  <span>{subtotal.toFixed(2)} CHF</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">{locale === 'fr' ? 'Livraison' : 'Shipping'}</span>
-                  <span>{shipping === 0 ? (locale === 'fr' ? 'Gratuite' : 'Free') : `${shipping.toFixed(2)} CHF`}</span>
-                </div>
-                <div className="border-t border-neutral-200 pt-2 flex justify-between">
-                  <span className="font-semibold">{locale === 'fr' ? 'Total' : 'Total'}</span>
-                  <span className="font-bold text-lg">{total.toFixed(2)} CHF</span>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">{locale === 'fr' ? 'Livraison' : 'Shipping'}</span>
+                    <span>{shipping === 0 ? (locale === 'fr' ? 'Gratuite' : 'Free') : `${shipping.toFixed(2)} CHF`}</span>
+                  </div>
+                  <div className="border-t border-neutral-200 pt-2 flex justify-between">
+                    <span className="font-semibold">{locale === 'fr' ? 'Total' : 'Total'}</span>
+                    <span className="font-bold text-lg">{total.toFixed(2)} CHF</span>
+                  </div>
                 </div>
               </div>
             </div>
