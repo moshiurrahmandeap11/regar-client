@@ -469,14 +469,14 @@ export default function HomePage() {
 
       {/* How It Works */}
       <section id="how-it-works" className="py-10 sm:py-14 bg-[#fbfaf8]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#c28a3d]">{isFr ? 'Comment ca marche' : 'How it works'}</p>
           <h2 className="mt-1 text-[24px] sm:text-[28px] font-black leading-tight text-[#15120f]">{isFr ? 'Etapes simples pour gagner' : 'Simple steps to win'}</h2>
 
           <div className="mt-8 hidden md:flex items-center justify-center">
             {steps.map((step, index) => (
               <div key={step.title} className="flex items-center">
-                <div className="flex w-[188px] items-center gap-5 text-left">
+                <div className="flex w-[260px] items-center gap-5 text-left">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] shadow-[0_12px_35px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]">
                     <step.icon className={`h-9 w-9 ${index === 0 ? 'text-[#15120f]' : 'text-[#d29a4c]'}`} strokeWidth={1.7} />
                   </div>
@@ -496,7 +496,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-7 md:hidden max-w-[260px] mx-auto text-left">
+          <div className="mt-7 md:hidden max-w-[320px] mx-auto text-left">
             {steps.map((step, index) => (
               <div key={step.title} className="relative flex gap-5 pb-7 last:pb-0">
                 {index < steps.length - 1 ? <span className="absolute left-9 top-[72px] h-[34px] w-px bg-neutral-200" /> : null}
@@ -539,155 +539,155 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recent Winners */}
-      {winners.length > 0 && (
-        <section className="py-8 sm:py-12">
+      {/* Winners & Reviews Combined Section */}
+      {(winners.length > 0 || reviews.length > 0) && (
+        <section className="py-8 sm:py-12 bg-[#fbfaf8]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">
-                  {isFr ? 'Gagnants recents' : 'Recent winners'}
-                </p>
-                <h2 className="mt-1 text-2xl font-black">
-                  {isFr ? 'Les derniers gagnants Regar' : 'Latest Regar winners'}
-                </h2>
-              </div>
-              <Link href="/winners" className="inline-flex w-fit items-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-xs font-black uppercase text-neutral-900">
-                {isFr ? 'Voir tous' : 'View all'} <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {winners.slice(0, 3).map((winner) => {
-                const avatar = winner.user?.avatar;
-                return (
-                  <div key={winner._id} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238]">
-                        {avatar ? (
-                          <img src={avatar} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <Trophy className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-black text-sm">
-                          {winner.user?.firstName} {winner.user?.lastName?.charAt(0)}.
-                        </p>
-                        <p className="mt-0.5 text-xs text-neutral-500">
-                          {winner.raffle ? (isFr ? winner.raffle.name : winner.raffle.nameEn || winner.raffle.name) : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-4 rounded-lg bg-neutral-50 p-4">
-                      <p className="text-sm font-bold text-neutral-800">
-                        {isFr ? winner.prize : winner.prizeEn || winner.prize}
-                      </p>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {winner.ticket?.ticketNumber}
-                        {winner.prizeValue ? ` • ${winner.prizeValue} CHF` : ''}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Participant Reviews */}
-      {reviews.length > 0 && (
-        <section className="py-8 sm:py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">
-                  {isFr ? 'Avis participants' : 'What participants say'}
-                </p>
-                <h2 className="mt-1 text-2xl font-black">
-                  {isFr ? 'Des acheteurs qui participent' : 'Cap owners joining the raffle'}
-                </h2>
-              </div>
-              <p className="max-w-sm text-sm text-neutral-500">
-                {isFr ? 'Les avis approuves par admin apparaissent ici.' : 'Admin-approved owner stories appear here.'}
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {reviews.slice(0, 3).map((review) => {
-                const avatar = review.avatar || review.user?.avatar;
-                return (
-                  <div key={review._id} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-sm font-black text-[#b88238]">
-                          {avatar ? (
-                            <img src={avatar} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            review.name?.charAt(0) || 'R'
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-black text-sm">{review.name}</p>
-                          <div className="mt-1 flex gap-0.5">
-                            {Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={index}
-                                className={`h-3.5 w-3.5 ${index < Number(review.rating || 0) ? 'fill-[#e2bd87] text-[#e2bd87]' : 'text-neutral-200'}`}
-                              />
-                            ))}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+              
+              {/* Left: Recent Winner */}
+              {winners.length > 0 && (
+                <div className="lg:col-span-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b88238]">
+                    {isFr ? 'Gagnant recent' : 'Recent Winner'}
+                  </p>
+                  
+                  <div className="mt-4">
+                    {(() => {
+                      const winner = winners[0];
+                      const avatar = winner.user?.avatar;
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-14 w-14 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238] ring-2 ring-[#e8d3b6]">
+                              {avatar ? (
+                                <img src={avatar} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <Trophy className="h-6 w-6" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-sm text-neutral-900">
+                                  {winner.user?.firstName} {winner.user?.lastName}
+                                </p>
+                                <span className="px-2 py-0.5 bg-[#e8d3b6] text-[#8b6914] text-[10px] font-bold uppercase rounded-full">
+                                  {isFr ? 'Gagne' : 'Won'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-neutral-500 mt-0.5">
+                                {isFr ? winner.prize : winner.prizeEn || winner.prize}
+                              </p>
+                            </div>
                           </div>
+                          
+                          <p className="text-sm text-neutral-600 italic">
+                            &ldquo;{isFr ? 'Je n\'arrive pas a y croire ! Merci Regar !' : 'Can\'t believe I won! Thank you Regar!' }&rdquo;
+                          </p>
+                          
+                          <Link 
+                            href="/winners" 
+                            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-5 py-2.5 text-xs font-bold uppercase text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          >
+                            {isFr ? 'Voir tous les gagnants' : 'See all winners'} <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
                         </div>
-                      </div>
-                      <Quote className="h-6 w-6 text-[#e2bd87]" />
-                    </div>
-                    <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-                      {isFr ? review.comment : review.commentEn || review.comment}
-                    </p>
+                      );
+                    })()}
                   </div>
-                );
-              })}
+                </div>
+              )}
+
+              {/* Right: What Participants Say */}
+              {reviews.length > 0 && (
+                <div className={`${winners.length > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b88238]">
+                    {isFr ? 'Ce que disent nos participants' : 'What Our Participants Say'}
+                  </p>
+                  
+                  <div className="mt-4 relative">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {reviews.slice(0, 2).map((review) => {
+                        const avatar = review.avatar || review.user?.avatar;
+                        return (
+                          <div key={review._id} className="relative">
+                            {/* Quote mark */}
+                            <Quote className="h-8 w-8 text-[#e2bd87]/40 mb-2" />
+                            
+                            <p className="text-sm leading-relaxed text-neutral-600">
+                              {isFr ? review.comment : review.commentEn || review.comment}
+                            </p>
+                            
+                            {/* Stars */}
+                            <div className="mt-3 flex gap-0.5">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star
+                                  key={index}
+                                  className={`h-4 w-4 ${index < Number(review.rating || 0) ? 'fill-[#e2bd87] text-[#e2bd87]' : 'text-neutral-200'}`}
+                                />
+                              ))}
+                            </div>
+                            
+                            {/* Reviewer */}
+                            <div className="mt-4 flex items-center gap-2">
+                              <div className="h-8 w-8 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-xs font-bold text-[#b88238]">
+                                {avatar ? (
+                                  <img src={avatar} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  review.name?.charAt(0) || 'R'
+                                )}
+                              </div>
+                              <p className="text-sm font-semibold text-neutral-900">{review.name}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
       )}
 
       {/* Newsletter */}
-      <section className="pb-8 sm:pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl bg-[#e8d3b6] p-5 flex flex-col sm:flex-row items-center gap-6">
-            {/* Left: Running Raffle Image */}
+      <section className="pb-8 sm:pb-0 bg-[#e8d3b6]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+            {/* Left: Recent Raffle Image */}
             {runningRaffleImage && (
-              <div className="w-full sm:w-40 shrink-0">
-                <div className="aspect-square rounded-xl overflow-hidden bg-white/50 border border-black/10">
-                  <img 
-                    src={runningRaffleImage} 
-                    alt={heroName || 'Raffle'} 
-                    className="w-full h-full object-cover"
+              <div className="w-full sm:w-48 shrink-0 flex items-center justify-center">
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40">
+                  <img
+                    src={runningRaffleImage}
+                    alt={heroName || 'Raffle'}
+                    className="w-full h-full object-cover rounded-2xl drop-shadow-xl"
                   />
                 </div>
               </div>
             )}
             
-            {/* Right: Content */}
+            {/* Middle: Content */}
             <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-black">{isFr ? 'Ne manquez rien !' : "Don't miss out!"}</h2>
-              <p className="mt-1 text-xs text-black/65">{isFr ? 'Recevez les nouveaux raffles et offres exclusives.' : 'Get exclusive updates on new raffles and special offers.'}</p>
-              <form onSubmit={handleNewsletter} className="mt-4 flex gap-2 max-w-md">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={isFr ? 'Votre email' : 'Enter your email'}
-                  className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-3 py-2.5 text-sm outline-none"
-                />
-                <button type="submit" className="rounded-lg bg-black px-4 py-2.5 text-xs font-black uppercase text-white">
-                  {isFr ? 'Subscribe' : 'Subscribe'}
-                </button>
-              </form>
+              <h2 className="text-2xl sm:text-3xl font-black text-neutral-900">{isFr ? 'Ne manquez rien !' : "Don't Miss Out!"}</h2>
+              <p className="mt-2 text-sm text-neutral-700 max-w-md">{isFr ? 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.' : 'Join our community and get exclusive updates on new raffles and special offers.'}</p>
             </div>
+
+            {/* Right: Form */}
+            <form onSubmit={handleNewsletter} className="w-full sm:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={isFr ? 'Votre email' : 'Enter your email'}
+                className="min-w-0 sm:w-56 rounded-lg border border-black/10 bg-white px-4 py-3 text-sm outline-none"
+              />
+              <button type="submit" className="rounded-lg bg-black px-6 py-3 text-xs font-black uppercase text-white whitespace-nowrap">
+                {isFr ? 'Subscribe' : 'Subscribe'}
+              </button>
+            </form>
           </div>
         </div>
       </section>
