@@ -22,7 +22,7 @@ export default function RafflesContent() {
   const [editingRaffle, setEditingRaffle] = useState(null); // null or raffle object
 
   const [form, setForm] = useState({
-    name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '',
+    name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '',
     prizes: [{ name: '', nameEn: '', value: '', image: '' }]
   });
   
@@ -86,6 +86,9 @@ export default function RafflesContent() {
       formData.append('product', form.product);
       formData.append('startDate', form.startDate);
       formData.append('endDate', form.endDate);
+      if (form.raffleNumber) {
+        formData.append('raffleNumber', form.raffleNumber);
+      }
       formData.append('prizes', JSON.stringify(form.prizes));
 
       prizeImageFiles.forEach((file, index) => {
@@ -203,7 +206,7 @@ export default function RafflesContent() {
   const resetForm = () => {
     setShowForm(false);
     setEditingRaffle(null);
-    setForm({ name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
+    setForm({ name: '', nameEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
     setPrizeImageFiles([]);
     setPrizeImagePreviews([]);
   };
@@ -217,6 +220,7 @@ export default function RafflesContent() {
       product: raffle.product?._id || raffle.product || '',
       startDate: raffle.startDate ? new Date(raffle.startDate).toISOString().slice(0, 16) : '',
       endDate: raffle.endDate ? new Date(raffle.endDate).toISOString().slice(0, 16) : '',
+      raffleNumber: raffle.raffleNumber || '',
       prizes: raffle.prizes?.length ? raffle.prizes.map(p => ({ name: p.name || '', nameEn: p.nameEn || '', value: p.value || '', image: p.image || '' })) : [{ name: '', nameEn: '', value: '', image: '' }],
     });
     setPrizeImageFiles(raffle.prizes?.map(() => null) || []);
@@ -285,14 +289,20 @@ export default function RafflesContent() {
                     <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="e.g. summer-giveaway-2024" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
                     <p className="text-xs text-neutral-400 mt-1">Used in raffle URL: /raffles/your-slug</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-neutral-700 mb-1 block">Product</label>
-                    <select value={form.product} onChange={e => setForm({...form, product: e.target.value})} required className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900">
-                      <option value="">Select product</option>
-                      {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Raffle Number <span className="text-neutral-400 font-normal">(auto-generated if empty)</span></label>
+                      <input type="number" value={form.raffleNumber} onChange={e => setForm({...form, raffleNumber: e.target.value})} placeholder="e.g. 42" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Product</label>
+                      <select value={form.product} onChange={e => setForm({...form, product: e.target.value})} required className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900">
+                        <option value="">Select product</option>
+                        {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-neutral-700 mb-1 block">Start Date</label>
                       <input type="datetime-local" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} required className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />

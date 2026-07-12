@@ -80,6 +80,11 @@ export default function RafflesPage() {
 
                   {/* Info */}
                   <div className="p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-1.5 py-0.5 bg-neutral-100 text-neutral-600 text-[10px] font-bold uppercase tracking-wider rounded">
+                        {locale === 'fr' ? 'Tombola' : 'Raffle'} #{raffle.raffleNumber ? String(raffle.raffleNumber).padStart(3, '0') : '---'}
+                      </span>
+                    </div>
                     <h3 className="font-semibold text-neutral-900 truncate">{locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}</h3>
                     <p className="text-sm text-neutral-500 mt-1 truncate">{locale === 'fr' ? raffle.product?.name : (raffle.product?.nameEn || raffle.product?.name)}</p>
                     {/* Product description */}
