@@ -36,6 +36,9 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeRaffle, setActiveRaffle] = useState(null);
+  const [productRaffles, setProductRaffles] = useState([]);
+  const drawnRaffle = productRaffles.find(r => r.status === 'drawn');
+  const hasDrawnRaffle = Boolean(drawnRaffle);
 
   const selectedColorData = product?.colors?.find((color) => color.name === selectedColor);
   const displayImages = (() => {
@@ -78,10 +81,12 @@ export default function ProductDetailPage() {
 
         // Fetch the active raffle linked to this product (if any)
         try {
-          const raffleRes = await api.get(`/api/raffles?product=${productId}&status=active`);
+          const raffleRes = await api.get(`/api/raffles?product=${productId}`);
           const list = Array.isArray(raffleRes.data) ? raffleRes.data : [];
-          setActiveRaffle(list[0] || null);
+          setProductRaffles(list);
+          setActiveRaffle(list.find(r => r.status === 'active') || null);
         } catch {
+          setProductRaffles([]);
           setActiveRaffle(null);
         }
       } catch (error) {
@@ -96,6 +101,10 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!selectedColor || !selectedSize) {
       toast.error(locale === 'fr' ? 'Veuillez selectionner une couleur et une taille' : 'Please select color and size');
+      return;
+    }
+    if (hasDrawnRaffle) {
+      toast.error(locale === 'fr' ? 'Le tirage de cette tombola a deja ete effectue.' : 'This raffle has already been drawn.');
       return;
     }
     addToCart(product, selectedColor, selectedSize, quantity, displayImages[activeImage] || displayImages[0]);
@@ -181,6 +190,18 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
+              {hasDrawnRaffle && !activeRaffle && (
+                <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+                  <Ticket className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-amber-600">
+                    {locale === 'fr' ? 'Tirage effectue' : 'Raffle Drawn'}
+                  </span>
+                  <span className="w-px h-3 bg-amber-300 shrink-0" />
+                  <span className="text-xs text-amber-700 truncate max-w-[180px]">
+                    {locale === 'fr' ? 'Ce raffle est termine' : 'This raffle is over'}
+                  </span>
+                </div>
+              )}
               <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{product.name}</h1>
               
               <div className="mt-6 flex items-baseline gap-3">
@@ -242,13 +263,20 @@ export default function ProductDetailPage() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={hasDrawnRaffle ? {} : { scale: 1.02 }}
+                  whileTap={hasDrawnRaffle ? {} : { scale: 0.98 }}
                   onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-neutral-900 text-white font-medium rounded-xl hover:bg-neutral-800 transition-colors"
+                  disabled={hasDrawnRaffle}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-medium rounded-xl transition-colors ${
+                    hasDrawnRaffle
+                      ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                      : 'bg-neutral-900 text-white hover:bg-neutral-800'
+                  }`}
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  {locale === 'fr' ? 'Ajouter au panier' : 'Add to cart'}
+                  {hasDrawnRaffle
+                    ? (locale === 'fr' ? 'Tirage effectue' : 'Raffle drawn')
+                    : (locale === 'fr' ? 'Ajouter au panier' : 'Add to cart')}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -273,7 +301,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Tickets sold progress - show active raffle ticket count if available */}
-              {(activeRaffle?.ticketCount !== undefined || (typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0)) && (
+              {activeRaffle && (activeRaffle?.ticketCount !== undefined || (typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0)) && (
                 <div className="mt-6">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-neutral-600 font-medium">

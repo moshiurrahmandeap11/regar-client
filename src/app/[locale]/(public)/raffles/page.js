@@ -138,9 +138,19 @@ export default function RafflesPage() {
                       </div>
                     )}
 
-                    <div className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl group-hover:bg-neutral-800 transition-colors">
-                      {locale === 'fr' ? 'Participer' : 'Participate'} <ChevronRight className="w-4 h-4" />
-                    </div>
+                    {/* CTA Button */}
+                    {raffle.status === 'active' ? (
+                      <div className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl group-hover:bg-neutral-800 transition-colors">
+                        {locale === 'fr' ? 'Participer' : 'Participate'} <ChevronRight className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-neutral-200 text-neutral-500 text-sm font-medium rounded-xl cursor-not-allowed">
+                        {raffle.status === 'drawn'
+                          ? (locale === 'fr' ? 'Tirage effectue' : 'Drawn')
+                          : (locale === 'fr' ? 'Terminee' : 'Closed')}
+                        <ChevronRight className="w-4 h-4" />
+                      </div>
+                    )}
                   </div>
                 </Link>
               </HoverScale>

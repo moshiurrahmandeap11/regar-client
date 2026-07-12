@@ -58,6 +58,29 @@ export default function CheckoutPage() {
       toast.error(locale === 'fr' ? 'Veuillez confirmer votre age' : 'Please confirm your age');
       return;
     }
+
+    // Pre-check: block if any cart item is linked to a drawn raffle
+    try {
+      const raffleRes = await api.get('/api/raffles');
+      const raffles = Array.isArray(raffleRes.data) ? raffleRes.data : [];
+      const drawnProductIds = new Set(
+        raffles
+          .filter(r => r.status === 'drawn')
+          .map(r => String(r.product?._id || r.product))
+      );
+      const blocked = cart.filter(item => drawnProductIds.has(String(item.productId)));
+      if (blocked.length > 0) {
+        toast.error(
+          locale === 'fr'
+            ? 'Certaines tombolas ont deja ete tirees. Veuillez retirer ces articles.'
+            : 'Some raffles have already been drawn. Please remove those items.'
+        );
+        return;
+      }
+    } catch {
+      // If check fails, let backend handle it
+    }
+
     setOrderLoading(true);
     try {
       const res = await api.post('/api/orders', {
