@@ -146,6 +146,7 @@ export default function CheckoutPage() {
       if (paymentMethod === 'stripe') {
         const sessionRes = await api.post('/api/payments/stripe/session', { orderId: res.data._id, amount: total });
         if (sessionRes.data?.url) {
+          clearCart(); // Clear cart before redirecting to Stripe
           window.location.href = sessionRes.data.url;
           return;
         }
