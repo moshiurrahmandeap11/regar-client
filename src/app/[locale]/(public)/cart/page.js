@@ -32,7 +32,7 @@ export default function CartPage() {
         const raffles = Array.isArray(res.data) ? res.data : [];
         const drawn = new Set(
           raffles
-            .filter(r => r.status === 'drawn')
+            .filter(r => r.status === 'drawn' || r.status === 'closed')
             .map(r => String(r.product?._id || r.product))
         );
         setDrawnProductIds(drawn);
@@ -52,8 +52,8 @@ export default function CartPage() {
     if (hasBlockedItems) {
       toast.error(
         locale === 'fr'
-          ? 'Certaines tombolas ont deja ete tirees. Veuillez retirer ces articles.'
-          : 'Some raffles have already been drawn. Please remove those items.'
+          ? 'Certaines tombolas sont terminees. Veuillez retirer ces articles.'
+          : 'Some raffles have ended. Please remove those items.'
       );
       return;
     }
@@ -114,7 +114,7 @@ export default function CartPage() {
                           </p>
                           {isBlocked && (
                             <p className="text-xs text-amber-600 mt-1 font-medium">
-                              {locale === 'fr' ? 'Tirage effectue — non disponible' : 'Raffle drawn — unavailable'}
+                              {locale === 'fr' ? 'Tombola terminee — non disponible' : 'Raffle ended — unavailable'}
                             </p>
                           )}
                         </div>

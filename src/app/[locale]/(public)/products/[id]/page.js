@@ -37,8 +37,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeRaffle, setActiveRaffle] = useState(null);
   const [productRaffles, setProductRaffles] = useState([]);
-  const drawnRaffle = productRaffles.find(r => r.status === 'drawn');
-  const hasDrawnRaffle = Boolean(drawnRaffle);
+  const drawnOrClosedRaffle = productRaffles.find(r => r.status === 'drawn' || r.status === 'closed');
+  const hasEndedRaffle = Boolean(drawnOrClosedRaffle);
 
   const selectedColorData = product?.colors?.find((color) => color.name === selectedColor);
   const displayImages = (() => {
@@ -103,8 +103,8 @@ export default function ProductDetailPage() {
       toast.error(locale === 'fr' ? 'Veuillez selectionner une couleur et une taille' : 'Please select color and size');
       return;
     }
-    if (hasDrawnRaffle) {
-      toast.error(locale === 'fr' ? 'Le tirage de cette tombola a deja ete effectue.' : 'This raffle has already been drawn.');
+    if (hasEndedRaffle) {
+      toast.error(locale === 'fr' ? 'Cette tombola est terminee.' : 'This raffle has ended.');
       return;
     }
     addToCart(product, selectedColor, selectedSize, quantity, displayImages[activeImage] || displayImages[0]);
@@ -190,11 +190,11 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
-              {hasDrawnRaffle && !activeRaffle && (
+              {hasEndedRaffle && !activeRaffle && (
                 <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
                   <Ticket className="w-4 h-4 text-amber-600 shrink-0" />
                   <span className="text-xs font-bold tracking-widest uppercase text-amber-600">
-                    {locale === 'fr' ? 'Tirage effectue' : 'Raffle Drawn'}
+                    {locale === 'fr' ? 'Tombola terminee' : 'Raffle Ended'}
                   </span>
                   <span className="w-px h-3 bg-amber-300 shrink-0" />
                   <span className="text-xs text-amber-700 truncate max-w-[180px]">
@@ -263,19 +263,19 @@ export default function ProductDetailPage() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <motion.button
-                  whileHover={hasDrawnRaffle ? {} : { scale: 1.02 }}
-                  whileTap={hasDrawnRaffle ? {} : { scale: 0.98 }}
+                  whileHover={hasEndedRaffle ? {} : { scale: 1.02 }}
+                  whileTap={hasEndedRaffle ? {} : { scale: 0.98 }}
                   onClick={handleAddToCart}
-                  disabled={hasDrawnRaffle}
+                  disabled={hasEndedRaffle}
                   className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-medium rounded-xl transition-colors ${
-                    hasDrawnRaffle
+                    hasEndedRaffle
                       ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
                       : 'bg-neutral-900 text-white hover:bg-neutral-800'
                   }`}
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  {hasDrawnRaffle
-                    ? (locale === 'fr' ? 'Tirage effectue' : 'Raffle drawn')
+                  {hasEndedRaffle
+                    ? (locale === 'fr' ? 'Tombola terminee' : 'Raffle ended')
                     : (locale === 'fr' ? 'Ajouter au panier' : 'Add to cart')}
                 </motion.button>
                 <motion.button
