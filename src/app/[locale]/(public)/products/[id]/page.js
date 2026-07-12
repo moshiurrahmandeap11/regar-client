@@ -154,7 +154,7 @@ export default function ProductDetailPage() {
               <div className="aspect-square bg-neutral-100 rounded-2xl overflow-hidden">
                 <img
                   src={displayImages?.[activeImage] || '/placeholder.jpg'}
-                  alt={product.name}
+                  alt={locale === 'fr' ? product.name : (product.nameEn || product.name)}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{product.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{locale === 'fr' ? product.name : (product.nameEn || product.name)}</h1>
               
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-neutral-900">{product.price} CHF</span>

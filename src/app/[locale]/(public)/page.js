@@ -269,12 +269,12 @@ export default function HomePage() {
                     <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow flex flex-col">
                       <div className="h-28 sm:h-32 lg:h-[132px] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
                         {pickImage(product) ? (
-                          <img src={pickImage(product)} alt={product.name} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
+                          <img src={pickImage(product)} alt={isFr ? product.name : (product.nameEn || product.name)} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
                         )}
                       </div>
-                      <h3 className="mt-2 text-sm font-bold text-neutral-900 leading-tight">{product.name}</h3>
+                      <h3 className="mt-2 text-sm font-bold text-neutral-900 leading-tight">{isFr ? product.name : (product.nameEn || product.name)}</h3>
                       <p className="mt-1 text-sm font-bold text-neutral-900 leading-tight">${Number(product.price || 0).toFixed(2)}</p>
                       <div className="mt-1.5 flex min-h-4 items-center gap-2">
                         {(product.colors || []).slice(0, 4).map((color, index) => (

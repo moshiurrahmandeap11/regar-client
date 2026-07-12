@@ -25,8 +25,11 @@ export default function ProductsPage() {
   }, []);
 
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase();
+    const matchSearch = p.name?.toLowerCase().includes(searchLower) ||
+      p.nameEn?.toLowerCase().includes(searchLower) ||
+      p.description?.toLowerCase().includes(searchLower) ||
+      p.descriptionEn?.toLowerCase().includes(searchLower);
     const matchCategory = category === 'all' || p.category === category;
     return matchSearch && matchCategory;
   });
@@ -81,10 +84,10 @@ export default function ProductsPage() {
             {filtered.map(product => (
               <FadeIn key={product._id}>
                 <div className="flex gap-4 bg-white rounded-2xl border border-neutral-200 p-4 hover:shadow-md transition-shadow">
-                  <img src={product.images?.[0] || '/placeholder.jpg'} alt={product.name} className="w-32 h-32 rounded-xl object-cover" />
+                  <img src={product.images?.[0] || '/placeholder.jpg'} alt={locale === 'fr' ? product.name : (product.nameEn || product.name)} className="w-32 h-32 rounded-xl object-cover" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{product.name}</h3>
-                    <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{product.description}</p>
+                    <h3 className="font-semibold text-lg">{locale === 'fr' ? product.name : (product.nameEn || product.name)}</h3>
+                    <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{locale === 'fr' ? product.description : (product.descriptionEn || product.description)}</p>
                     <p className="text-lg font-bold mt-2">{product.price} CHF</p>
                   </div>
                 </div>

@@ -62,7 +62,7 @@ export default function RafflesPage() {
                   <div className="aspect-square bg-neutral-100 relative overflow-hidden">
                     <img
                       src={raffle.product?.images?.[0] || '/placeholder.jpg'}
-                      alt={raffle.name}
+                      alt={locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3">
@@ -80,8 +80,8 @@ export default function RafflesPage() {
 
                   {/* Info */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-neutral-900 truncate">{raffle.name}</h3>
-                    <p className="text-sm text-neutral-500 mt-1 truncate">{raffle.product?.name}</p>
+                    <h3 className="font-semibold text-neutral-900 truncate">{locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}</h3>
+                    <p className="text-sm text-neutral-500 mt-1 truncate">{locale === 'fr' ? raffle.product?.name : (raffle.product?.nameEn || raffle.product?.name)}</p>
                     {/* Product description */}
                     {(raffle.product?.description || raffle.product?.descriptionEn) && (
                       <p className="text-sm text-neutral-600 mt-2 line-clamp-2">
@@ -98,7 +98,7 @@ export default function RafflesPage() {
                           {raffle.prizes.slice(0, 3).map((prize, i) => (
                             <div key={i} className="flex items-center gap-1 text-xs bg-neutral-100 px-2 py-1 rounded-lg">
                               <Ticket className="w-3 h-3 text-amber-500" />
-                              {prize.name}
+                              {locale === 'fr' ? prize.name : (prize.nameEn || prize.name)}
                             </div>
                           ))}
                         </div>

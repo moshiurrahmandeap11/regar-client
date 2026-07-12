@@ -6,6 +6,8 @@ import { FadeIn, HoverScale } from './animations';
 import { productPath } from '@/lib/productPath';
 
 export default function ProductCard({ product, locale }) {
+  const displayName = locale === 'fr' ? product.name : (product.nameEn || product.name);
+  const displayDescription = locale === 'fr' ? product.description : (product.descriptionEn || product.description);
   const endDate = product.raffleEndDate ? new Date(product.raffleEndDate) : null;
   const isActive = endDate && endDate > new Date();
   const coverImage = product.images?.[0] || product.colors?.find((color) => color.image)?.image;
@@ -22,7 +24,7 @@ export default function ProductCard({ product, locale }) {
             {coverImage ? (
               <img
                 src={coverImage}
-                alt={product.name}
+                alt={displayName}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
@@ -45,8 +47,8 @@ export default function ProductCard({ product, locale }) {
 
           {/* Info */}
           <div className="p-4">
-            <h3 className="font-semibold text-neutral-900 truncate">{product.name}</h3>
-            <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{product.description}</p>
+            <h3 className="font-semibold text-neutral-900 truncate">{displayName}</h3>
+            <p className="text-sm text-neutral-500 mt-1 line-clamp-2">{displayDescription}</p>
             <div className="flex items-center justify-between mt-3">
               <div>
                 <span className="text-lg font-bold text-neutral-900">{product.price} CHF</span>
