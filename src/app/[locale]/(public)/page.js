@@ -23,6 +23,9 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Shield,
+  BadgeCheck,
+  Handshake,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { productPath } from '@/lib/productPath';
@@ -122,10 +125,10 @@ export default function HomePage() {
   };
 
   const trustItems = [
-    { icon: ShieldCheck, title: isFr ? '100% securise' : '100% Secure', text: isFr ? 'Vos donnees restent protegees.' : 'Your data is always safe with us.' },
-    { icon: Award, title: isFr ? 'Equitable' : 'Fair and Transparent', text: isFr ? 'Tirage aleatoire verifie.' : 'Random and verified winner selection.' },
-    { icon: Trophy, title: isFr ? 'Gagnants verifies' : 'Verified Winners', text: isFr ? 'Vrais participants, vrais prix.' : 'Real people, real prizes.' },
-    { icon: Globe2, title: isFr ? 'Livraison mondiale' : 'Worldwide Shipping', text: isFr ? 'Livraison rapide et fiable.' : 'Fast and reliable delivery.' },
+    { icon: Shield, title: isFr ? '100% securise' : '100% Secure', text: isFr ? 'Vos donnees restent protegees.' : 'Your data is always safe with us.' },
+    { icon: Handshake, title: isFr ? 'Equitable' : 'Fair & Transparent', text: isFr ? 'Tirage aleatoire verifie.' : 'Random & verified winner selection.' },
+    { icon: BadgeCheck, title: isFr ? 'Gagnants verifies' : 'Verified Winners', text: isFr ? 'Vrais participants, vrais prix.' : 'Real people, real prizes.' },
+    { icon: Globe2, title: isFr ? 'Livraison mondiale' : 'Worldwide Shipping', text: isFr ? 'Livraison rapide et fiable.' : 'Fast & reliable delivery.' },
   ];
 
   const steps = [
@@ -518,16 +521,20 @@ export default function HomePage() {
       {/* Trust Banner */}
       <section className="py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-3 rounded-xl bg-black p-4 sm:grid-cols-4">
-            {trustItems.map((item) => (
-              <div key={item.title} className="flex flex-col items-center text-center gap-2">
-                <item.icon className="h-6 w-6 text-[#e2bd87]" />
-                <div>
-                  <p className="text-xs font-black text-white">{item.title}</p>
-                  <p className="mt-0.5 text-[10px] leading-relaxed text-white/50">{item.text}</p>
+          <div className="rounded-xl bg-black p-5 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+              {trustItems.map((item, index) => (
+                <div key={item.title} className={`flex items-center gap-4 px-4 py-4 ${index === 0 ? 'lg:pl-0' : ''} ${index === 3 ? 'lg:pr-0' : ''}`}>
+                  <div className="shrink-0">
+                    <item.icon className="h-8 w-8 text-[#e2bd87]" strokeWidth={1.2} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white leading-tight">{item.title}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-white/50">{item.text}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
