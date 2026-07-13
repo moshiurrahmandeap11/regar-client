@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import BrandLogo from '@/components/BrandLogo';
-import CapRaffleLogo from '@/components/CapRaffleLogo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, ShoppingBag, User, LogOut, ChevronDown,
@@ -380,7 +379,7 @@ export default function Navbar() {
           <Menu className="w-6 h-6" />
         </button>
         <Link href="/dashboard" className="flex items-center gap-1.5">
-          <CapRaffleLogo size="sm" />
+          <BrandLogo size="sm" />
         </Link>
         <div className="flex items-center gap-2">
           <button
@@ -474,7 +473,7 @@ export default function Navbar() {
           >
             <div className="flex items-center justify-between mb-6">
               {isAuthPage ? (
-                <CapRaffleLogo size="sm" />
+                <BrandLogo size="sm" />
               ) : (
                 <BrandLogo locale={locale} className="text-white" size="sm" />
               )}
