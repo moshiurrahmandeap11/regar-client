@@ -15,6 +15,7 @@ import CountdownTimer from '@/components/CountdownTimer';
 import { FadeIn } from '@/components/animations';
 import { productPath, productSlug } from '@/lib/productPath';
 import toast from 'react-hot-toast';
+import RaffleAlertModal from '@/components/RaffleAlertModal';
 
 const objectIdPattern = /^[a-f\d]{24}$/i;
 
@@ -36,6 +37,7 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeRaffle, setActiveRaffle] = useState(null);
+  const [showRaffleAlertModal, setShowRaffleAlertModal] = useState(false);
   const [productRaffles, setProductRaffles] = useState([]);
   const drawnOrClosedRaffle = productRaffles.find(r => r.status === 'drawn' || r.status === 'closed');
   const hasEndedRaffle = Boolean(drawnOrClosedRaffle);
@@ -90,7 +92,18 @@ export default function ProductDetailPage() {
           const raffleRes = await api.get(`/api/raffles?product=${productId}`);
           const list = Array.isArray(raffleRes.data) ? raffleRes.data : [];
           setProductRaffles(list);
-          setActiveRaffle(list.find(r => r.status === 'active') || null);
+          const active = list.find(r => r.status === 'active') || null;
+          setActiveRaffle(active);
+
+          // If active raffle exists and not dismissed in this session, show popup after 650ms
+          if (active && typeof window !== 'undefined') {
+            const seen = sessionStorage.getItem(`regar_raffle_seen_${productId}`);
+            if (!seen) {
+              setTimeout(() => {
+                setShowRaffleAlertModal(true);
+              }, 650);
+            }
+          }
         } catch {
           setProductRaffles([]);
           setActiveRaffle(null);
@@ -103,6 +116,24 @@ export default function ProductDetailPage() {
     };
     if (params.id) fetchProduct();
   }, [params.id, router]);
+
+  const handleCloseRaffleModal = () => {
+    if (product?._id && typeof window !== 'undefined') {
+      sessionStorage.setItem(`regar_raffle_seen_${product._id}`, 'true');
+    }
+    setShowRaffleAlertModal(false);
+  };
+
+  const handleEnterRaffleFromModal = () => {
+    if (product?._id && typeof window !== 'undefined') {
+      sessionStorage.setItem(`regar_raffle_seen_${product._id}`, 'true');
+    }
+    setShowRaffleAlertModal(false);
+    const targetElement = document.getElementById('raffle-drop-section');
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
   const handleAddToCart = () => {
     const validColors = (product?.colors || []).filter(c => c && (c.name?.trim() || c.image));
@@ -313,32 +344,35 @@ export default function ProductDetailPage() {
                 ))}
               </div>
 
-              {/* Tickets sold progress - show active raffle ticket count if available */}
-              {activeRaffle && (activeRaffle?.ticketCount !== undefined || (typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0)) && (
-                <div className="mt-6">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-neutral-600 font-medium">
-                      {locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}
-                    </span>
-                    <span className="font-semibold text-neutral-900">
-                      {activeRaffle?.ticketCount !== undefined ? `${activeRaffle.ticketCount} / ${activeRaffle.maxTickets || product.maxTickets}` : `${product.soldTickets} / ${product.maxTickets}`}
-                    </span>
+              {/* Raffle info and countdown section */}
+              <div id="raffle-drop-section" className="scroll-mt-28">
+                {/* Tickets sold progress - show active raffle ticket count if available */}
+                {activeRaffle && (activeRaffle?.ticketCount !== undefined || (typeof product.soldTickets === 'number' && typeof product.maxTickets === 'number' && product.maxTickets > 0)) && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-neutral-600 font-medium">
+                        {locale === 'fr' ? 'Tickets vendus' : 'Tickets sold'}
+                      </span>
+                      <span className="font-semibold text-neutral-900">
+                        {activeRaffle?.ticketCount !== undefined ? `${activeRaffle.ticketCount} / ${activeRaffle.maxTickets || product.maxTickets}` : `${product.soldTickets} / ${product.maxTickets}`}
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
+                        style={{ width: `${Math.min(((activeRaffle?.ticketCount !== undefined ? activeRaffle.ticketCount : product.soldTickets) / (activeRaffle?.maxTickets || product.maxTickets)) * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#c8442d] rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(((activeRaffle?.ticketCount !== undefined ? activeRaffle.ticketCount : product.soldTickets) / (activeRaffle?.maxTickets || product.maxTickets)) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Drawing in countdown */}
-              {activeRaffle?.endDate && (
-                <div className="mt-4">
-                  <CountdownTimer targetDate={activeRaffle.endDate} locale={locale} variant="dark" />
-                </div>
-              )}
+                {/* Drawing in countdown */}
+                {activeRaffle?.endDate && (
+                  <div className="mt-4">
+                    <CountdownTimer targetDate={activeRaffle.endDate} locale={locale} variant="dark" />
+                  </div>
+                )}
+              </div>
             </div>
           </FadeIn>
         </div>
@@ -427,6 +461,15 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Luxury Active Giveaway Alert Modal */}
+      <RaffleAlertModal
+        isOpen={showRaffleAlertModal}
+        onClose={handleCloseRaffleModal}
+        onEnterRaffle={handleEnterRaffleFromModal}
+        raffle={activeRaffle}
+        locale={locale}
+      />
     </div>
   );
 }

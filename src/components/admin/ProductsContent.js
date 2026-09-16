@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone, Star, Globe, Tag, Sparkles } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
@@ -23,7 +23,8 @@ export default function ProductsContent() {
   const [form, setForm] = useState({
     name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
     stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
-    featured: false, isActive: true
+    featured: false, isActive: true,
+    metaTitle: '', metaTitleEn: '', metaDescription: '', metaDescriptionEn: '', seoKeywords: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -224,7 +225,12 @@ export default function ProductsContent() {
         ? validColors.map((color) => ({ name: color.name || '', hex: color.hex || '#000000', image: color.image || '' }))
         : [{ name: '', hex: '#000000', image: '' }],
       sizes: validSizes.length ? validSizes : [''],
-      featured: product.featured, isActive: product.isActive
+      featured: product.featured, isActive: product.isActive,
+      metaTitle: product.metaTitle || '',
+      metaTitleEn: product.metaTitleEn || '',
+      metaDescription: product.metaDescription || '',
+      metaDescriptionEn: product.metaDescriptionEn || '',
+      seoKeywords: Array.isArray(product.seoKeywords) ? product.seoKeywords.join(', ') : (product.seoKeywords || '')
     });
     setImagesList(
       (product.images || []).map((imgUrl, i) => ({
@@ -252,7 +258,8 @@ export default function ProductsContent() {
     setForm({
       name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
       stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
-      featured: false, isActive: true
+      featured: false, isActive: true,
+      metaTitle: '', metaTitleEn: '', metaDescription: '', metaDescriptionEn: '', seoKeywords: ''
     });
   };
 
@@ -650,6 +657,126 @@ export default function ProductsContent() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* SEO & Search Engine Optimization Card */}
+                <div className="pt-5 border-t border-neutral-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-700">
+                        <Globe className="w-4 h-4 text-[#d8a868]" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold text-neutral-800">SEO & Search Engine Metadata</span>
+                        <p className="text-xs text-neutral-400">Optimize how this product appears on Google and social shares</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-emerald-500" />
+                      Google SERP
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1 block">
+                        Meta Title (FR) <span className="text-neutral-400 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        value={form.metaTitle}
+                        onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                        placeholder={form.name ? `${form.name} | Regar` : 'e.g. Casquette Signature | Regar'}
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1 block">
+                        Meta Title (EN) <span className="text-neutral-400 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        value={form.metaTitleEn}
+                        onChange={(e) => setForm({ ...form, metaTitleEn: e.target.value })}
+                        placeholder={form.nameEn ? `${form.nameEn} | Regar` : 'e.g. Signature Cap | Regar'}
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1 block">
+                        Meta Description (FR)
+                      </label>
+                      <textarea
+                        value={form.metaDescription}
+                        onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                        rows={2}
+                        placeholder="Description affichée dans les résultats Google..."
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1 block">
+                        Meta Description (EN)
+                      </label>
+                      <textarea
+                        value={form.metaDescriptionEn}
+                        onChange={(e) => setForm({ ...form, metaDescriptionEn: e.target.value })}
+                        rows={2}
+                        placeholder="Snippet displayed on Google and social media..."
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                      <span>SEO Keywords <span className="text-neutral-400 font-normal">(comma-separated)</span></span>
+                      <span className="text-[11px] text-neutral-400">e.g. luxury cap, streetwear, raffle, limited drop</span>
+                    </label>
+                    <input
+                      value={form.seoKeywords}
+                      onChange={(e) => setForm({ ...form, seoKeywords: e.target.value })}
+                      placeholder="luxury cap, limited edition, sneaker raffle, regar"
+                      className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                    />
+
+                    {/* Keywords Tag Badges preview */}
+                    {form.seoKeywords && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {form.seoKeywords.split(',').map((k, idx) => {
+                          const tag = k.trim();
+                          if (!tag) return null;
+                          return (
+                            <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 text-[11px] font-medium">
+                              <Tag className="w-2.5 h-2.5 text-[#d8a868]" />
+                              {tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Live Google SERP Simulation Preview */}
+                  <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200/80 space-y-1.5 select-none">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                      Google Search Result Preview (Simulation)
+                    </span>
+                    <div className="text-xs text-neutral-500 flex items-center gap-1.5">
+                      <span className="font-semibold text-neutral-700">https://regar.com</span>
+                      <span>›</span>
+                      <span>products</span>
+                      <span>›</span>
+                      <span className="truncate max-w-[140px]">{form.slug || 'product-slug'}</span>
+                    </div>
+                    <h4 className="text-sm sm:text-base font-medium text-blue-700 hover:underline cursor-pointer truncate">
+                      {(form.metaTitleEn || form.metaTitle || form.nameEn || form.name || 'Product Title')} | Regar
+                    </h4>
+                    <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">
+                      {form.metaDescriptionEn || form.metaDescription || form.descriptionEn || form.description || 'Exclusive luxury streetwear caps with automatic entry to luxury raffle giveaways. Fast shipping across Switzerland and Europe.'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Toggles */}
