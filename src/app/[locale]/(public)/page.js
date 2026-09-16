@@ -46,12 +46,30 @@ const uniqueById = (items = []) => {
 const pickImage = (item) => item?.images?.[0] || item?.colors?.find((color) => color.image)?.image || '';
 const HERO_BANNER_IMAGE = '/images/regar-hero-banner.jpeg';
 
+const DEFAULT_HERO_BANNER = {
+  image: HERO_BANNER_IMAGE,
+  buttonLink: '/products',
+  en: {
+    titleLine1: 'Buy a cap.',
+    titleLine2: 'Win big.',
+    subtitle: 'Purchase a cap and get automatic entry to win high-value prizes.',
+    buttonText: 'Buy cap & enter',
+  },
+  fr: {
+    titleLine1: 'Achetez une casquette.',
+    titleLine2: 'Gagnez gros.',
+    subtitle: 'Achetez une casquette et obtenez une entree automatique pour gagner des prix de grande valeur.',
+    buttonText: 'Acheter et entrer',
+  },
+};
+
 export default function HomePage() {
   const locale = useLocale();
   const [products, setProducts] = useState([]);
   const [raffles, setRaffles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [winners, setWinners] = useState([]);
+  const [heroBanner, setHeroBanner] = useState(DEFAULT_HERO_BANNER);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -64,16 +82,25 @@ export default function HomePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [productRes, raffleRes, reviewRes, winnerRes] = await Promise.all([
+        const [productRes, raffleRes, reviewRes, winnerRes, heroRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
           api.get('/api/reviews?limit=4'),
           api.get(`/api/tickets/winners?limit=4&t=${Date.now()}`),
+          api.get('/api/content/hero-banner').catch(() => ({ data: null })),
         ]);
         setProducts(Array.isArray(productRes.data) ? productRes.data : []);
         setRaffles(Array.isArray(raffleRes.data) ? raffleRes.data : []);
         setReviews(Array.isArray(reviewRes.data) ? reviewRes.data : []);
         setWinners(Array.isArray(winnerRes.data) ? winnerRes.data : []);
+        if (heroRes?.data) {
+          setHeroBanner({
+            image: heroRes.data.image || DEFAULT_HERO_BANNER.image,
+            buttonLink: heroRes.data.buttonLink || DEFAULT_HERO_BANNER.buttonLink,
+            en: { ...DEFAULT_HERO_BANNER.en, ...(heroRes.data.en || {}) },
+            fr: { ...DEFAULT_HERO_BANNER.fr, ...(heroRes.data.fr || {}) },
+          });
+        }
       } catch (error) {
         console.error('Home load failed:', error);
       } finally {
@@ -105,7 +132,9 @@ export default function HomePage() {
   const prizePages = Math.ceil(allPrizes.length / 3);
   const modalPrizeItems = allPrizes.slice(prizePage * 3, prizePage * 3 + 3);
 
-  const headline = isFr ? ['Achetez une casquette.', 'Gagnez gros.'] : ['Buy a cap.', 'Win big.'];
+  const heroText = isFr ? heroBanner.fr : heroBanner.en;
+  const currentHeroBannerImage = heroBanner.image || DEFAULT_HERO_BANNER.image;
+  const currentButtonLink = heroBanner.buttonLink || DEFAULT_HERO_BANNER.buttonLink;
   const heroName = heroRaffle ? (isFr ? heroRaffle.name : heroRaffle.nameEn || heroRaffle.name) : '';
   const participantCount = Math.max(0, ...raffles.map((raffle) => Number(raffle.ticketCount || raffle.product?.soldTickets || 0)));
   const displayParticipantCount = Math.max(participantCount, 10000);
@@ -158,7 +187,7 @@ export default function HomePage() {
         <div className="relative min-h-[680px] w-full overflow-hidden bg-[#100d09] sm:min-h-[640px] lg:min-h-[720px] 2xl:min-h-[760px]">
           <div className="absolute inset-0">
             <img
-              src={HERO_BANNER_IMAGE}
+              src={currentHeroBannerImage}
               alt="Regar cap raffle campaign"
               className="absolute left-0 top-[56%] h-full w-full -translate-y-1/2 object-cover object-[42%_center] opacity-100 lg:top-[58%] lg:h-auto lg:w-full lg:max-w-none 2xl:top-[57%]"
             />
@@ -174,17 +203,17 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-black uppercase leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.42)]">
-              {headline[0]}
-              <span className="block text-[#e9c58c]">{headline[1]}</span>
+              {heroText.titleLine1 || (isFr ? 'Achetez une casquette.' : 'Buy a cap.')}
+              <span className="block text-[#e9c58c]">{heroText.titleLine2 || (isFr ? 'Gagnez gros.' : 'Win big.')}</span>
             </h1>
 
             <p className="mt-3 max-w-[290px] sm:max-w-[360px] text-sm sm:text-[15px] text-white/88 leading-relaxed">
-              {isFr ? 'Achetez une casquette et obtenez une entree automatique pour gagner des prix de grande valeur.' : 'Purchase a cap and get automatic entry to win high-value prizes.'}
+              {heroText.subtitle || (isFr ? 'Achetez une casquette et obtenez une entree automatique pour gagner des prix de grande valeur.' : 'Purchase a cap and get automatic entry to win high-value prizes.')}
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
-              <Link href="/products" className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
-                {isFr ? 'Acheter et entrer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
+              <Link href={currentButtonLink || "/products"} className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
+                {heroText.buttonText || (isFr ? 'Acheter et entrer' : 'Buy cap & enter')} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs font-black uppercase text-white">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9c58c]/65 bg-black/18">
