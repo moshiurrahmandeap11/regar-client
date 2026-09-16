@@ -22,7 +22,7 @@ export default function RafflesContent() {
   const [editingRaffle, setEditingRaffle] = useState(null); // null or raffle object
 
   const [form, setForm] = useState({
-    name: '', nameEn: '', description: '', descriptionEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '',
+    name: '', nameEn: '', description: '', descriptionEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '', maxTickets: '',
     prizes: [{ name: '', nameEn: '', value: '', image: '' }]
   });
   
@@ -89,6 +89,9 @@ export default function RafflesContent() {
       formData.append('endDate', form.endDate);
       if (form.raffleNumber) {
         formData.append('raffleNumber', form.raffleNumber);
+      }
+      if (form.maxTickets !== undefined && form.maxTickets !== '') {
+        formData.append('maxTickets', form.maxTickets);
       }
       formData.append('prizes', JSON.stringify(form.prizes));
 
@@ -207,7 +210,7 @@ export default function RafflesContent() {
   const resetForm = () => {
     setShowForm(false);
     setEditingRaffle(null);
-    setForm({ name: '', nameEn: '', description: '', descriptionEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
+    setForm({ name: '', nameEn: '', description: '', descriptionEn: '', slug: '', product: '', startDate: '', endDate: '', raffleNumber: '', maxTickets: '', prizes: [{ name: '', nameEn: '', value: '', image: '' }] });
     setPrizeImageFiles([]);
     setPrizeImagePreviews([]);
   };
@@ -224,6 +227,7 @@ export default function RafflesContent() {
       startDate: raffle.startDate ? new Date(raffle.startDate).toISOString().slice(0, 16) : '',
       endDate: raffle.endDate ? new Date(raffle.endDate).toISOString().slice(0, 16) : '',
       raffleNumber: raffle.raffleNumber || '',
+      maxTickets: raffle.maxTickets !== undefined && raffle.maxTickets !== null ? raffle.maxTickets : (raffle.product?.maxTickets || ''),
       prizes: raffle.prizes?.length ? raffle.prizes.map(p => ({ name: p.name || '', nameEn: p.nameEn || '', value: p.value || '', image: p.image || '' })) : [{ name: '', nameEn: '', value: '', image: '' }],
     });
     setPrizeImageFiles(raffle.prizes?.map(() => null) || []);
@@ -300,17 +304,45 @@ export default function RafflesContent() {
                     <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="e.g. summer-giveaway-2024" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
                     <p className="text-xs text-neutral-400 mt-1">Used in raffle URL: /raffles/your-slug</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Raffle Number <span className="text-neutral-400 font-normal">(auto-generated if empty)</span></label>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Raffle Number <span className="text-neutral-400 font-normal">(auto if empty)</span></label>
                       <input type="number" value={form.raffleNumber} onChange={e => setForm({...form, raffleNumber: e.target.value})} placeholder="e.g. 42" className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-neutral-700 mb-1 block">Product</label>
-                      <select value={form.product} onChange={e => setForm({...form, product: e.target.value})} required className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900">
+                      <select
+                        value={form.product}
+                        onChange={e => {
+                          const prodId = e.target.value;
+                          const selectedProd = products.find(p => p._id === prodId);
+                          setForm(prev => ({
+                            ...prev,
+                            product: prodId,
+                            maxTickets: (!prev.maxTickets || prev.maxTickets === '') && selectedProd?.maxTickets ? selectedProd.maxTickets : prev.maxTickets
+                          }));
+                        }}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      >
                         <option value="">Select product</option>
-                        {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                        {products.map(p => (
+                          <option key={p._id} value={p._id}>
+                            {p.name} {p.maxTickets ? `(${p.maxTickets} tickets)` : ''}
+                          </option>
+                        ))}
                       </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-neutral-700 mb-1 block">Max Tickets <span className="text-neutral-400 font-normal">(quota)</span></label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={form.maxTickets}
+                        onChange={e => setForm({...form, maxTickets: e.target.value})}
+                        placeholder="e.g. 5000"
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -422,7 +454,9 @@ export default function RafflesContent() {
                     >
                       <td className="py-3 px-4">
                         <div className="font-medium">{raffle.name}</div>
-                        <div className="text-xs text-neutral-500">{raffle.prizes?.length || 0} prizes</div>
+                        <div className="text-xs text-neutral-500">
+                          {raffle.prizes?.length || 0} prizes • {raffle.maxTickets || raffle.product?.maxTickets || 100} tickets
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
