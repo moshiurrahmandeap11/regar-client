@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, ImageIcon, Search, ChevronLeft, ChevronRight, Megaphone, Star } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 import MarketingModal from '@/components/admin/MarketingModal';
@@ -18,8 +18,8 @@ export default function ProductsContent() {
   const [hasSizes, setHasSizes] = useState(false);
   const [colorImagePreviews, setColorImagePreviews] = useState([]);
   const [colorImageFiles, setColorImageFiles] = useState([]);
-  const [productImagePreviews, setProductImagePreviews] = useState([]);
-  const [productImageFiles, setProductImageFiles] = useState([]);
+  const [imagesList, setImagesList] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [form, setForm] = useState({
     name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
     stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
@@ -49,24 +49,51 @@ export default function ProductsContent() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const handleProductImageUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+  const handleAddImages = (files) => {
+    const fileArray = Array.from(files || []).filter((f) => f && f.type && f.type.startsWith('image/'));
+    if (!fileArray.length) return;
 
-    setProductImageFiles((prev) => [...prev, ...files]);
-
-    files.forEach((file) => {
+    fileArray.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProductImagePreviews((prev) => [...prev, reader.result]);
+        setImagesList((prev) => [
+          ...prev,
+          {
+            id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+            url: reader.result,
+            file,
+            isNew: true,
+          },
+        ]);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removeProductImage = (index) => {
-    setProductImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    setProductImageFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveImage = (index) => {
+    setImagesList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSetCover = (index) => {
+    if (index === 0) return;
+    setImagesList((prev) => {
+      const next = [...prev];
+      const [target] = next.splice(index, 1);
+      next.unshift(target);
+      return next;
+    });
+  };
+
+  const handleMoveImage = (index, direction) => {
+    const target = index + direction;
+    if (target < 0 || target >= imagesList.length) return;
+    setImagesList((prev) => {
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[target];
+      next[target] = temp;
+      return next;
+    });
   };
 
   const handleColorImageChange = (index, file) => {
@@ -108,16 +135,31 @@ export default function ProductsContent() {
     formData.append('colors', JSON.stringify(cleanColors));
     formData.append('sizes', JSON.stringify(cleanSizes));
 
-    // Existing product images (strings)
-    const existingImages = productImagePreviews.filter(p => typeof p === 'string' && p.startsWith('http'));
+    const existingImages = [];
+    const newFiles = [];
+    const imageOrder = [];
+
+    imagesList.forEach((item) => {
+      if (!item.isNew && item.url) {
+        const idx = existingImages.length;
+        existingImages.push(item.url);
+        imageOrder.push(`existing:${idx}`);
+      } else if (item.isNew && item.file) {
+        const idx = newFiles.length;
+        newFiles.push(item.file);
+        imageOrder.push(`new:${idx}`);
+      }
+    });
+
     if (existingImages.length > 0) {
       formData.append('images', JSON.stringify(existingImages));
     }
-
-    // New uploaded product images (files)
-    productImageFiles.forEach((file) => {
-      if (file) formData.append('images', file);
+    newFiles.forEach((file) => {
+      formData.append('images', file);
     });
+    if (imageOrder.length > 0) {
+      formData.append('imageOrder', JSON.stringify(imageOrder));
+    }
 
     if (hasColors) {
       colorImageFiles.forEach((file, index) => {
@@ -184,8 +226,14 @@ export default function ProductsContent() {
       sizes: validSizes.length ? validSizes : [''],
       featured: product.featured, isActive: product.isActive
     });
-    setProductImagePreviews(product.images || []);
-    setProductImageFiles([]);
+    setImagesList(
+      (product.images || []).map((imgUrl, i) => ({
+        id: `existing-${i}-${Math.random().toString(36).substring(2, 8)}`,
+        url: imgUrl,
+        file: null,
+        isNew: false,
+      }))
+    );
     setColorImagePreviews(validColors.map((color) => color.image || null));
     setColorImageFiles([]);
     setShowForm(true);
@@ -197,8 +245,8 @@ export default function ProductsContent() {
     setEditing(null);
     setHasColors(false);
     setHasSizes(false);
-    setProductImagePreviews([]);
-    setProductImageFiles([]);
+    setImagesList([]);
+    setIsDragging(false);
     setColorImagePreviews([]);
     setColorImageFiles([]);
     setForm({
@@ -322,36 +370,185 @@ export default function ProductsContent() {
                   </div>
                 </div>
 
-                {/* Product Images (Main photos) */}
+                {/* Product Images (Gallery & Cover) */}
                 <div>
-                  <label className="text-sm font-medium text-neutral-700 mb-2 block">
-                    Product Images <span className="text-neutral-400 font-normal">(main photos)</span>
-                  </label>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {productImagePreviews.map((img, i) => (
-                      <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-neutral-200 group bg-neutral-100">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeProductImage(i)}
-                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-neutral-800">Product Images</label>
+                        {imagesList.length > 0 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 font-medium">
+                            {imagesList.length} {imagesList.length === 1 ? 'photo' : 'photos'}
+                          </span>
+                        )}
                       </div>
-                    ))}
-                    <label className="flex flex-col items-center justify-center w-16 h-16 border-2 border-dashed border-neutral-300 rounded-xl cursor-pointer hover:border-neutral-500 hover:bg-neutral-50 transition-colors">
-                      <Upload className="w-4 h-4 text-neutral-400" />
-                      <span className="text-[10px] text-neutral-500 mt-1">Upload</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleProductImageUpload}
-                        className="hidden"
-                      />
-                    </label>
+                      <p className="text-xs text-neutral-400">The 1st photo is used as the product cover.</p>
+                    </div>
+                    {imagesList.length > 0 && (
+                      <label
+                        htmlFor="product-images-input"
+                        className="cursor-pointer text-xs font-medium text-neutral-900 hover:text-neutral-700 flex items-center gap-1 bg-neutral-100 hover:bg-neutral-200 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Photos
+                      </label>
+                    )}
                   </div>
+
+                  <input
+                    id="product-images-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      handleAddImages(e.target.files);
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                  />
+
+                  {imagesList.length === 0 ? (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        if (e.dataTransfer?.files?.length) {
+                          handleAddImages(e.dataTransfer.files);
+                        }
+                      }}
+                      onClick={() => document.getElementById('product-images-input')?.click()}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
+                        isDragging
+                          ? 'border-neutral-900 bg-neutral-100/70 scale-[0.99]'
+                          : 'border-neutral-300 hover:border-neutral-400 bg-neutral-50/50 hover:bg-neutral-50'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-600 border border-neutral-200">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-neutral-800">
+                            Drag & drop photos here, or <span className="text-neutral-900 underline underline-offset-2">browse</span>
+                          </p>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            Upload one or multiple photos (JPG, PNG, WEBP)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        if (e.dataTransfer?.files?.length) {
+                          handleAddImages(e.dataTransfer.files);
+                        }
+                      }}
+                      className={`p-3 rounded-2xl border-2 border-dashed transition-all ${
+                        isDragging ? 'border-neutral-900 bg-neutral-100/60' : 'border-neutral-200 bg-neutral-50/30'
+                      }`}
+                    >
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {imagesList.map((item, index) => {
+                          const isCover = index === 0;
+                          return (
+                            <div
+                              key={item.id || index}
+                              className={`group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border transition-all ${
+                                isCover
+                                  ? 'ring-2 ring-neutral-900 border-transparent shadow-md'
+                                  : 'border-neutral-200 hover:border-neutral-400'
+                              }`}
+                            >
+                              <img src={item.url} alt="" className="w-full h-full object-cover" />
+
+                              {/* Badge */}
+                              {isCover ? (
+                                <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-neutral-900/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1 shadow-sm">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  <span>Cover</span>
+                                </div>
+                              ) : (
+                                <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium">
+                                  #{index + 1}
+                                </div>
+                              )}
+
+                              {/* Delete button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                                title="Remove photo"
+                                className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+
+                              {/* Action controls footer */}
+                              <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between opacity-95 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveImage(index, -1)}
+                                  title="Move left"
+                                  className={`p-1 rounded bg-white/20 hover:bg-white/40 text-white transition-colors ${
+                                    index === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                                  }`}
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+
+                                {!isCover && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetCover(index)}
+                                    title="Set as main cover photo"
+                                    className="px-2 py-0.5 text-[10px] font-medium rounded bg-white/90 hover:bg-white text-neutral-900 shadow transition-colors flex items-center gap-1"
+                                  >
+                                    <Star className="w-2.5 h-2.5" />
+                                    Cover
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  disabled={index === imagesList.length - 1}
+                                  onClick={() => handleMoveImage(index, 1)}
+                                  title="Move right"
+                                  className={`p-1 rounded bg-white/20 hover:bg-white/40 text-white transition-colors ${
+                                    index === imagesList.length - 1 ? 'opacity-30 cursor-not-allowed' : ''
+                                  }`}
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Add Photo tile in grid */}
+                        <label
+                          htmlFor="product-images-input"
+                          className="aspect-square border-2 border-dashed border-neutral-300 hover:border-neutral-500 rounded-xl cursor-pointer hover:bg-neutral-50 transition-all flex flex-col items-center justify-center gap-1.5 text-neutral-500 hover:text-neutral-700"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
+                            <Plus className="w-4 h-4" />
+                          </div>
+                          <span className="text-xs font-medium">Add photo</span>
+                        </label>
+                      </div>
+
+                      <p className="text-[11px] text-neutral-400 mt-2 px-1">
+                        Tip: First photo is the catalog cover. Use &larr; &rarr; arrows to reorder or click &apos;Cover&apos; on any image.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Color Variants Toggle */}
