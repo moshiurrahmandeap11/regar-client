@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, HelpCircle, Search, X, ChevronLeft, ChevronRight, FileText, Image as ImageIcon, Upload, RotateCcw, ArrowRight, Sparkles, Globe } from 'lucide-react';
+import {
+  Plus, HelpCircle, Search, X, ChevronLeft, ChevronRight, FileText,
+  Image as ImageIcon, Upload, RotateCcw, ArrowRight, Sparkles, Globe,
+  Shield, Scale, Calendar, Trash2, ArrowUp, ArrowDown
+} from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
 
@@ -67,60 +71,207 @@ export default function ContentContent() {
   const defaultLegalContent = {
     terms: {
       fr: {
-        title: 'Conditions generales',
+        title: 'Conditions Générales de Vente et d’Utilisation',
+        lastUpdated: 'Mars 2025',
+        summary: 'Veuillez lire attentivement nos conditions. En achetant une casquette Regar ou en participant à nos tirages au sort, vous acceptez l’ensemble de ces dispositions.',
         description: 'Les CGV, reglement du tirage et politique de confidentialite seront publies ici selon le modele Regar-site.',
-        primaryLabel: 'Politique retours',
+        sections: [
+          {
+            title: '1. Éligibilité et Inscription',
+            content: 'Pour acheter nos casquettes et participer aux tirages au sort associés, vous devez être âgé d’au moins 18 ans ou avoir la majorité légale dans votre pays. Vous devez vous assurer que les informations de livraison et de contact fournies lors de votre commande sont exactes et complètes.',
+          },
+          {
+            title: '2. Achat de Casquettes et Entrée au Tirage',
+            content: 'Tout achat d’une casquette de la collection Regar donne droit à une participation gratuite et automatique au tirage au sort lié à cette édition. Aucun frais supplémentaire n’est requis pour participer au concours. Tous les prix sont indiqués en Euros (EUR) toutes taxes comprises.',
+          },
+          {
+            title: '3. Déroulement et Transparence du Tirage',
+            content: 'Les tirages au sort sont réalisés en toute impartialité grâce à un système certifié de génération de nombres aléatoires à la fin du compte à rebours de l’édition ou dès l’allocation complète des stocks. Les résultats sont vérifiés et sans appel.',
+          },
+          {
+            title: '4. Notification et Attribution des Lots',
+            content: 'Les gagnants sont avertis par e-mail et téléphone dans les 48 heures suivant la clôture du tirage. En cas de non-réponse sous 14 jours calendaires, Regar se réserve le droit de procéder à un nouveau tirage pour désigner un bénéficiaire alternatif.',
+          },
+          {
+            title: '5. Limitation de Responsabilité',
+            content: 'Regar ne saurait être tenu responsable des retards d’acheminement postal, des perturbations techniques du réseau ou de tout événement de force majeure indépendant de sa volonté.',
+          },
+        ],
+        primaryLabel: 'Politique de retours',
         primaryHref: '/refund',
-        secondaryLabel: 'Contact',
+        secondaryLabel: 'Nous contacter',
         secondaryHref: '/contact',
       },
       en: {
-        title: 'Terms and conditions',
+        title: 'Terms & Conditions',
+        lastUpdated: 'March 2025',
+        summary: 'Please review these terms carefully. By purchasing premium Regar caps or entering our raffle competitions, you acknowledge and agree to these terms.',
         description: 'Terms of sale, raffle rules and legal information are published here.',
-        primaryLabel: 'Refund policy',
+        sections: [
+          {
+            title: '1. Eligibility & Account',
+            content: 'To purchase products and participate in associated raffles on Regar, you must be at least 18 years of age or the age of legal majority in your country of residence. You are responsible for ensuring that all registration and shipping details provided during checkout are accurate and complete.',
+          },
+          {
+            title: '2. Cap Purchases & Automatic Raffle Entry',
+            content: 'Each eligible purchase of a Regar branded cap automatically includes a complimentary entry into the promotional raffle draw linked to that product collection. No separate fee is charged for raffle entries. All sales are processed in Euros (EUR) or specified local currency.',
+          },
+          {
+            title: '3. Fair Play & Draw Mechanism',
+            content: 'Raffle competitions are conducted with complete transparency. Winners are drawn randomly via a cryptographically secure random number generator once the countdown timer expires or the drop allocation is completed. Results are final and audited.',
+          },
+          {
+            title: '4. Winner Notification & Prize Claim',
+            content: 'Winners will be contacted via the email address and phone number provided at checkout within 48 hours of draw completion. If a winner fails to respond within 14 calendar days, Regar reserves the right to conduct a redraw to select an alternate winner.',
+          },
+          {
+            title: '5. Limitation of Liability',
+            content: 'Regar shall not be liable for any indirect, incidental, or consequential damages resulting from website downtime, carrier delays, or technical issues beyond our reasonable control.',
+          },
+        ],
+        primaryLabel: 'Refund Policy',
         primaryHref: '/refund',
-        secondaryLabel: 'Contact',
+        secondaryLabel: 'Contact Support',
         secondaryHref: '/contact',
       },
     },
     privacy: {
       fr: {
-        title: 'Politique de confidentialite',
+        title: 'Politique de Confidentialité',
+        lastUpdated: 'Mars 2025',
+        summary: 'Votre confiance est primordiale. Cette politique détaille la collecte, la protection et l’utilisation de vos données personnelles conformément au RGPD.',
         description: 'Cette page couvre le traitement des donnees personnelles, cookies et droits RGPD.',
-        primaryLabel: 'Conditions',
+        sections: [
+          {
+            title: '1. Données Personnelles Collectées',
+            content: 'Nous recueillons uniquement les informations nécessaires au traitement de vos commandes et au bon déroulement des tirages au sort : nom, prénom, adresse postale, adresse e-mail, numéro de téléphone et historique des transactions.',
+          },
+          {
+            title: '2. Finalités et Utilisation',
+            content: 'Vos données sont strictement traitées afin de : (a) expédier vos casquettes commandées ; (b) valider et comptabiliser vos entrées aux tirages au sort ; (c) contacter les gagnants des tirages ; (d) vous transmettre les notifications de suivi de commande ; et (e) lutter contre les tentatives de fraude.',
+          },
+          {
+            title: '3. Sécurité des Paiements Bancaires',
+            content: 'Toutes les transactions bancaires sont chiffrées via des protocoles SSL et traitées par des prestataires de paiement certifiés PCI-DSS (ex: Stripe, Apple Pay). Regar ne conserve à aucun moment vos coordonnées bancaires complètes sur ses serveurs.',
+          },
+          {
+            title: '4. Cookies et Traceurs',
+            content: 'Nous utilisons des cookies strictement nécessaires au fonctionnement de votre panier et de votre session. Des traceurs d’audience anonymes nous permettent d’améliorer l’ergonomie du site. Vous pouvez à tout moment configurer vos préférences via votre navigateur.',
+          },
+          {
+            title: '5. Vos Droits (RGPD)',
+            content: 'Conformément au Règlement Général sur la Protection des Données (RGPD), vous bénéficiez d’un droit d’accès, de rectification, de portabilité et de suppression de vos données personnelles. Vous pouvez faire valoir ces droits en écrivant à privacy@regar.com.',
+          },
+        ],
+        primaryLabel: 'Conditions Générales',
         primaryHref: '/terms',
-        secondaryLabel: 'Contact',
+        secondaryLabel: 'Support Client',
         secondaryHref: '/contact',
       },
       en: {
-        title: 'Privacy policy',
+        title: 'Privacy Policy',
+        lastUpdated: 'March 2025',
+        summary: 'We value your trust. This Privacy Policy outlines how Regar collects, safeguards, and processes your personal data in strict adherence to GDPR guidelines.',
         description: 'This page covers personal data processing, cookies and privacy rights.',
-        primaryLabel: 'Terms',
+        sections: [
+          {
+            title: '1. Information We Collect',
+            content: 'We collect information you provide directly to us when creating an account, ordering a cap, or subscribing to our updates. This includes your name, shipping address, email address, phone number, and order history.',
+          },
+          {
+            title: '2. Purpose of Data Processing',
+            content: 'Your personal data is used solely to: (a) fulfill and deliver your cap orders; (b) record and verify your raffle entries; (c) communicate winner announcements; (d) send shipment tracking notifications and customer support responses; and (e) prevent fraudulent transactions.',
+          },
+          {
+            title: '3. Payment Data & Security',
+            content: 'All online transactions are encrypted and processed by industry-leading, PCI-DSS compliant payment gateways (e.g. Stripe, Apple Pay). Regar never stores your complete credit card numbers or sensitive payment credentials on our servers.',
+          },
+          {
+            title: '4. Cookies & Preferences',
+            content: 'We employ essential cookies necessary for checkout functionality and shopping cart persistence. Optional analytics cookies assist us in diagnosing speed and performance. You can manage cookie permissions at any time in your browser settings.',
+          },
+          {
+            title: '5. Your Rights Under GDPR',
+            content: 'Under the General Data Protection Regulation, you hold the right to access, rectify, export, or request full deletion of your personal records at any time. To exercise these rights, please contact our Data Protection team at privacy@regar.com.',
+          },
+        ],
+        primaryLabel: 'Terms of Service',
         primaryHref: '/terms',
-        secondaryLabel: 'Contact',
+        secondaryLabel: 'Contact Support',
         secondaryHref: '/contact',
       },
     },
     refund: {
       fr: {
-        title: 'Retours et remboursements',
+        title: 'Politique de Retours et Remboursements',
+        lastUpdated: 'Mars 2025',
+        summary: 'Nous nous engageons sur l’excellence et la qualité de chaque casquette Regar. Découvrez ci-dessous nos modalités complètes de retour sous 14 jours.',
         description: 'Retour possible sous 14 jours pour produit non porte. Remboursement apres validation du retour.',
+        sections: [
+          {
+            title: '1. Droit de Rétractation sous 14 Jours',
+            content: 'Conformément aux lois sur la protection des consommateurs, vous bénéficiez d’un délai de 14 jours calendaires à compter de la réception de votre colis pour demander un retour ou un échange sans avoir à justifier de motif.',
+          },
+          {
+            title: '2. Conditions d’Acceptation du Retour',
+            content: 'Pour être éligible à un remboursement intégral, la casquette doit être retournée dans son état neuf d’origine : non portée, non lavée, sans trace d’usage, dans son emballage d’origine avec toutes ses étiquettes et housses de protection.',
+          },
+          {
+            title: '3. Précision sur les Tirages au Sort',
+            content: 'L’achat d’une casquette vous donne accès au tirage au sort lié à l’édition. Si vous effectuez un retour produit avant la réalisation du tirage, votre demande est traitée normalement. Toutefois, une fois le tirage officiel clôturé et les gagnants désignés, la participation au concours est réputée consommée et ne peut faire l’objet d’une annulation rétroactive, bien que le retour physique de l’article soit honoré selon les conditions en vigueur.',
+          },
+          {
+            title: '4. Procédure pour Effectuer un Retour',
+            content: 'Pour entamer une démarche de retour, connectez-vous à la page « Suivre ma commande » ou contactez notre support par e-mail à support@regar.com en mentionnant votre numéro de commande. Notre équipe vous fournira l’adresse de retour et votre bon de réexpédition sous 24h.',
+          },
+          {
+            title: '5. Traitement et Délais de Remboursement',
+            content: 'À réception du colis dans notre centre logistique et après validation du contrôle qualité, le remboursement est automatiquement déclenché sous 5 à 10 jours ouvrés sur le mode de paiement utilisé lors de votre achat.',
+          },
+        ],
         primaryLabel: 'Suivre ma commande',
         primaryHref: '/track-order',
-        secondaryLabel: 'FAQ',
+        secondaryLabel: 'Consulter la FAQ',
         secondaryHref: '/faq',
       },
       en: {
-        title: 'Returns and refunds',
+        title: 'Returns & Refunds Policy',
+        lastUpdated: 'March 2025',
+        summary: 'We are committed to the craftsmanship and quality of every Regar cap. Review our streamlined 14-day return and refund procedures below.',
         description: 'Returns are possible within 14 days for unworn products. Refund is processed after validation.',
-        primaryLabel: 'Track my order',
+        sections: [
+          {
+            title: '1. 14-Day Return Guarantee',
+            content: 'Under applicable consumer protection regulations, you are entitled to return your purchase within 14 calendar days from the date of package delivery, without giving any specific reason.',
+          },
+          {
+            title: '2. Return Eligibility Criteria',
+            content: 'To qualify for a full reimbursement, the cap must be returned in its original, pristine condition: unworn, unwashed, odor-free, in the original custom box with all branded tags and dust covers fully attached.',
+          },
+          {
+            title: '3. Raffle Participation Clarification',
+            content: 'Each cap purchase grants an automatic entry to the drop’s promotional draw. If a physical return is requested prior to the draw execution, the return is processed normally. However, once a raffle draw has officially concluded and winners are announced, competition entries are deemed fully executed and cannot be retroactively cancelled, though the physical merchandise return remains subject to standard refund terms.',
+          },
+          {
+            title: '4. How to Initiate a Return',
+            content: 'To start a return, navigate to the “Track my order” page or email our customer care team at support@regar.com including your order reference. Our team will supply return authorization and packaging guidelines within 24 hours.',
+          },
+          {
+            title: '5. Inspection & Refund Timeline',
+            content: 'Upon arrival and inspection at our logistics hub, your refund will be processed. Approved refunds are credited directly to your original payment method (card or digital wallet) within 5 to 10 business days.',
+          },
+        ],
+        primaryLabel: 'Track My Order',
         primaryHref: '/track-order',
-        secondaryLabel: 'FAQ',
+        secondaryLabel: 'Visit FAQ',
         secondaryHref: '/faq',
       },
     },
   };
   const [legalContent, setLegalContent] = useState(defaultLegalContent);
+  const [legalSection, setLegalSection] = useState('terms');
+  const [legalLang, setLegalLang] = useState('en');
+  const [savingLegal, setSavingLegal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('faq');
   const [showForm, setShowForm] = useState(false);
@@ -308,17 +459,31 @@ export default function ContentContent() {
 
           if (data.valueFr) {
             try {
-              fr = { ...fr, ...JSON.parse(data.valueFr) };
+              const parsedFr = JSON.parse(data.valueFr);
+              fr = {
+                ...fr,
+                ...parsedFr,
+                sections: Array.isArray(parsedFr.sections) && parsedFr.sections.length > 0
+                  ? parsedFr.sections
+                  : fr.sections,
+              };
             } catch {
-              fr = { ...fr, description: data.valueFr };
+              fr = { ...fr, description: data.valueFr, summary: data.valueFr };
             }
           }
 
           if (data.valueEn) {
             try {
-              en = { ...en, ...JSON.parse(data.valueEn) };
+              const parsedEn = JSON.parse(data.valueEn);
+              en = {
+                ...en,
+                ...parsedEn,
+                sections: Array.isArray(parsedEn.sections) && parsedEn.sections.length > 0
+                  ? parsedEn.sections
+                  : en.sections,
+              };
             } catch {
-              en = { ...en, description: data.valueEn };
+              en = { ...en, description: data.valueEn, summary: data.valueEn };
             }
           }
 
@@ -343,6 +508,7 @@ export default function ContentContent() {
     if (!key) return;
 
     try {
+      setSavingLegal(true);
       const payload = legalContent[section];
       const res = await fetch(`${API}/api/content/${key}`, {
         method: 'PUT',
@@ -354,10 +520,88 @@ export default function ContentContent() {
       });
 
       if (!res.ok) throw new Error('Failed to save legal content');
-      toast.success(`${section} content saved`);
+      const label = section === 'terms' ? 'Terms & Conditions' : section === 'privacy' ? 'Privacy Policy' : 'Refund Policy';
+      toast.success(`${label} saved successfully`);
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setSavingLegal(false);
     }
+  };
+
+  const handleAddLegalSection = () => {
+    setLegalContent((prev) => {
+      const currentList = prev[legalSection]?.[legalLang]?.sections || [];
+      const newSection = {
+        title: `${currentList.length + 1}. Clause Title`,
+        content: '',
+      };
+      return {
+        ...prev,
+        [legalSection]: {
+          ...prev[legalSection],
+          [legalLang]: {
+            ...prev[legalSection][legalLang],
+            sections: [...currentList, newSection],
+          },
+        },
+      };
+    });
+  };
+
+  const handleUpdateLegalSection = (index, field, value) => {
+    setLegalContent((prev) => {
+      const currentList = [...(prev[legalSection]?.[legalLang]?.sections || [])];
+      currentList[index] = { ...currentList[index], [field]: value };
+      return {
+        ...prev,
+        [legalSection]: {
+          ...prev[legalSection],
+          [legalLang]: {
+            ...prev[legalSection][legalLang],
+            sections: currentList,
+          },
+        },
+      };
+    });
+  };
+
+  const handleRemoveLegalSection = (index) => {
+    setLegalContent((prev) => {
+      const currentList = [...(prev[legalSection]?.[legalLang]?.sections || [])];
+      currentList.splice(index, 1);
+      return {
+        ...prev,
+        [legalSection]: {
+          ...prev[legalSection],
+          [legalLang]: {
+            ...prev[legalSection][legalLang],
+            sections: currentList,
+          },
+        },
+      };
+    });
+  };
+
+  const handleMoveLegalSection = (index, direction) => {
+    setLegalContent((prev) => {
+      const currentList = [...(prev[legalSection]?.[legalLang]?.sections || [])];
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= currentList.length) return prev;
+      const temp = currentList[index];
+      currentList[index] = currentList[targetIndex];
+      currentList[targetIndex] = temp;
+      return {
+        ...prev,
+        [legalSection]: {
+          ...prev[legalSection],
+          [legalLang]: {
+            ...prev[legalSection][legalLang],
+            sections: currentList,
+          },
+        },
+      };
+    });
   };
 
   const handleFaqSubmit = async (e) => {
@@ -972,66 +1216,459 @@ export default function ContentContent() {
 
       {activeTab === 'legal' && (
         <FadeIn>
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6">
-            <h2 className="text-lg font-semibold">Legal Pages Content</h2>
+          <div className="space-y-6">
+            {/* Top Bar: Policy sub-tabs + Lang Switcher + Save button */}
+            <div className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+              {/* Policy selector tabs */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'terms', label: 'Terms & Conditions', icon: Scale },
+                  { id: 'privacy', label: 'Privacy Policy', icon: Shield },
+                  { id: 'refund', label: 'Refund Policy', icon: RotateCcw },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isCurrent = legalSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setLegalSection(item.id)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                        isCurrent
+                          ? 'bg-neutral-900 text-white shadow'
+                          : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 border border-neutral-200/60'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isCurrent ? 'text-[#e9c58c]' : 'text-neutral-500'}`} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            {[
-              ['terms', 'Terms'],
-              ['privacy', 'Privacy'],
-              ['refund', 'Refund'],
-            ].map(([section, sectionLabel]) => (
-              <div key={section} className="rounded-xl border border-neutral-200 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-sm uppercase tracking-wide">{sectionLabel}</h3>
+              {/* Language Switcher & Save Button */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center bg-neutral-100 p-1 rounded-xl">
                   <button
-                    onClick={() => saveLegalContent(section)}
-                    className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-xs font-medium hover:bg-neutral-800 transition-colors"
+                    type="button"
+                    onClick={() => setLegalLang('en')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      legalLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
                   >
-                    Save {sectionLabel}
+                    <Globe className="w-3.5 h-3.5 text-[#d8a868]" />
+                    <span>English (EN)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLegalLang('fr')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      legalLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-[#d8a868]" />
+                    <span>French (FR)</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {['fr', 'en'].map((lang) => (
-                    <div key={`${section}-${lang}`} className="space-y-2 p-3 rounded-lg border border-neutral-100 bg-neutral-50/50">
-                      <h4 className="text-xs uppercase font-semibold text-neutral-500">{lang === 'fr' ? 'French' : 'English'}</h4>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => saveLegalContent(legalSection)}
+                  disabled={savingLegal}
+                  className="px-5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 shadow transition-colors"
+                >
+                  {savingLegal ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-[#e9c58c]" />
+                  )}
+                  {savingLegal ? 'Saving...' : `Save ${legalSection === 'terms' ? 'Terms' : legalSection === 'privacy' ? 'Privacy' : 'Refund'}`}
+                </motion.button>
+              </div>
+            </div>
 
-                      {[['title', 'Title'], ['description', 'Description'], ['primaryLabel', 'Primary label'], ['primaryHref', 'Primary href'], ['secondaryLabel', 'Secondary label'], ['secondaryHref', 'Secondary href']].map(([field, label]) => (
-                        <div key={`${section}-${lang}-${field}`}>
-                          <label className="text-xs font-medium text-neutral-600 mb-1 block">{label}</label>
-                          {field === 'description' ? (
-                            <textarea
-                              value={legalContent[section][lang][field] || ''}
-                              onChange={(e) => setLegalContent((prev) => ({
-                                ...prev,
-                                [section]: {
-                                  ...prev[section],
-                                  [lang]: { ...prev[section][lang], [field]: e.target.value },
-                                },
-                              }))}
-                              rows={4}
-                              className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
-                            />
-                          ) : (
-                            <input
-                              value={legalContent[section][lang][field] || ''}
-                              onChange={(e) => setLegalContent((prev) => ({
-                                ...prev,
-                                [section]: {
-                                  ...prev[section],
-                                  [lang]: { ...prev[section][lang], [field]: e.target.value },
-                                },
-                              }))}
-                              className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                            />
-                          )}
-                        </div>
-                      ))}
+            {/* Main Editor & Live Preview Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Form Controls (7 cols on xl) */}
+              <div className="xl:col-span-7 space-y-6">
+                {/* Document Metadata Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wide flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#d8a868]" />
+                      <span>Document Header & Overview ({legalLang.toUpperCase()})</span>
+                    </h3>
+                    <span className="text-[11px] font-semibold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-md uppercase">
+                      {legalSection}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1.5 block">
+                        Page Title
+                      </label>
+                      <input
+                        type="text"
+                        value={legalContent[legalSection]?.[legalLang]?.title || ''}
+                        onChange={(e) =>
+                          setLegalContent((prev) => ({
+                            ...prev,
+                            [legalSection]: {
+                              ...prev[legalSection],
+                              [legalLang]: { ...prev[legalSection][legalLang], title: e.target.value },
+                            },
+                          }))
+                        }
+                        placeholder="e.g. Terms & Conditions"
+                        className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 font-medium"
+                      />
                     </div>
-                  ))}
+
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-700 mb-1.5 block">
+                        Last Updated Timestamp
+                      </label>
+                      <div className="relative">
+                        <Calendar className="w-4 h-4 text-neutral-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          value={legalContent[legalSection]?.[legalLang]?.lastUpdated || ''}
+                          onChange={(e) =>
+                            setLegalContent((prev) => ({
+                              ...prev,
+                              [legalSection]: {
+                                ...prev[legalSection],
+                                [legalLang]: { ...prev[legalSection][legalLang], lastUpdated: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="e.g. March 2025"
+                          className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-neutral-700 mb-1.5 block">
+                      Summary / Introduction Overview
+                    </label>
+                    <textarea
+                      value={
+                        legalContent[legalSection]?.[legalLang]?.summary ||
+                        legalContent[legalSection]?.[legalLang]?.description ||
+                        ''
+                      }
+                      onChange={(e) =>
+                        setLegalContent((prev) => ({
+                          ...prev,
+                          [legalSection]: {
+                            ...prev[legalSection],
+                            [legalLang]: {
+                              ...prev[legalSection][legalLang],
+                              summary: e.target.value,
+                              description: e.target.value,
+                            },
+                          },
+                        }))
+                      }
+                      rows={3}
+                      placeholder="Brief introductory paragraph explaining this legal document..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Clauses & Sections Manager Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-5 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
+                        Clauses & Sections
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-[#e9c58c]/20 text-[#8a6122] text-xs font-bold">
+                        {(legalContent[legalSection]?.[legalLang]?.sections || []).length}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddLegalSection}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 text-white text-xs font-semibold hover:bg-neutral-800 transition-colors shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#e9c58c]" />
+                      <span>Add Clause</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(legalContent[legalSection]?.[legalLang]?.sections || []).map((sec, sIdx) => (
+                      <div
+                        key={sIdx}
+                        className="rounded-2xl border border-neutral-200 p-4 sm:p-5 bg-neutral-50/40 space-y-3 hover:border-neutral-300 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-200/70 text-neutral-700 text-xs font-bold">
+                            Clause #{sIdx + 1}
+                          </span>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveLegalSection(sIdx, -1)}
+                              disabled={sIdx === 0}
+                              title="Move Up"
+                              className="p-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveLegalSection(sIdx, 1)}
+                              disabled={
+                                sIdx ===
+                                (legalContent[legalSection]?.[legalLang]?.sections || []).length - 1
+                              }
+                              title="Move Down"
+                              className="p-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLegalSection(sIdx)}
+                              title="Delete Clause"
+                              className="p-1.5 rounded-lg border border-red-200 bg-white text-red-500 hover:bg-red-50 transition-colors ml-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold text-neutral-600 mb-1 block">
+                            Clause Title
+                          </label>
+                          <input
+                            type="text"
+                            value={sec.title || ''}
+                            onChange={(e) => handleUpdateLegalSection(sIdx, 'title', e.target.value)}
+                            placeholder="e.g. 1. Eligibility & Registration"
+                            className="w-full px-3 py-1.5 rounded-xl border border-neutral-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold text-neutral-600 mb-1 block">
+                            Clause Content / Paragraphs
+                          </label>
+                          <textarea
+                            value={sec.content || ''}
+                            onChange={(e) => handleUpdateLegalSection(sIdx, 'content', e.target.value)}
+                            rows={4}
+                            placeholder="Detailed text, terms, or conditions of this clause..."
+                            className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-y bg-white leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={handleAddLegalSection}
+                      className="w-full py-3 rounded-2xl border-2 border-dashed border-neutral-200 hover:border-neutral-400 text-neutral-500 hover:text-neutral-800 text-xs font-bold transition-all flex items-center justify-center gap-2 bg-neutral-50/50 hover:bg-neutral-50"
+                    >
+                      <Plus className="w-4 h-4 text-[#d8a868]" />
+                      <span>Add New Clause</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Footer Action Buttons Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-6 space-y-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wide pb-3 border-b border-neutral-100">
+                    Bottom Action Buttons (Optional)
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2 p-3 rounded-xl bg-neutral-50 border border-neutral-100">
+                      <span className="text-xs font-bold text-neutral-700 block">Primary Action Button</span>
+                      <div>
+                        <label className="text-[11px] text-neutral-500 block mb-1">Button Label</label>
+                        <input
+                          type="text"
+                          value={legalContent[legalSection]?.[legalLang]?.primaryLabel || ''}
+                          onChange={(e) =>
+                            setLegalContent((prev) => ({
+                              ...prev,
+                              [legalSection]: {
+                                ...prev[legalSection],
+                                [legalLang]: { ...prev[legalSection][legalLang], primaryLabel: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="e.g. Refund Policy"
+                          className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-neutral-500 block mb-1">Button URL</label>
+                        <input
+                          type="text"
+                          value={legalContent[legalSection]?.[legalLang]?.primaryHref || ''}
+                          onChange={(e) =>
+                            setLegalContent((prev) => ({
+                              ...prev,
+                              [legalSection]: {
+                                ...prev[legalSection],
+                                [legalLang]: { ...prev[legalSection][legalLang], primaryHref: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="e.g. /refund"
+                          className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 p-3 rounded-xl bg-neutral-50 border border-neutral-100">
+                      <span className="text-xs font-bold text-neutral-700 block">Secondary Action Button</span>
+                      <div>
+                        <label className="text-[11px] text-neutral-500 block mb-1">Button Label</label>
+                        <input
+                          type="text"
+                          value={legalContent[legalSection]?.[legalLang]?.secondaryLabel || ''}
+                          onChange={(e) =>
+                            setLegalContent((prev) => ({
+                              ...prev,
+                              [legalSection]: {
+                                ...prev[legalSection],
+                                [legalLang]: { ...prev[legalSection][legalLang], secondaryLabel: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="e.g. Contact Support"
+                          className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-neutral-500 block mb-1">Button URL</label>
+                        <input
+                          type="text"
+                          value={legalContent[legalSection]?.[legalLang]?.secondaryHref || ''}
+                          onChange={(e) =>
+                            setLegalContent((prev) => ({
+                              ...prev,
+                              [legalSection]: {
+                                ...prev[legalSection],
+                                [legalLang]: { ...prev[legalSection][legalLang], secondaryHref: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder="e.g. /contact"
+                          className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* Right Column: Sticky Live Document Preview (5 cols on xl) */}
+              <div className="xl:col-span-5">
+                <div className="sticky top-6 space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-neutral-800 uppercase tracking-wider">
+                        Live Document Preview
+                      </span>
+                    </div>
+
+                    <span className="text-[11px] font-bold text-neutral-500 bg-neutral-100 px-2.5 py-0.5 rounded-md uppercase">
+                      {legalLang} · {legalSection}
+                    </span>
+                  </div>
+
+                  {/* Simulated Document Reader Box */}
+                  <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 space-y-5 max-h-[750px] overflow-y-auto">
+                    {/* Header preview */}
+                    <div className="space-y-2 pb-4 border-b border-neutral-100">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700 text-[10px] font-bold uppercase tracking-wider">
+                        <Sparkles className="w-3 h-3 text-[#d8a868]" />
+                        <span>Legal Documentation</span>
+                      </div>
+                      <h4 className="text-xl font-black text-neutral-900 tracking-tight">
+                        {legalContent[legalSection]?.[legalLang]?.title || 'Untitled Policy'}
+                      </h4>
+                      {legalContent[legalSection]?.[legalLang]?.lastUpdated && (
+                        <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                          <Calendar className="w-3.5 h-3.5 text-[#d8a868]" />
+                          <span>Last updated: {legalContent[legalSection]?.[legalLang]?.lastUpdated}</span>
+                        </div>
+                      )}
+                      {(legalContent[legalSection]?.[legalLang]?.summary ||
+                        legalContent[legalSection]?.[legalLang]?.description) && (
+                        <p className="text-xs text-neutral-600 leading-relaxed pt-1">
+                          {legalContent[legalSection]?.[legalLang]?.summary ||
+                            legalContent[legalSection]?.[legalLang]?.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Clauses preview */}
+                    <div className="space-y-4">
+                      {(legalContent[legalSection]?.[legalLang]?.sections || []).length > 0 ? (
+                        (legalContent[legalSection]?.[legalLang]?.sections || []).map((sec, idx) => (
+                          <div key={idx} className="space-y-1.5 pb-3 border-b border-neutral-100 last:border-none">
+                            <div className="flex items-start gap-2">
+                              <span className="flex-shrink-0 w-5 h-5 rounded-md bg-[#e9c58c]/20 text-[#8a6122] text-[10px] font-black flex items-center justify-center border border-[#e9c58c]/40">
+                                {idx + 1}
+                              </span>
+                              <div className="space-y-1 flex-1">
+                                <h5 className="text-xs font-bold text-neutral-900">
+                                  {sec.title || `Clause ${idx + 1}`}
+                                </h5>
+                                <p className="text-[11px] text-neutral-600 leading-relaxed whitespace-pre-line">
+                                  {sec.content || 'Clause content preview...'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-neutral-400 text-center py-4">
+                          No clauses added yet. Click &quot;Add Clause&quot; to add one.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Buttons preview */}
+                    {(legalContent[legalSection]?.[legalLang]?.primaryLabel ||
+                      legalContent[legalSection]?.[legalLang]?.secondaryLabel) && (
+                      <div className="pt-3 border-t border-neutral-100 flex gap-2">
+                        {legalContent[legalSection]?.[legalLang]?.primaryLabel && (
+                          <span className="px-3 py-1.5 rounded-lg bg-neutral-900 text-white text-[11px] font-bold">
+                            {legalContent[legalSection]?.[legalLang]?.primaryLabel}
+                          </span>
+                        )}
+                        {legalContent[legalSection]?.[legalLang]?.secondaryLabel && (
+                          <span className="px-3 py-1.5 rounded-lg border border-neutral-200 text-neutral-700 text-[11px] font-bold">
+                            {legalContent[legalSection]?.[legalLang]?.secondaryLabel}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-neutral-400 text-center">
+                    Real-time document preview updates as you type.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </FadeIn>
       )}
