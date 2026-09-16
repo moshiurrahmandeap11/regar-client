@@ -14,13 +14,17 @@ export default function ProductsContent() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [hasColors, setHasColors] = useState(false);
+  const [hasSizes, setHasSizes] = useState(false);
   const [colorImagePreviews, setColorImagePreviews] = useState([]);
+  const [colorImageFiles, setColorImageFiles] = useState([]);
+  const [productImagePreviews, setProductImagePreviews] = useState([]);
+  const [productImageFiles, setProductImageFiles] = useState([]);
   const [form, setForm] = useState({
     name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
-    stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
+    stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
     featured: false, isActive: true
   });
-  const [colorImageFiles, setColorImageFiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -45,6 +49,26 @@ export default function ProductsContent() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+  const handleProductImageUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setProductImageFiles((prev) => [...prev, ...files]);
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProductImagePreviews((prev) => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeProductImage = (index) => {
+    setProductImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setProductImageFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleColorImageChange = (index, file) => {
     if (!file) return;
 
@@ -66,15 +90,40 @@ export default function ProductsContent() {
     const formData = new FormData();
     Object.keys(form).forEach(key => {
       if (key === 'colors' || key === 'sizes') {
-        formData.append(key, JSON.stringify(form[key]));
+        // Handled specifically below
       } else {
         formData.append(key, form[key]);
       }
     });
 
-    colorImageFiles.forEach((file, index) => {
-      if (file) formData.append(`colorImage_${index}`, file);
+    const cleanColors = hasColors
+      ? form.colors
+          .filter((color, i) => color.name?.trim() || color.image || colorImageFiles[i])
+          .map(color => ({ name: color.name || '', hex: color.hex || '#000000', image: color.image || '' }))
+      : [];
+    const cleanSizes = hasSizes
+      ? form.sizes.filter(s => typeof s === 'string' && s.trim().length > 0)
+      : [];
+
+    formData.append('colors', JSON.stringify(cleanColors));
+    formData.append('sizes', JSON.stringify(cleanSizes));
+
+    // Existing product images (strings)
+    const existingImages = productImagePreviews.filter(p => typeof p === 'string' && p.startsWith('http'));
+    if (existingImages.length > 0) {
+      formData.append('images', JSON.stringify(existingImages));
+    }
+
+    // New uploaded product images (files)
+    productImageFiles.forEach((file) => {
+      if (file) formData.append('images', file);
     });
+
+    if (hasColors) {
+      colorImageFiles.forEach((file, index) => {
+        if (file) formData.append(`colorImage_${index}`, file);
+      });
+    }
 
     const url = editing ? `${API}/api/products/${editing}` : `${API}/api/products`;
     const method = editing ? 'PUT' : 'POST';
@@ -118,18 +167,26 @@ export default function ProductsContent() {
 
   const handleEdit = (product) => {
     setEditing(product._id);
+    const validColors = (product.colors || []).filter(c => c && (c.name?.trim() || c.image));
+    const validSizes = (product.sizes || []).filter(s => s && String(s).trim());
+
+    setHasColors(validColors.length > 0);
+    setHasSizes(validSizes.length > 0);
+
     setForm({
       name: product.name, nameEn: product.nameEn || '', slug: product.slug || '',
       description: product.description || '',
       descriptionEn: product.descriptionEn || '', price: product.price, originalPrice: product.originalPrice || '',
       stock: product.stock, maxTickets: product.maxTickets, category: product.category,
-      colors: product.colors?.length
-        ? product.colors.map((color) => ({ name: color.name || '', hex: color.hex || '#000000', image: color.image || '' }))
-        : [{ name: '', hex: '', image: '' }],
-      sizes: product.sizes?.length ? product.sizes : [''],
+      colors: validColors.length
+        ? validColors.map((color) => ({ name: color.name || '', hex: color.hex || '#000000', image: color.image || '' }))
+        : [{ name: '', hex: '#000000', image: '' }],
+      sizes: validSizes.length ? validSizes : [''],
       featured: product.featured, isActive: product.isActive
     });
-    setColorImagePreviews((product.colors || []).map((color) => color.image || null));
+    setProductImagePreviews(product.images || []);
+    setProductImageFiles([]);
+    setColorImagePreviews(validColors.map((color) => color.image || null));
     setColorImageFiles([]);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -138,11 +195,15 @@ export default function ProductsContent() {
   const resetForm = () => {
     setShowForm(false);
     setEditing(null);
+    setHasColors(false);
+    setHasSizes(false);
+    setProductImagePreviews([]);
+    setProductImageFiles([]);
     setColorImagePreviews([]);
     setColorImageFiles([]);
     setForm({
       name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
-      stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '', image: '' }], sizes: [''],
+      stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
       featured: false, isActive: true
     });
   };
@@ -261,57 +322,137 @@ export default function ProductsContent() {
                   </div>
                 </div>
 
-                {/* Colors */}
+                {/* Product Images (Main photos) */}
                 <div>
-                  <label className="text-sm font-medium text-neutral-700 mb-2 block">Colors</label>
-                  <div className="space-y-2">
-                    {form.colors.map((color, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-2 bg-neutral-50 rounded-lg p-2">
-                        <input type="color" value={color.hex} onChange={e => updateColor(i, 'hex', e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-                        <input value={color.name} onChange={e => updateColor(i, 'name', e.target.value)} placeholder="Color name" className="w-24 px-2 py-1 rounded border border-neutral-200 text-xs" />
-
-                        <label className="flex items-center gap-2 px-2 py-1.5 border border-neutral-200 rounded-lg cursor-pointer bg-white hover:bg-neutral-50 transition-colors">
-                          <Upload className="w-3 h-3" />
-                          <span className="text-xs">{colorImageFiles[i]?.name || 'Image'}</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleColorImageChange(i, e.target.files?.[0])}
-                            className="hidden"
-                          />
-                        </label>
-
-                        {(colorImagePreviews[i] || color.image) ? (
-                          <img
-                            src={colorImagePreviews[i] || color.image}
-                            alt={color.name || `color-${i}`}
-                            className="w-8 h-8 rounded object-cover border border-neutral-200"
-                          />
-                        ) : null}
-
-                        {form.colors.length > 1 && (
-                          <button type="button" onClick={() => removeColor(i)} className="text-red-500 hover:text-red-700"><X className="w-3 h-3" /></button>
-                        )}
+                  <label className="text-sm font-medium text-neutral-700 mb-2 block">
+                    Product Images <span className="text-neutral-400 font-normal">(main photos)</span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {productImagePreviews.map((img, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-neutral-200 group bg-neutral-100">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeProductImage(i)}
+                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
                     ))}
-                    <button type="button" onClick={addColor} className="px-3 py-2 bg-neutral-100 rounded-lg text-xs font-medium hover:bg-neutral-200 transition-colors">+ Add</button>
+                    <label className="flex flex-col items-center justify-center w-16 h-16 border-2 border-dashed border-neutral-300 rounded-xl cursor-pointer hover:border-neutral-500 hover:bg-neutral-50 transition-colors">
+                      <Upload className="w-4 h-4 text-neutral-400" />
+                      <span className="text-[10px] text-neutral-500 mt-1">Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleProductImageUpload}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
                 </div>
 
-                {/* Sizes */}
-                <div>
-                  <label className="text-sm font-medium text-neutral-700 mb-2 block">Sizes</label>
-                  <div className="flex flex-wrap gap-2">
-                    {form.sizes.map((size, i) => (
-                      <div key={i} className="flex items-center gap-1 bg-neutral-50 rounded-lg p-2">
-                        <input value={size} onChange={e => updateSize(i, e.target.value)} placeholder="Size" className="w-16 px-2 py-1 rounded border border-neutral-200 text-xs text-center" />
-                        {form.sizes.length > 1 && (
-                          <button type="button" onClick={() => removeSize(i)} className="text-red-500 hover:text-red-700"><X className="w-3 h-3" /></button>
-                        )}
-                      </div>
-                    ))}
-                    <button type="button" onClick={addSize} className="px-3 py-2 bg-neutral-100 rounded-lg text-xs font-medium hover:bg-neutral-200 transition-colors">+ Add</button>
+                {/* Color Variants Toggle */}
+                <div className="pt-3 border-t border-neutral-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className="text-sm font-medium text-neutral-800">Color Variants</span>
+                      <p className="text-xs text-neutral-400">Enable if this product comes in different colors</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasColors}
+                        onChange={e => {
+                          const checked = e.target.checked;
+                          setHasColors(checked);
+                          if (checked && form.colors.length === 0) {
+                            setForm(prev => ({ ...prev, colors: [{ name: '', hex: '#000000', image: '' }] }));
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900"></div>
+                    </label>
                   </div>
+
+                  {hasColors && (
+                    <div className="space-y-2 pl-3 border-l-2 border-neutral-200 pt-1">
+                      {form.colors.map((color, i) => (
+                        <div key={i} className="flex flex-wrap items-center gap-2 bg-neutral-50 rounded-lg p-2">
+                          <input type="color" value={color.hex} onChange={e => updateColor(i, 'hex', e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
+                          <input value={color.name} onChange={e => updateColor(i, 'name', e.target.value)} placeholder="Color name" className="w-24 px-2 py-1 rounded border border-neutral-200 text-xs" />
+
+                          <label className="flex items-center gap-2 px-2 py-1.5 border border-neutral-200 rounded-lg cursor-pointer bg-white hover:bg-neutral-50 transition-colors">
+                            <Upload className="w-3 h-3" />
+                            <span className="text-xs">{colorImageFiles[i]?.name || 'Image'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleColorImageChange(i, e.target.files?.[0])}
+                              className="hidden"
+                            />
+                          </label>
+
+                          {(colorImagePreviews[i] || color.image) ? (
+                            <img
+                              src={colorImagePreviews[i] || color.image}
+                              alt={color.name || `color-${i}`}
+                              className="w-8 h-8 rounded object-cover border border-neutral-200"
+                            />
+                          ) : null}
+
+                          {form.colors.length > 1 && (
+                            <button type="button" onClick={() => removeColor(i)} className="text-red-500 hover:text-red-700"><X className="w-3 h-3" /></button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" onClick={addColor} className="px-3 py-2 bg-neutral-100 rounded-lg text-xs font-medium hover:bg-neutral-200 transition-colors">+ Add Color</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Size Variants Toggle */}
+                <div className="pt-3 border-t border-neutral-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className="text-sm font-medium text-neutral-800">Size Variants</span>
+                      <p className="text-xs text-neutral-400">Enable if this product has sizes (e.g. S, M, L)</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasSizes}
+                        onChange={e => {
+                          const checked = e.target.checked;
+                          setHasSizes(checked);
+                          if (checked && form.sizes.length === 0) {
+                            setForm(prev => ({ ...prev, sizes: [''] }));
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900"></div>
+                    </label>
+                  </div>
+
+                  {hasSizes && (
+                    <div className="pl-3 border-l-2 border-neutral-200 pt-1">
+                      <div className="flex flex-wrap gap-2">
+                        {form.sizes.map((size, i) => (
+                          <div key={i} className="flex items-center gap-1 bg-neutral-50 rounded-lg p-2">
+                            <input value={size} onChange={e => updateSize(i, e.target.value)} placeholder="Size" className="w-16 px-2 py-1 rounded border border-neutral-200 text-xs text-center" />
+                            {form.sizes.length > 1 && (
+                              <button type="button" onClick={() => removeSize(i)} className="text-red-500 hover:text-red-700"><X className="w-3 h-3" /></button>
+                            )}
+                          </div>
+                        ))}
+                        <button type="button" onClick={addSize} className="px-3 py-2 bg-neutral-100 rounded-lg text-xs font-medium hover:bg-neutral-200 transition-colors">+ Add Size</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Toggles */}

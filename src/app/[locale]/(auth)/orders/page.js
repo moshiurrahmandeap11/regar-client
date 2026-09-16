@@ -130,9 +130,11 @@ export default function OrdersPage() {
                               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                                 <div className="flex-1">
                                   <p className="font-semibold text-neutral-900">{item.name}</p>
-                                  <p className="text-sm text-neutral-500 mt-1">
-                                    {isFr ? 'Couleur' : 'Color'}: {item.color} · {isFr ? 'Taille' : 'Size'}: {item.size}
-                                  </p>
+                                  {[item.color ? `${isFr ? 'Couleur' : 'Color'}: ${item.color}` : '', item.size ? `${isFr ? 'Taille' : 'Size'}: ${item.size}` : ''].filter(Boolean).length > 0 && (
+                                    <p className="text-sm text-neutral-500 mt-1">
+                                      {[item.color ? `${isFr ? 'Couleur' : 'Color'}: ${item.color}` : '', item.size ? `${isFr ? 'Taille' : 'Size'}: ${item.size}` : ''].filter(Boolean).join(' · ')}
+                                    </p>
+                                  )}
                                   <p className="text-sm text-neutral-500">
                                     {isFr ? 'Quantite' : 'Quantity'}: {item.quantity}
                                   </p>

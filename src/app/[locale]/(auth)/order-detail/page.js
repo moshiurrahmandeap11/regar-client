@@ -114,7 +114,9 @@ export default function OrderDetailPage() {
                   <img src={item.image || '/placeholder.jpg'} alt={item.name} className="w-16 h-16 rounded-xl object-cover bg-neutral-100" />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-neutral-900">{item.name}</p>
-                    <p className="text-sm text-neutral-500">{item.color} / {item.size}</p>
+                    {[item.color, item.size].filter(Boolean).length > 0 && (
+                      <p className="text-sm text-neutral-500">{[item.color, item.size].filter(Boolean).join(' · ')}</p>
+                    )}
                     <p className="text-sm text-neutral-500">Qty: {item.quantity}</p>
                     {item.raffleNumber && (
                       <div className="mt-1.5 flex items-center gap-2">

@@ -318,7 +318,9 @@ export default function CheckoutPage() {
                       <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-neutral-100" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-neutral-900 truncate">{item.name}</p>
-                        <p className="text-xs text-neutral-500">{item.color} / {item.size}</p>
+                        {[item.color, item.size].filter(Boolean).length > 0 && (
+                          <p className="text-xs text-neutral-500">{[item.color, item.size].filter(Boolean).join(' · ')}</p>
+                        )}
                         {raffle && (
                           <div className="mt-1 flex items-center gap-1.5">
                             <Ticket className="w-3 h-3 text-emerald-600" />

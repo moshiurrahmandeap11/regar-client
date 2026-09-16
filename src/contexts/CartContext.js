@@ -16,11 +16,13 @@ export function CartProvider({ children }) {
     localStorage.setItem('regar_cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product, color, size, quantity = 1, imageOverride = null) => {
+  const addToCart = (product, color = '', size = '', quantity = 1, imageOverride = null) => {
+    const safeColor = color || '';
+    const safeSize = size || '';
     setCart(prev => {
-      const existing = prev.find(item => item.productId === product._id && item.color === color && item.size === size);
+      const existing = prev.find(item => item.productId === product._id && (item.color || '') === safeColor && (item.size || '') === safeSize);
       if (existing) {
-        return prev.map(item => item.productId === product._id && item.color === color && item.size === size
+        return prev.map(item => item.productId === product._id && (item.color || '') === safeColor && (item.size || '') === safeSize
           ? { ...item, quantity: item.quantity + quantity }
           : item
         );
@@ -30,21 +32,25 @@ export function CartProvider({ children }) {
         name: product.name,
         price: product.price,
         image: imageOverride || product.images?.[0],
-        color,
-        size,
+        color: safeColor,
+        size: safeSize,
         quantity,
         maxTickets: product.maxTickets,
       }];
     });
   };
 
-  const removeFromCart = (productId, color, size) => {
-    setCart(prev => prev.filter(item => !(item.productId === productId && item.color === color && item.size === size)));
+  const removeFromCart = (productId, color = '', size = '') => {
+    const safeColor = color || '';
+    const safeSize = size || '';
+    setCart(prev => prev.filter(item => !(item.productId === productId && (item.color || '') === safeColor && (item.size || '') === safeSize)));
   };
 
-  const updateQuantity = (productId, color, size, quantity) => {
-    if (quantity < 1) return removeFromCart(productId, color, size);
-    setCart(prev => prev.map(item => item.productId === productId && item.color === color && item.size === size
+  const updateQuantity = (productId, color = '', size = '', quantity = 1) => {
+    const safeColor = color || '';
+    const safeSize = size || '';
+    if (quantity < 1) return removeFromCart(productId, safeColor, safeSize);
+    setCart(prev => prev.map(item => item.productId === productId && (item.color || '') === safeColor && (item.size || '') === safeSize
       ? { ...item, quantity }
       : item
     ));

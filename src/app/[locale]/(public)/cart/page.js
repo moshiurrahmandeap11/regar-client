@@ -124,9 +124,11 @@ export default function CartPage() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-semibold text-neutral-900">{item.name}</h3>
-                          <p className="text-sm text-neutral-500 mt-1">
-                            {item.color} / {item.size}
-                          </p>
+                          {[item.color, item.size].filter(Boolean).length > 0 && (
+                            <p className="text-sm text-neutral-500 mt-1">
+                              {[item.color, item.size].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
                           {raffle && (
                             <div className="mt-1.5 flex items-center gap-2">
                               <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/routing';
@@ -40,6 +40,9 @@ export default function ProductDetailPage() {
   const drawnOrClosedRaffle = productRaffles.find(r => r.status === 'drawn' || r.status === 'closed');
   const hasEndedRaffle = Boolean(drawnOrClosedRaffle);
 
+  const validColors = useMemo(() => (product?.colors || []).filter(c => c && (c.name?.trim() || c.image)), [product?.colors]);
+  const validSizes = useMemo(() => (product?.sizes || []).filter(s => s && String(s).trim()), [product?.sizes]);
+
   const selectedColorData = product?.colors?.find((color) => color.name === selectedColor);
   const displayImages = (() => {
     if (!product) return [];
@@ -69,9 +72,12 @@ export default function ProductDetailPage() {
         if (canonicalPath !== `/products/${params.id}`) {
           router.replace(canonicalPath);
         }
+        const validColors = (productData.colors || []).filter(c => c && (c.name?.trim() || c.image));
+        const validSizes = (productData.sizes || []).filter(s => s && String(s).trim());
+
         setProduct(productData);
-        setSelectedColor(productData.colors?.[0]?.name);
-        setSelectedSize(productData.sizes?.[0]);
+        setSelectedColor(validColors[0]?.name || '');
+        setSelectedSize(validSizes[0] || '');
 
         const reviewsRes = await api.get(`/api/reviews?product=${productId}&limit=10`);
         setProductReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
@@ -99,15 +105,22 @@ export default function ProductDetailPage() {
   }, [params.id, router]);
 
   const handleAddToCart = () => {
-    if (!selectedColor || !selectedSize) {
-      toast.error(locale === 'fr' ? 'Veuillez selectionner une couleur et une taille' : 'Please select color and size');
+    const validColors = (product?.colors || []).filter(c => c && (c.name?.trim() || c.image));
+    const validSizes = (product?.sizes || []).filter(s => s && String(s).trim());
+
+    if (validColors.length > 0 && !selectedColor) {
+      toast.error(locale === 'fr' ? 'Veuillez selectionner une couleur' : 'Please select a color');
+      return;
+    }
+    if (validSizes.length > 0 && !selectedSize) {
+      toast.error(locale === 'fr' ? 'Veuillez selectionner une taille' : 'Please select a size');
       return;
     }
     if (hasEndedRaffle) {
       toast.error(locale === 'fr' ? 'Cette tombola est terminee.' : 'This raffle has ended.');
       return;
     }
-    addToCart(product, selectedColor, selectedSize, quantity, displayImages[activeImage] || displayImages[0]);
+    addToCart(product, selectedColor || '', selectedSize || '', quantity, displayImages[activeImage] || displayImages[0]);
     toast.success(locale === 'fr' ? 'Ajoute au panier !' : 'Added to cart!');
   };
 
@@ -212,13 +225,13 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mt-6 space-y-4">
-                {product.colors?.length > 0 && (
+                {validColors.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-2 block">
                       {locale === 'fr' ? 'Couleur' : 'Color'}: {selectedColor}
                     </label>
                     <div className="flex gap-2">
-                      {product.colors.map((color) => (
+                      {validColors.map((color) => (
                         <button
                           key={color.name}
                           onClick={() => {
@@ -234,13 +247,13 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-                {product.sizes?.length > 0 && (
+                {validSizes.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-neutral-700 mb-2 block">
                       {locale === 'fr' ? 'Taille' : 'Size'}
                     </label>
                     <div className="flex gap-2 flex-wrap">
-                      {product.sizes.map((size) => (
+                      {validSizes.map((size) => (
                         <button
                           key={size}
                           onClick={() => setSelectedSize(size)}
