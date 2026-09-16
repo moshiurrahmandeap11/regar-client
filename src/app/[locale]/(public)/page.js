@@ -26,6 +26,8 @@ import {
   Shield,
   BadgeCheck,
   Handshake,
+  Sparkles,
+  Gift,
 } from 'lucide-react';
 import api from '@/lib/api';
 import { productPath } from '@/lib/productPath';
@@ -63,6 +65,45 @@ const DEFAULT_HERO_BANNER = {
   },
 };
 
+const DEFAULT_SHOP_CAPS = {
+  en: {
+    eyebrow: 'Shop caps',
+    title: 'Choose Your Cap',
+    benefits: [
+      { icon: 'Gem', title: 'Premium Quality', text: 'High quality materials, built to last.' },
+      { icon: 'Ticket', title: 'One Cap, Multiple Entries', text: 'Every purchase gives you raffle entries.' },
+      { icon: 'Truck', title: 'Worldwide Shipping', text: 'Fast & reliable delivery to your door.' },
+    ],
+  },
+  fr: {
+    eyebrow: 'Collection casquettes',
+    title: 'Choisissez votre casquette',
+    benefits: [
+      { icon: 'Gem', title: 'Qualité Supérieure', text: 'Matériaux haut de gamme conçus pour durer.' },
+      { icon: 'Ticket', title: 'Une Casquette, Plusieurs Chances', text: 'Chaque achat vous donne des participations au tirage.' },
+      { icon: 'Truck', title: 'Livraison Internationale', text: 'Expédition rapide et sécurisée à votre porte.' },
+    ],
+  },
+};
+
+const resolveBenefitIcon = (iconName) => {
+  switch (iconName) {
+    case 'Ticket': return Ticket;
+    case 'Truck': return Truck;
+    case 'Shield': return Shield;
+    case 'Trophy': return Trophy;
+    case 'Star': return Star;
+    case 'BadgeCheck': return BadgeCheck;
+    case 'Globe2': return Globe2;
+    case 'Sparkles': return Sparkles;
+    case 'Gift': return Gift;
+    case 'RotateCcw': return RotateCcw;
+    case 'Gem':
+    default:
+      return Gem;
+  }
+};
+
 export default function HomePage() {
   const locale = useLocale();
   const [products, setProducts] = useState([]);
@@ -70,6 +111,7 @@ export default function HomePage() {
   const [reviews, setReviews] = useState([]);
   const [winners, setWinners] = useState([]);
   const [heroBanner, setHeroBanner] = useState(DEFAULT_HERO_BANNER);
+  const [shopCapsContent, setShopCapsContent] = useState(DEFAULT_SHOP_CAPS);
   const [reviewSlide, setReviewSlide] = useState(0);
   const [isReviewHovered, setIsReviewHovered] = useState(false);
   const [email, setEmail] = useState('');
@@ -84,12 +126,13 @@ export default function HomePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [productRes, raffleRes, reviewRes, winnerRes, heroRes] = await Promise.all([
+        const [productRes, raffleRes, reviewRes, winnerRes, heroRes, shopCapsRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
           api.get('/api/reviews?limit=20'),
           api.get(`/api/tickets/winners?limit=4&t=${Date.now()}`),
           api.get('/api/content/hero-banner').catch(() => ({ data: null })),
+          api.get('/api/content/shop_caps_section').catch(() => ({ data: null })),
         ]);
         setProducts(Array.isArray(productRes.data) ? productRes.data : []);
         setRaffles(Array.isArray(raffleRes.data) ? raffleRes.data : []);
@@ -102,6 +145,23 @@ export default function HomePage() {
             en: { ...DEFAULT_HERO_BANNER.en, ...(heroRes.data.en || {}) },
             fr: { ...DEFAULT_HERO_BANNER.fr, ...(heroRes.data.fr || {}) },
           });
+        }
+        if (shopCapsRes?.data) {
+          let en = DEFAULT_SHOP_CAPS.en;
+          let fr = DEFAULT_SHOP_CAPS.fr;
+          if (shopCapsRes.data.valueEn) {
+            try {
+              const parsed = JSON.parse(shopCapsRes.data.valueEn);
+              en = { ...en, ...parsed, benefits: Array.isArray(parsed.benefits) && parsed.benefits.length ? parsed.benefits : en.benefits };
+            } catch (e) {}
+          }
+          if (shopCapsRes.data.valueFr) {
+            try {
+              const parsed = JSON.parse(shopCapsRes.data.valueFr);
+              fr = { ...fr, ...parsed, benefits: Array.isArray(parsed.benefits) && parsed.benefits.length ? parsed.benefits : fr.benefits };
+            } catch (e) {}
+          }
+          setShopCapsContent({ en, fr });
         }
       } catch (error) {
         console.error('Home load failed:', error);
@@ -178,11 +238,10 @@ export default function HomePage() {
     { icon: Trophy, title: isFr ? 'Gagner' : 'Win Big', text: isFr ? 'Attendez le tirage et devenez le gagnant.' : 'Wait for the draw and be the lucky winner.' },
   ];
 
-  const shopBenefits = [
-    { icon: Gem, title: isFr ? 'Premium Quality' : 'Premium Quality', text: isFr ? 'High quality materials, built to last.' : 'High quality materials, built to last.' },
-    { icon: Ticket, title: isFr ? 'One Cap, Multiple Entries' : 'One Cap, Multiple Entries', text: isFr ? 'Every purchase gives you raffle entries.' : 'Every purchase gives you raffle entries.' },
-    { icon: Truck, title: isFr ? 'Worldwide Shipping' : 'Worldwide Shipping', text: isFr ? 'Fast & reliable delivery to your door.' : 'Fast & reliable delivery to your door.' },
-  ];
+  const currentShopCaps = isFr ? (shopCapsContent?.fr || DEFAULT_SHOP_CAPS.fr) : (shopCapsContent?.en || DEFAULT_SHOP_CAPS.en);
+  const currentShopBenefits = Array.isArray(currentShopCaps?.benefits) && currentShopCaps.benefits.length > 0
+    ? currentShopCaps.benefits
+    : (isFr ? DEFAULT_SHOP_CAPS.fr.benefits : DEFAULT_SHOP_CAPS.en.benefits);
 
   if (loading) {
     return (
@@ -286,23 +345,30 @@ export default function HomePage() {
       {/* Shop Caps Section - New Design */}
       <section id="shop-caps" className="py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">{isFr ? 'Shop caps' : 'Shop caps'}</p>
-          <h2 className="mt-1 text-2xl font-black">{isFr ? 'Choisissez votre casquette' : 'Choose Your Cap'}</h2>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b88238]">
+            {currentShopCaps?.eyebrow || (isFr ? 'Collection casquettes' : 'Shop caps')}
+          </p>
+          <h2 className="mt-1 text-2xl font-black">
+            {currentShopCaps?.title || (isFr ? 'Choisissez votre casquette' : 'Choose Your Cap')}
+          </h2>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[200px_1fr] lg:items-start">
             {/* Left: Benefits */}
             <div className="flex flex-col gap-4">
-              {shopBenefits.map((benefit) => (
-                <div key={benefit.title} className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0">
-                    <benefit.icon className="w-5 h-5 text-[#b88238]" />
+              {currentShopBenefits.map((benefit, index) => {
+                const IconComp = resolveBenefitIcon(benefit.icon);
+                return (
+                  <div key={`${benefit.title}-${index}`} className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0">
+                      <IconComp className="w-5 h-5 text-[#b88238]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-neutral-900">{benefit.title}</p>
+                      <p className="text-xs text-neutral-500 leading-relaxed">{benefit.text}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-neutral-900">{benefit.title}</p>
-                    <p className="text-xs text-neutral-500 leading-relaxed">{benefit.text}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Right: Product Cards */}

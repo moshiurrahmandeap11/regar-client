@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, HelpCircle, Search, X, ChevronLeft, ChevronRight, FileText,
   Image as ImageIcon, Upload, RotateCcw, ArrowRight, Sparkles, Globe,
-  Shield, Scale, Calendar, Trash2, ArrowUp, ArrowDown
+  Shield, Scale, Calendar, Trash2, ArrowUp, ArrowDown,
+  Gem, Ticket, Truck, Trophy, Star, BadgeCheck, Globe2, Gift, Check
 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
@@ -268,6 +269,45 @@ export default function ContentContent() {
       },
     },
   };
+  const defaultShopCapsConfig = {
+    en: {
+      eyebrow: 'SHOP CAPS',
+      title: 'Choose Your Cap',
+      benefits: [
+        { icon: 'Gem', title: 'Premium Quality', text: 'High quality materials, built to last.' },
+        { icon: 'Ticket', title: 'One Cap, Multiple Entries', text: 'Every purchase gives you raffle entries.' },
+        { icon: 'Truck', title: 'Worldwide Shipping', text: 'Fast & reliable delivery to your door.' },
+      ],
+    },
+    fr: {
+      eyebrow: 'COLLECTION CASQUETTES',
+      title: 'Choisissez votre casquette',
+      benefits: [
+        { icon: 'Gem', title: 'Qualité Supérieure', text: 'Matériaux haut de gamme conçus pour durer.' },
+        { icon: 'Ticket', title: 'Une Casquette, Plusieurs Chances', text: 'Chaque achat vous donne des participations au tirage.' },
+        { icon: 'Truck', title: 'Livraison Internationale', text: 'Expédition rapide et sécurisée à votre porte.' },
+      ],
+    },
+  };
+
+  const BENEFIT_ICON_OPTIONS = [
+    { id: 'Gem', label: 'Gem / Luxury', icon: Gem },
+    { id: 'Ticket', label: 'Raffle Ticket', icon: Ticket },
+    { id: 'Truck', label: 'Shipping Truck', icon: Truck },
+    { id: 'Shield', label: 'Security Shield', icon: Shield },
+    { id: 'Trophy', label: 'Trophy / Prize', icon: Trophy },
+    { id: 'Star', label: 'Star / Rated', icon: Star },
+    { id: 'BadgeCheck', label: 'Verified Badge', icon: BadgeCheck },
+    { id: 'Globe2', label: 'Global / World', icon: Globe2 },
+    { id: 'Sparkles', label: 'Sparkles / Exclusive', icon: Sparkles },
+    { id: 'Gift', label: 'Gift / Reward', icon: Gift },
+  ];
+
+  const [shopCapsConfig, setShopCapsConfig] = useState(defaultShopCapsConfig);
+  const [shopCapsLang, setShopCapsLang] = useState('en');
+  const [shopCapsPreviewLang, setShopCapsPreviewLang] = useState('en');
+  const [savingShopCaps, setSavingShopCaps] = useState(false);
+
   const [legalContent, setLegalContent] = useState(defaultLegalContent);
   const [legalSection, setLegalSection] = useState('terms');
   const [legalLang, setLegalLang] = useState('en');
@@ -292,7 +332,113 @@ export default function ContentContent() {
     fetchHeroBanner();
     fetchHeroContent();
     fetchLegalContent();
+    fetchShopCapsContent();
   }, []);
+
+  const fetchShopCapsContent = async () => {
+    try {
+      const res = await fetch(`${API}/api/content/shop_caps_section`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data) return;
+
+      let en = defaultShopCapsConfig.en;
+      let fr = defaultShopCapsConfig.fr;
+
+      if (data.valueEn) {
+        try {
+          const parsed = JSON.parse(data.valueEn);
+          en = {
+            ...en,
+            ...parsed,
+            benefits: Array.isArray(parsed.benefits) && parsed.benefits.length ? parsed.benefits : en.benefits,
+          };
+        } catch (e) {}
+      }
+
+      if (data.valueFr) {
+        try {
+          const parsed = JSON.parse(data.valueFr);
+          fr = {
+            ...fr,
+            ...parsed,
+            benefits: Array.isArray(parsed.benefits) && parsed.benefits.length ? parsed.benefits : fr.benefits,
+          };
+        } catch (e) {}
+      }
+
+      setShopCapsConfig({ en, fr });
+    } catch (error) {
+      console.error('Failed to load shop caps content:', error);
+    }
+  };
+
+  const saveShopCapsContent = async () => {
+    setSavingShopCaps(true);
+    try {
+      const res = await fetch(`${API}/api/content/shop_caps_section`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          valueEn: JSON.stringify(shopCapsConfig.en),
+          valueFr: JSON.stringify(shopCapsConfig.fr),
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save shop caps content');
+      toast.success('Shop Caps & Benefits updated successfully');
+    } catch (error) {
+      toast.error(error.message || 'Error saving shop caps content');
+    } finally {
+      setSavingShopCaps(false);
+    }
+  };
+
+  const handleUpdateShopCapsHeader = (field, value) => {
+    setShopCapsConfig((prev) => ({
+      ...prev,
+      [shopCapsLang]: {
+        ...prev[shopCapsLang],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleUpdateShopCapsBenefit = (index, field, value) => {
+    setShopCapsConfig((prev) => {
+      if (field === 'icon') {
+        const enBenefits = [...(prev.en.benefits || [])];
+        const frBenefits = [...(prev.fr.benefits || [])];
+        if (enBenefits[index]) enBenefits[index] = { ...enBenefits[index], icon: value };
+        if (frBenefits[index]) frBenefits[index] = { ...frBenefits[index], icon: value };
+        return {
+          ...prev,
+          en: { ...prev.en, benefits: enBenefits },
+          fr: { ...prev.fr, benefits: frBenefits },
+        };
+      }
+
+      const currentBenefits = [...(prev[shopCapsLang].benefits || [])];
+      if (!currentBenefits[index]) return prev;
+      currentBenefits[index] = { ...currentBenefits[index], [field]: value };
+      return {
+        ...prev,
+        [shopCapsLang]: {
+          ...prev[shopCapsLang],
+          benefits: currentBenefits,
+        },
+      };
+    });
+  };
+
+  const renderSelectedBenefitIcon = (iconName, className = 'w-5 h-5 text-[#b88238]') => {
+    const found = BENEFIT_ICON_OPTIONS.find((item) => item.id === iconName);
+    const IconComp = found ? found.icon : Gem;
+    return <IconComp className={className} />;
+  };
 
   const fetchHeroBanner = async () => {
     try {
@@ -687,6 +833,12 @@ export default function ContentContent() {
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'hero' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
         >
           Hero Banner
+        </button>
+        <button
+          onClick={() => setActiveTab('shopCaps')}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'shopCaps' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+        >
+          Shop Caps & Benefits
         </button>
         <button
           onClick={() => setActiveTab('legal')}
@@ -1206,6 +1358,316 @@ export default function ContentContent() {
 
                   <p className="text-[11px] text-neutral-400 text-center">
                     Interactive Preview: Switch between EN and FR to see changes live.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {activeTab === 'shopCaps' && (
+        <FadeIn>
+          <div className="space-y-6">
+            {/* Top Bar: Language Switcher + Save button */}
+            <div className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-neutral-900">Shop Caps & Value Props</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f3eadb] text-[#b88238]">
+                    Homepage Section
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Customize the badge eyebrow, main heading, and the 3 benefit highlight cards shown beside caps.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Language Switcher */}
+                <div className="flex items-center bg-neutral-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setShopCapsLang('en')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      shopCapsLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-[#d8a868]" />
+                    <span>English (EN)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShopCapsLang('fr')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      shopCapsLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5 text-[#d8a868]" />
+                    <span>French (FR)</span>
+                  </button>
+                </div>
+
+                {/* Save Button */}
+                <button
+                  type="button"
+                  disabled={savingShopCaps}
+                  onClick={saveShopCapsContent}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-neutral-800 active:scale-98 transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {savingShopCaps ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 text-[#e9c58c]" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Main Content Grid: Editor (Left) & Real-time Live Preview (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Form Editor */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* 1. Section Header Texts */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#b88238]" />
+                      <h3 className="text-sm font-bold text-neutral-900">
+                        Section Titles ({shopCapsLang.toUpperCase()})
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-medium text-neutral-400">
+                      Displayed directly above the product catalog
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Eyebrow Badge Text
+                      </label>
+                      <input
+                        type="text"
+                        value={shopCapsConfig[shopCapsLang]?.eyebrow || ''}
+                        onChange={(e) => handleUpdateShopCapsHeader('eyebrow', e.target.value)}
+                        placeholder={shopCapsLang === 'fr' ? 'COLLECTION CASQUETTES' : 'SHOP CAPS'}
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all uppercase tracking-wider font-semibold text-[#b88238]"
+                      />
+                      <p className="text-[11px] text-neutral-400 mt-1">
+                        Small golden pill label rendered at the very top (e.g. SHOP CAPS, LIMITED EDITION).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Main Section Heading
+                      </label>
+                      <input
+                        type="text"
+                        value={shopCapsConfig[shopCapsLang]?.title || ''}
+                        onChange={(e) => handleUpdateShopCapsHeader('title', e.target.value)}
+                        placeholder={shopCapsLang === 'fr' ? 'Choisissez votre casquette' : 'Choose Your Cap'}
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-bold text-neutral-900"
+                      />
+                      <p className="text-[11px] text-neutral-400 mt-1">
+                        Prominent headline introducing your cap selection.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Benefit Cards Configuration */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-5 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <Gem className="w-4 h-4 text-[#b88238]" />
+                      <h3 className="text-sm font-bold text-neutral-900">
+                        Value Proposition Cards (3 Benefits)
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-neutral-400">
+                      Icons sync across EN & FR; text is translated
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(shopCapsConfig[shopCapsLang]?.benefits || defaultShopCapsConfig[shopCapsLang].benefits).map((item, idx) => {
+                      return (
+                        <div
+                          key={`benefit-item-${idx}`}
+                          className="p-4 rounded-xl border border-neutral-200 bg-[#faf8f5]/60 hover:bg-[#faf8f5] transition-colors space-y-3.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-[#f3eadb] text-[#b88238] flex items-center justify-center text-xs font-black">
+                                {idx + 1}
+                              </span>
+                              <span className="text-xs font-bold text-neutral-800">
+                                Benefit Card #{idx + 1}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-neutral-200 text-xs text-neutral-600 font-medium">
+                              {renderSelectedBenefitIcon(item.icon, 'w-3.5 h-3.5 text-[#b88238]')}
+                              <span>{item.icon || 'Gem'}</span>
+                            </div>
+                          </div>
+
+                          {/* Icon Selector Pills */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">
+                              Choose Icon
+                            </label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {BENEFIT_ICON_OPTIONS.map((opt) => {
+                                const OptIcon = opt.icon;
+                                const isSelected = item.icon === opt.id;
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => handleUpdateShopCapsBenefit(idx, 'icon', opt.id)}
+                                    title={opt.label}
+                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                      isSelected
+                                        ? 'bg-neutral-900 text-white shadow-sm'
+                                        : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-100'
+                                    }`}
+                                  >
+                                    <OptIcon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#e9c58c]' : 'text-neutral-500'}`} />
+                                    <span>{opt.label.split(' / ')[0]}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Title & Description Inputs */}
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+                            <div className="sm:col-span-5">
+                              <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                Benefit Title ({shopCapsLang.toUpperCase()})
+                              </label>
+                              <input
+                                type="text"
+                                value={item.title || ''}
+                                onChange={(e) => handleUpdateShopCapsBenefit(idx, 'title', e.target.value)}
+                                placeholder="e.g. Premium Quality"
+                                className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 font-bold"
+                              />
+                            </div>
+                            <div className="sm:col-span-7">
+                              <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                                Description ({shopCapsLang.toUpperCase()})
+                              </label>
+                              <input
+                                type="text"
+                                value={item.text || ''}
+                                onChange={(e) => handleUpdateShopCapsBenefit(idx, 'text', e.target.value)}
+                                placeholder="e.g. High quality materials, built to last."
+                                className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 text-neutral-600"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Live Real-Time Homepage Preview */}
+              <div className="lg:col-span-5 lg:sticky lg:top-6 space-y-4">
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div>
+                      <h3 className="text-sm font-bold text-neutral-900">Live Homepage Preview</h3>
+                      <p className="text-[11px] text-neutral-400">Actual simulation of the public storefront</p>
+                    </div>
+
+                    <div className="flex items-center bg-neutral-100 p-1 rounded-lg text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setShopCapsPreviewLang('en')}
+                        className={`px-2.5 py-1 rounded-md font-bold transition-all ${
+                          shopCapsPreviewLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShopCapsPreviewLang('fr')}
+                        className={`px-2.5 py-1 rounded-md font-bold transition-all ${
+                          shopCapsPreviewLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        FR
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Simulated Storefront Container */}
+                  <div className="rounded-xl border border-neutral-200 bg-[#f8f5ef] p-4 sm:p-5 shadow-inner">
+                    {/* Eyebrow & Title */}
+                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#b88238]">
+                      {shopCapsConfig[shopCapsPreviewLang]?.eyebrow ||
+                        (shopCapsPreviewLang === 'fr' ? 'COLLECTION CASQUETTES' : 'SHOP CAPS')}
+                    </p>
+                    <h2 className="mt-1 text-xl font-black text-neutral-900 leading-snug">
+                      {shopCapsConfig[shopCapsPreviewLang]?.title ||
+                        (shopCapsPreviewLang === 'fr' ? 'Choisissez votre casquette' : 'Choose Your Cap')}
+                    </h2>
+
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                      {/* Left: The 3 Benefit Cards */}
+                      <div className="flex flex-col gap-3.5">
+                        {(shopCapsConfig[shopCapsPreviewLang]?.benefits || defaultShopCapsConfig[shopCapsPreviewLang].benefits).map((b, bIdx) => (
+                          <div key={`prev-b-${bIdx}`} className="flex items-start gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0 shadow-xs">
+                              {renderSelectedBenefitIcon(b.icon, 'w-4 h-4 text-[#b88238]')}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-neutral-900 leading-snug truncate">
+                                {b.title || `Benefit #${bIdx + 1}`}
+                              </p>
+                              <p className="text-[10px] text-neutral-500 leading-relaxed line-clamp-2 mt-0.5">
+                                {b.text || 'Benefit description preview text.'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right: Mock Cap Product Card showing spatial balance */}
+                      <div className="rounded-lg bg-white p-2.5 shadow-sm ring-1 ring-black/5 flex flex-col">
+                        <div className="h-20 rounded-md bg-[#f5f0e8] p-1.5 flex items-center justify-center">
+                          <img
+                            src="/images/regar-hero-banner.jpeg"
+                            alt="Sample Product"
+                            className="h-full w-full object-contain rounded"
+                          />
+                        </div>
+                        <h4 className="mt-1.5 text-xs font-bold text-neutral-900 truncate">
+                          {shopCapsPreviewLang === 'fr' ? 'Casquette Signature Regar' : 'Regar Signature Cap'}
+                        </h4>
+                        <p className="text-xs font-black text-neutral-900">$29.90</p>
+                        <div className="mt-2 flex items-center justify-center gap-1.5 rounded-md bg-black py-1.5 text-[10px] font-bold uppercase text-white">
+                          <Check className="h-3 w-3 text-[#e9c58c]" />
+                          <span>{shopCapsPreviewLang === 'fr' ? 'Acheter & Entrer' : 'Buy & Enter'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-neutral-400 text-center">
+                    💡 Changes you make on the left update this preview in real time. Click &quot;Save Changes&quot; when ready.
                   </p>
                 </div>
               </div>
