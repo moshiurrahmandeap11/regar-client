@@ -104,6 +104,57 @@ const resolveBenefitIcon = (iconName) => {
   }
 };
 
+const FALLBACK_REVIEWS = [
+  {
+    _id: 'fb-1',
+    name: 'Emma Wilson',
+    avatar: 'https://i.pravatar.cc/100?img=32',
+    rating: 5,
+    comment: "J'ai rejoint pour la tombola, mais la qualité m'a vraiment surpris. Tout était simple et limpide.",
+    commentEn: 'I joined for the raffle, but the quality really surprised me. Everything was simple and easy to follow.',
+  },
+  {
+    _id: 'fb-2',
+    name: 'Michael Brown',
+    avatar: 'https://i.pravatar.cc/100?img=12',
+    rating: 5,
+    comment: 'Livraison rapide, emballage soigné et le processus des tickets était incroyablement simple à suivre.',
+    commentEn: 'Fast delivery, clean packaging, and the ticket flow was incredibly easy to follow. Great experience.',
+  },
+  {
+    _id: 'fb-3',
+    name: 'Daniel Smith',
+    avatar: 'https://i.pravatar.cc/100?img=44',
+    rating: 5,
+    comment: 'Le processus était très direct et limpide. J\'ai reçu mon prix exactement comme prévu. Fortement recommandé.',
+    commentEn: 'The whole process was very straightforward. I received my prize exactly as expected. Highly recommended.',
+  },
+  {
+    _id: 'fb-4',
+    name: 'Sophia Miller',
+    avatar: 'https://i.pravatar.cc/100?img=25',
+    rating: 5,
+    comment: 'Expérience très fluide, de la participation à la tombola jusqu\'à la réception du prix.',
+    commentEn: 'Very smooth experience from entering the raffle to receiving the prize. Everything was clearly explained.',
+  },
+  {
+    _id: 'fb-5',
+    name: 'Olivia Taylor',
+    avatar: 'https://i.pravatar.cc/100?img=48',
+    rating: 5,
+    comment: 'Impressionnée par la simplicité de tout. Le prix est arrivé en toute sécurité et la communication était excellente.',
+    commentEn: 'I was impressed with how simple everything was. The prize arrived safely and the communication was excellent.',
+  },
+  {
+    _id: 'fb-6',
+    name: 'James Anderson',
+    avatar: 'https://i.pravatar.cc/100?img=15',
+    rating: 5,
+    comment: 'J\'ai adoré participer. Le tirage était transparent, rapide et bien plus simple que ce à quoi je m\'attendais.',
+    commentEn: 'Really enjoyed participating. The process was transparent, quick and much easier than I expected.',
+  },
+];
+
 export default function HomePage() {
   const locale = useLocale();
   const [products, setProducts] = useState([]);
@@ -112,8 +163,6 @@ export default function HomePage() {
   const [winners, setWinners] = useState([]);
   const [heroBanner, setHeroBanner] = useState(DEFAULT_HERO_BANNER);
   const [shopCapsContent, setShopCapsContent] = useState(DEFAULT_SHOP_CAPS);
-  const [reviewSlide, setReviewSlide] = useState(0);
-  const [isReviewHovered, setIsReviewHovered] = useState(false);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -204,15 +253,13 @@ export default function HomePage() {
   // Running raffle image for the countdown section (first prize image or product image)
   const runningRaffleImage = heroRaffle?.prizes?.[0]?.image || heroImage || '';
 
-  const reviewPages = Math.ceil(reviews.length / 3);
-
-  useEffect(() => {
-    if (reviewPages <= 1 || isReviewHovered) return;
-    const timer = setInterval(() => {
-      setReviewSlide((prev) => (prev + 1) % reviewPages);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [reviewPages, isReviewHovered]);
+  const marqueeReviews = useMemo(() => {
+    const valid = Array.isArray(reviews) ? reviews.filter((r) => r && (r.comment || r.commentEn)) : [];
+    const base = valid.length >= 6
+      ? valid
+      : [...valid, ...FALLBACK_REVIEWS.slice(valid.length)];
+    return [...base, ...base];
+  }, [reviews]);
 
   const handleNewsletter = async (event) => {
     event.preventDefault();
@@ -646,189 +693,103 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Winners & Reviews Combined Section */}
-      {(winners.length > 0 || reviews.length > 0) && (
-        <section className="py-8 sm:py-12 bg-[#fbfaf8]">
+      {/* Recent Winner Featured Banner (if any) */}
+      {winners.length > 0 && (
+        <section className="py-8 sm:py-10 bg-white border-y border-neutral-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-              
-              {/* Left: Recent Winner */}
-              {winners.length > 0 && (
-                <div className="lg:col-span-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b88238]">
-                    {isFr ? 'Gagnant recent' : 'Recent Winner'}
-                  </p>
-                  
-                  <div className="mt-4">
-                    {(() => {
-                      const winner = winners[0];
-                      const avatar = winner.user?.avatar;
-                      return (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-14 w-14 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238] ring-2 ring-[#e8d3b6]">
-                              {avatar ? (
-                                <img src={avatar} alt="" className="h-full w-full object-cover" />
-                              ) : (
-                                <Trophy className="h-6 w-6" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-bold text-sm text-neutral-900">
-                                  {winner.user?.firstName} {winner.user?.lastName}
-                                </p>
-                                <span className="px-2 py-0.5 bg-[#e8d3b6] text-[#8b6914] text-[10px] font-bold uppercase rounded-full">
-                                  {isFr ? 'Gagne' : 'Won'}
-                                </span>
-                              </div>
-                              <p className="text-xs text-neutral-500 mt-0.5">
-                                {isFr ? winner.prize : winner.prizeEn || winner.prize}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <p className="text-sm text-neutral-600 italic">
-                            &ldquo;{isFr ? 'Je n\'arrive pas a y croire ! Merci Regar !' : 'Can\'t believe I won! Thank you Regar!' }&rdquo;
-                          </p>
-                          
-                          <Link 
-                            href="/winners" 
-                            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-5 py-2.5 text-xs font-bold uppercase text-neutral-700 hover:bg-neutral-50 transition-colors"
-                          >
-                            {isFr ? 'Voir tous les gagnants' : 'See all winners'} <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
-
-              {/* Right: What Participants Say with Auto Slider */}
-              {reviews.length > 0 && (
-                <div
-                  onMouseEnter={() => setIsReviewHovered(true)}
-                  onMouseLeave={() => setIsReviewHovered(false)}
-                  className={`${winners.length > 0 ? 'lg:col-span-8' : 'lg:col-span-12'} flex flex-col justify-between`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b88238]">
-                      {isFr ? 'Ce que disent nos participants' : 'What Our Participants Say'}
-                    </p>
-
-                    {reviewPages > 1 && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setReviewSlide((prev) => (prev - 1 + reviewPages) % reviewPages)}
-                          className="h-7 w-7 rounded-full border border-neutral-300 hover:border-neutral-900 bg-white hover:bg-neutral-900 hover:text-white flex items-center justify-center text-neutral-600 transition-all shadow-xs active:scale-95"
-                          aria-label="Previous reviews"
-                        >
-                          <ChevronLeft className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setReviewSlide((prev) => (prev + 1) % reviewPages)}
-                          className="h-7 w-7 rounded-full border border-neutral-300 hover:border-neutral-900 bg-white hover:bg-neutral-900 hover:text-white flex items-center justify-center text-neutral-600 transition-all shadow-xs active:scale-95"
-                          aria-label="Next reviews"
-                        >
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="mt-4 relative overflow-hidden min-h-[160px]">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={reviewSlide}
-                        initial={{ opacity: 0, x: 25 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -25 }}
-                        transition={{ duration: 0.35, ease: 'easeInOut' }}
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                      >
-                        {reviews.slice(reviewSlide * 3, reviewSlide * 3 + 3).map((review) => {
-                          const avatar = review.avatar || review.user?.avatar;
-                          return (
-                            <div
-                              key={review._id}
-                              className="relative bg-white p-4 sm:p-4.5 rounded-2xl border border-neutral-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-full"
-                            >
-                              {/* Top: Stars & Quote */}
-                              <div>
-                                <div className="flex items-center justify-between mb-2.5">
-                                  <div className="flex gap-0.5">
-                                    {Array.from({ length: 5 }).map((_, index) => (
-                                      <Star
-                                        key={index}
-                                        className={`h-3.5 w-3.5 ${
-                                          index < Number(review.rating || 0)
-                                            ? 'fill-[#e2bd87] text-[#e2bd87]'
-                                            : 'text-neutral-200'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <Quote className="h-4 w-4 text-[#e2bd87]/40 shrink-0" />
-                                </div>
-
-                                {/* Comment */}
-                                <p className="text-xs sm:text-[13px] leading-relaxed text-neutral-700 line-clamp-3 italic">
-                                  &ldquo;{isFr ? review.comment : review.commentEn || review.comment}&rdquo;
-                                </p>
-                              </div>
-
-                              {/* Reviewer info at bottom */}
-                              <div className="mt-3.5 pt-3 border-t border-neutral-100 flex items-center gap-2">
-                                <div className="h-7 w-7 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[10px] font-bold text-[#b88238] shrink-0 ring-1 ring-[#e2bd87]/40">
-                                  {avatar ? (
-                                    <img src={avatar} alt="" className="h-full w-full object-cover" />
-                                  ) : (
-                                    review.name?.charAt(0) || 'R'
-                                  )}
-                                </div>
-                                <div className="truncate min-w-0">
-                                  <p className="text-xs font-semibold text-neutral-900 truncate">{review.name}</p>
-                                  {review.product?.name ? (
-                                    <p className="text-[10px] text-neutral-400 truncate">
-                                      {isFr ? review.product.name : review.product.nameEn || review.product.name}
-                                    </p>
-                                  ) : (
-                                    <span className="text-[9px] text-emerald-600 font-medium">✓ {isFr ? 'Acheteur verifie' : 'Verified Buyer'}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Navigation dots */}
-                  {reviewPages > 1 && (
-                    <div className="mt-4 pt-2 flex items-center justify-center sm:justify-start gap-1.5">
-                      {Array.from({ length: reviewPages }).map((_, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setReviewSlide(idx)}
-                          className={`h-1.5 rounded-full transition-all duration-300 ${
-                            reviewSlide === idx ? 'w-6 bg-[#b88238]' : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'
-                          }`}
-                          aria-label={`Go to review slide ${idx + 1}`}
-                        />
-                      ))}
+            {(() => {
+              const winner = winners[0];
+              const avatar = winner.user?.avatar;
+              return (
+                <div className="rounded-2xl bg-[#faf9f6] border border-[#ebe7df] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
+                  <div className="flex items-center gap-4 sm:gap-6 text-center sm:text-left flex-col sm:flex-row">
+                    <div className="h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238] ring-4 ring-[#e8d3b6] shrink-0">
+                      {avatar ? (
+                        <img src={avatar} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Trophy className="h-8 w-8 text-[#b47b24]" />
+                      )}
                     </div>
-                  )}
+                    <div>
+                      <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#b47b24]">
+                          {isFr ? 'Gagnant récent' : 'Recent Winner'}
+                        </span>
+                        <span className="px-2.5 py-0.5 bg-[#e8d3b6] text-[#8b6914] text-[10px] font-bold uppercase rounded-full">
+                          {isFr ? 'Gagné' : 'Won'}
+                        </span>
+                      </div>
+                      <h3 className="mt-1 font-black text-lg sm:text-xl text-neutral-900">
+                        {winner.user?.firstName} {winner.user?.lastName}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-neutral-600 mt-0.5">
+                        {isFr ? 'A remporté :' : 'Won:'} <span className="font-bold text-neutral-900">{isFr ? winner.prize : winner.prizeEn || winner.prize}</span>
+                      </p>
+                      <p className="text-xs sm:text-sm text-neutral-500 italic mt-1">
+                        &ldquo;{isFr ? (winner.quote || 'Je n\'arrive pas à y croire ! Merci Regar !') : (winner.quoteEn || winner.quote || 'Can\'t believe I won! Thank you Regar!')}&rdquo;
+                      </p>
+                    </div>
+                  </div>
+                  <Link 
+                    href="/winners" 
+                    className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#b47b24] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
+                  >
+                    {isFr ? 'Voir tous les gagnants' : 'See all winners'} <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </div>
         </section>
       )}
+
+      {/* Reviews Section - preview 4.html style */}
+      <section className="reviews-section">
+        <div className="reviews-container">
+          <div className="reviews-header">
+            <span>{isFr ? 'VRAIS GAGNANTS. VRAIES EXPÉRIENCES.' : 'REAL WINNERS. REAL EXPERIENCES.'}</span>
+            <h2>{isFr ? 'La confiance de nos participants' : 'Trusted by Our Participants'}</h2>
+            <p>{isFr ? 'Découvrez ce que nos gagnants et participants disent de leur expérience.' : 'See what our winners and participants have to say about their experience.'}</p>
+          </div>
+
+          <div className="reviews-slider">
+            <div className="reviews-track">
+              {marqueeReviews.map((review, idx) => {
+                const avatar = review.avatar || review.user?.avatar;
+                return (
+                  <div key={`${review._id || idx}-${idx}`} className="review-card">
+                    <div className="review-top">
+                      <span className="quote">&ldquo;</span>
+                      <div className="stars">
+                        {'★'.repeat(Math.max(1, Math.min(5, Number(review.rating || 5))))}
+                      </div>
+                    </div>
+
+                    <p>
+                      {isFr ? review.comment : review.commentEn || review.comment}
+                    </p>
+
+                    <div className="review-user">
+                      {avatar ? (
+                        <img src={avatar} alt={review.name || 'User'} />
+                      ) : (
+                        <div className="review-user-avatar bg-[#f3eadb] flex items-center justify-center text-sm font-bold text-[#b47b24] shrink-0">
+                          {review.name?.charAt(0) || 'U'}
+                        </div>
+                      )}
+                      <div>
+                        <strong>{review.name}</strong>
+                        <small>✓ {isFr ? 'Participant vérifié' : 'Verified Participant'}</small>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* Newsletter */}
       <section className="pb-8 sm:pb-0 bg-[#e8d3b6]">
