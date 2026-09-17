@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/routing';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star, Ticket } from 'lucide-react';
+import { ShoppingBag, Heart, Truck, Shield, RotateCcw, Star, Ticket, Sparkles } from 'lucide-react';
 import api from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -221,18 +221,24 @@ export default function ProductDetailPage() {
           <FadeIn delay={0.1}>
             <div>
               {activeRaffle && (
-                <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-neutral-900 text-white">
-                  <Ticket className="w-4 h-4 text-amber-400 shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => setShowRaffleAlertModal(true)}
+                  className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 hover:border-amber-400/40 border border-transparent shadow-xs hover:shadow-md transition-all cursor-pointer group active:scale-95 text-left"
+                  title={locale === 'fr' ? 'Cliquez pour voir les détails du tirage et le lot' : 'Click to view raffle details & grand prize'}
+                >
+                  <Ticket className="w-4 h-4 text-amber-400 shrink-0 group-hover:rotate-12 transition-transform duration-300" />
                   <span className="text-xs font-bold tracking-widest uppercase text-amber-400">
                     Raffle No. {activeRaffle.raffleNumber
                       ? String(activeRaffle.raffleNumber).padStart(3, '0')
                       : '—'}
                   </span>
                   <span className="w-px h-3 bg-white/20 shrink-0" />
-                  <span className="text-xs text-neutral-300 truncate max-w-[180px]">
+                  <span className="text-xs text-neutral-300 group-hover:text-white transition-colors truncate max-w-[180px]">
                     {locale === 'fr' ? activeRaffle.name : (activeRaffle.nameEn || activeRaffle.name)}
                   </span>
-                </div>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400/70 group-hover:text-amber-400 transition-colors shrink-0 ml-0.5" />
+                </button>
               )}
               {hasEndedRaffle && !activeRaffle && (
                 <div className="inline-flex items-center gap-2.5 mb-5 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
