@@ -315,12 +315,12 @@ export default function HomePage() {
 
           <div className="relative min-h-[inherit] px-6 py-12 sm:px-8 sm:py-12 lg:px-12 lg:py-14 xl:px-14">
             <div className="max-w-[320px] sm:max-w-[460px] lg:max-w-[500px]">
-            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs tracking-[0.06em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#e2bd87]" />
               {heroRaffle ? (isFr ? 'Raffle en direct' : 'Live raffle') : (isFr ? 'Raffle bientot' : 'Raffle coming soon')}
             </div>
 
-            <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-black uppercase leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.42)]">
+            <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-semibold leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.42)]">
               {heroText.titleLine1 || (isFr ? 'Achetez une casquette.' : 'Buy a cap.')}
               <span className="block text-[#e9c58c]">{heroText.titleLine2 || (isFr ? 'Gagnez gros.' : 'Win big.')}</span>
             </h1>
@@ -330,10 +330,10 @@ export default function HomePage() {
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
-              <Link href={currentButtonLink || "/products"} className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs font-black uppercase text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
+              <Link href={currentButtonLink || "/products"} className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
                 {heroText.buttonText || (isFr ? 'Acheter et entrer' : 'Buy cap & enter')} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs font-black uppercase text-white">
+              <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs text-white">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9c58c]/65 bg-black/18">
                   <PlayCircle className="h-4 w-4 text-[#e9c58c]" />
                 </span>
@@ -343,7 +343,7 @@ export default function HomePage() {
 
             {/* Countdown Timer */}
             <div className="mt-8 w-full max-w-[330px] rounded-lg border border-white/10 bg-black/28 px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.24)] sm:max-w-[470px] sm:px-6 sm:py-5">
-              <p className="text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-[#e9c58c]">
+              <p className="text-center text-[9px] sm:text-[10px] tracking-[0.16em] text-[#e9c58c]">
                 {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
               </p>
               {heroRaffle?.endDate ? (
@@ -355,7 +355,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="mt-5 hidden sm:flex flex-wrap items-center gap-4 text-[11px] font-bold text-white/82">
+            <div className="mt-5 hidden sm:flex flex-wrap items-center gap-4 text-[11px] text-white/82">
               {trustItems.slice(0, 3).map((item, index) => (
                 <div key={item.title} className="flex items-center gap-2">
                   <item.icon className="h-4 w-4 text-white/70" />
@@ -377,8 +377,8 @@ export default function HomePage() {
                   ))}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm sm:text-lg font-black text-[#d29a4c] leading-none">{displayParticipantCount.toLocaleString()}+</p>
-                  <p className="mt-1 text-[10px] sm:text-xs font-bold text-neutral-700">{isFr ? 'Participants' : 'Participants'}</p>
+                  <p className="text-sm sm:text-lg text-[#d29a4c] leading-none">{displayParticipantCount.toLocaleString()}+</p>
+                  <p className="mt-1 text-[10px] sm:text-xs text-neutral-700">{isFr ? 'Participants' : 'Participants'}</p>
                   <p className="hidden sm:block mt-0.5 text-[10px] leading-snug text-neutral-500">
                     {isFr ? 'Rejoignez des milliers de personnes qui gagnent gros.' : 'Join thousands of people winning big!'}
                   </p>

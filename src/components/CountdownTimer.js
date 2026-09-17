@@ -43,13 +43,13 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
           <div key={i} className="flex items-center gap-3 sm:gap-4">
             <div className="text-center min-w-[48px] sm:min-w-[56px]">
               <div className="bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 sm:px-4 sm:py-3">
-                <span className="text-2xl sm:text-3xl font-extrabold leading-none text-neutral-900">
+                <span className="text-2xl sm:text-3xl leading-none text-neutral-900">
                   {String(val).padStart(2, '0')}
                 </span>
               </div>
-              <p className="text-[10px] tracking-widest uppercase text-neutral-500 mt-1.5 font-semibold">{labels[i]}</p>
+              <p className="text-[10px] tracking-widest text-neutral-500 mt-1.5">{labels[i]}</p>
             </div>
-            {i < 3 && <span className="text-neutral-300 text-2xl font-bold">:</span>}
+            {i < 3 && <span className="text-neutral-300 text-2xl">:</span>}
           </div>
         ))}
       </div>
@@ -62,8 +62,8 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
         {units.map((unit, i) => (
           <div key={unit.label} className="flex flex-1 items-center">
             <div className="min-w-0 flex-1 text-center">
-              <p className="text-white text-2xl sm:text-3xl font-black leading-none tabular-nums">{String(unit.value).padStart(2, '0')}</p>
-              <p className="text-[9px] sm:text-[10px] tracking-[0.12em] uppercase text-white/70 mt-2 font-semibold">{unit.label}</p>
+              <p className="text-white text-2xl sm:text-3xl leading-none tabular-nums">{String(unit.value).padStart(2, '0')}</p>
+              <p className="text-[9px] sm:text-[10px] tracking-[0.12em]  text-white/70 mt-2">{unit.label}</p>
             </div>
             {i < units.length - 1 ? <span className="h-10 w-px bg-white/12" /> : null}
           </div>
@@ -82,19 +82,19 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
     const values = [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds];
     return (
       <div className="bg-[#1b2535] rounded-2xl px-5 py-4 w-full">
-        <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 mb-3">
+        <p className="text-xs tracking-widest text-neutral-400 mb-3">
           {locale === 'fr' ? 'Tirage dans' : 'Drawing in'}
         </p>
         <div className="flex items-end gap-1">
           {values.map((val, i) => (
             <div key={i} className="flex items-end gap-1">
               <div className="text-center">
-                <span className={`text-3xl font-extrabold leading-none ${i === 3 ? 'text-[#e05c3a]' : 'text-white'}`}>
+                <span className={`text-3xl leading-none ${i === 3 ? 'text-[#e05c3a]' : 'text-white'}`}>
                   {String(val).padStart(2, '0')}
                 </span>
                 <p className="text-[10px] tracking-widest uppercase text-neutral-500 mt-1">{labels[i]}</p>
               </div>
-              {i < 3 && <span className="text-white/40 text-2xl font-bold pb-4 mx-0.5">:</span>}
+              {i < 3 && <span className="text-white/40 text-2xl pb-4 mx-0.5">:</span>}
             </div>
           ))}
         </div>
@@ -113,7 +113,7 @@ export default function CountdownTimer({ targetDate, locale, variant }) {
           transition={{ delay: i * 0.1 }}
         >
           <div className="w-12 h-12 sm:w-14 sm:h-14 bg-neutral-900 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg sm:text-xl">{String(unit.value).padStart(2, '0')}</span>
+            <span className="text-white text-lg sm:text-xl">{String(unit.value).padStart(2, '0')}</span>
           </div>
           <span className="text-xs text-neutral-500 mt-1">{unit.label}</span>
         </motion.div>
