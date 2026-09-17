@@ -421,25 +421,65 @@ export default function HomePage() {
             {/* Right: Product Cards */}
             <div>
               {shopProducts.length ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className={`grid gap-5 ${
+                  shopProducts.length === 1
+                    ? 'grid-cols-1 w-full max-w-sm px-1 mx-auto sm:px-0 sm:mx-0 sm:max-w-[230px] lg:max-w-[240px]'
+                    : shopProducts.length === 2
+                      ? 'grid-cols-1 sm:grid-cols-2 max-w-xl mx-auto sm:mx-0'
+                      : shopProducts.length === 3
+                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                }`}>
                   {shopProducts.map((product) => (
-                    <Link key={product._id} href={productPath(product)} className="group rounded-xl bg-white p-3 shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow flex flex-col">
-                      <div className="h-28 sm:h-32 lg:h-[132px] rounded-lg bg-[#f5f0e8] p-2 flex items-center justify-center">
-                        {pickImage(product) ? (
-                          <img src={pickImage(product)} alt={isFr ? product.name : (product.nameEn || product.name)} className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-neutral-300"><ShoppingCart className="h-10 w-10" /></div>
-                        )}
+                    <Link 
+                      key={product._id} 
+                      href={productPath(product)} 
+                      className="group rounded-2xl bg-white p-4 sm:p-3.5 shadow-sm ring-1 ring-black/5 hover:shadow-lg hover:ring-black/10 transition-all duration-300 flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Image Container with 1:1 Aspect Ratio & Seamless Blending */}
+                        <div className="relative aspect-square w-full rounded-xl bg-[#faf8f5] p-3 sm:p-3 flex items-center justify-center overflow-hidden border border-black/5 group-hover:bg-[#f4efe6] transition-colors">
+                          {pickImage(product) ? (
+                            <img 
+                              src={pickImage(product)} 
+                              alt={isFr ? product.name : (product.nameEn || product.name)} 
+                              className="h-full w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" 
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-neutral-300">
+                              <ShoppingCart className="h-8 w-8" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="mt-2.5 text-xs sm:text-sm font-bold text-neutral-900 leading-snug group-hover:text-[#b88238] transition-colors line-clamp-2">
+                          {isFr ? product.name : (product.nameEn || product.name)}
+                        </h3>
+
+                        {/* Price */}
+                        <p className="mt-1 text-sm sm:text-base font-extrabold text-neutral-900">
+                          {Number(product.price || 0).toFixed(2)} CHF
+                        </p>
+
+                        {/* Colors */}
+                        {product.colors && product.colors.length > 0 ? (
+                          <div className="mt-1.5 flex min-h-4 items-center gap-1.5">
+                            {product.colors.slice(0, 4).map((color, index) => (
+                              <span 
+                                key={`${color.name}-${index}`} 
+                                className="h-3 w-3 rounded-full border border-black/10 shadow-inner" 
+                                style={{ backgroundColor: color.hex || '#ddd' }} 
+                                title={color.name}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                      <h3 className="mt-2 text-sm font-bold text-neutral-900 leading-tight">{isFr ? product.name : (product.nameEn || product.name)}</h3>
-                      <p className="mt-1 text-sm font-bold text-neutral-900 leading-tight">${Number(product.price || 0).toFixed(2)}</p>
-                      <div className="mt-1.5 flex min-h-4 items-center gap-2">
-                        {(product.colors || []).slice(0, 4).map((color, index) => (
-                          <span key={`${color.name}-${index}`} className="h-4 w-4 rounded-full border border-neutral-200" style={{ backgroundColor: color.hex || '#ddd' }} />
-                        ))}
-                      </div>
-                      <div className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-xs font-bold uppercase text-white hover:bg-neutral-800 transition-colors">
-                        <ShoppingCart className="h-4 w-4" />
+
+                      {/* CTA Button */}
+                      <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-neutral-900 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm group-hover:bg-black transition-colors">
+                        <ShoppingCart className="h-3.5 w-3.5 text-[#b88238]" />
                         {isFr ? 'Acheter et entrer' : 'Buy & Enter'}
                       </div>
                     </Link>
@@ -470,27 +510,61 @@ export default function HomePage() {
           </div>
 
           {prizeItems.length ? (
-            <div className="mt-5 relative">
-              {/* Slider Container */}
+            <div className="mt-6 relative">
+              {/* Slider / Grid Container */}
               <div className="overflow-hidden">
                 <div 
-                  className="flex transition-transform duration-300 ease-out sm:grid sm:grid-cols-3 sm:gap-4"
+                  className={`flex transition-transform duration-300 ease-out sm:grid sm:gap-6 ${
+                    prizeItems.length === 1 
+                      ? 'sm:grid-cols-1 max-w-sm sm:max-w-md' 
+                      : prizeItems.length === 2 
+                        ? 'sm:grid-cols-2 max-w-2xl' 
+                        : 'sm:grid-cols-3'
+                  }`}
                   style={{ transform: `translateX(-${prizeSlide * 100}%)` }}
                 >
                   {prizeItems.map((prize, index) => (
                     <div key={`${prize.raffle?._id || index}-${index}`} className="w-full flex-shrink-0 px-1 sm:px-0">
-                      <div className="relative rounded-xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5 h-full">
-                        {/* Prize Badge */}
-                        <div className="absolute left-4 top-0 bg-[#b88238] px-3 py-2 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
-                          {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
+                      <div className="group relative rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-black/5 hover:shadow-xl hover:ring-black/10 transition-all duration-300 flex flex-col h-full justify-between">
+                        <div>
+                          {/* Header: Badge & Value */}
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#b88238] to-[#d29a4c] px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-sm">
+                              <Trophy className="h-3 w-3" />
+                              {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
+                            </span>
+                            {prize.value ? (
+                              <span className="text-xs font-bold text-[#b88238]">
+                                {Number(prize.value).toLocaleString()} CHF
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Image Container with 4:5 Aspect Ratio */}
+                          <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black overflow-hidden flex items-center justify-center p-2 shadow-inner border border-neutral-800">
+                            {prize.image ? (
+                              <img 
+                                src={prize.image} 
+                                alt={isFr ? prize.name : prize.nameEn || prize.name} 
+                                className="h-full w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-500" 
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-[#d29a4c]">
+                                <Trophy className="h-16 w-16 stroke-[1.5]" />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {prize.image ? (
-                          <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-40 w-full object-contain mt-4" />
-                        ) : (
-                          <div className="mx-auto flex h-40 items-center justify-center text-[#b88238] mt-4"><Trophy className="h-12 w-12" /></div>
-                        )}
-                        <h3 className="mt-4 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
-                        {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
+
+                        {/* Title & Info */}
+                        <div className="mt-4 text-center">
+                          <h3 className="text-base font-bold text-neutral-900 group-hover:text-[#b88238] transition-colors">
+                            {isFr ? prize.name : prize.nameEn || prize.name}
+                          </h3>
+                          {prize.raffleName && (
+                            <p className="mt-1 text-xs text-neutral-500">{prize.raffleName}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -498,20 +572,24 @@ export default function HomePage() {
               </div>
 
               {/* Mobile Navigation Arrows */}
-              <button 
-                onClick={() => setPrizeSlide(prev => Math.max(0, prev - 1))}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
-                disabled={prizeSlide === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button 
-                onClick={() => setPrizeSlide(prev => Math.min(prizeItems.length - 1, prev + 1))}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
-                disabled={prizeSlide >= prizeItems.length - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+              {prizeItems.length > 1 && (
+                <>
+                  <button 
+                    onClick={() => setPrizeSlide(prev => Math.max(0, prev - 1))}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                    disabled={prizeSlide === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={() => setPrizeSlide(prev => Math.min(prizeItems.length - 1, prev + 1))}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                    disabled={prizeSlide >= prizeItems.length - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="mt-5 rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Ajoutez des prix.' : 'Add raffle prizes from admin.'}</div>
@@ -573,18 +651,33 @@ export default function HomePage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {modalPrizeItems.map((prize, index) => (
-                      <div key={`modal-${prize.raffleName || ''}-${index}`} className="relative rounded-xl bg-neutral-50 p-4 text-center border border-neutral-100">
-                        <div className="absolute left-3 top-0 bg-[#b88238] px-2.5 py-1.5 text-[10px] font-black uppercase text-white" style={{ borderRadius: '0 0 4px 4px' }}>
-                          {prize.rank}{prize.rank === 1 ? 'st' : prize.rank === 2 ? 'nd' : prize.rank === 3 ? 'rd' : 'th'} Prize
+                      <div key={`modal-${prize.raffleName || ''}-${index}`} className="group relative rounded-2xl bg-white p-4 text-center border border-neutral-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#b88238] to-[#d29a4c] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                              <Trophy className="h-3 w-3" />
+                              {prize.rank}{prize.rank === 1 ? 'st' : prize.rank === 2 ? 'nd' : prize.rank === 3 ? 'rd' : 'th'} Prize
+                            </span>
+                            {prize.value ? (
+                              <span className="text-xs font-bold text-[#b88238]">
+                                {Number(prize.value).toLocaleString()} CHF
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black overflow-hidden flex items-center justify-center p-2 border border-neutral-800">
+                            {prize.image ? (
+                              <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="h-full w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
+                            ) : (
+                              <div className="flex items-center justify-center text-[#b88238]"><Trophy className="h-10 w-10" /></div>
+                            )}
+                          </div>
+
+                          <h3 className="mt-3 text-sm font-bold text-neutral-900 group-hover:text-[#b88238] transition-colors">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
                         </div>
-                        {prize.image ? (
-                          <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="mx-auto h-32 w-full object-contain mt-6" />
-                        ) : (
-                          <div className="mx-auto flex h-32 items-center justify-center text-[#b88238] mt-6"><Trophy className="h-10 w-10" /></div>
+                        {prize.raffleName && (
+                          <p className="mt-2 text-[10px] text-neutral-400">{prize.raffleName}</p>
                         )}
-                        <h3 className="mt-3 text-sm font-bold text-neutral-900">{isFr ? prize.name : prize.nameEn || prize.name}</h3>
-                        {prize.value ? <p className="mt-1 text-xs font-bold text-[#b88238]">Value: ${Number(prize.value).toLocaleString()}</p> : null}
-                        <p className="mt-1 text-[10px] text-neutral-400">{prize.raffleName}</p>
                       </div>
                     ))}
                   </div>
