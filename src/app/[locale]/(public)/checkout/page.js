@@ -372,7 +372,6 @@ export default function CheckoutPage() {
                 </span>
               </label>
               <motion.button
-                whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={handleCreateOrder}
                 disabled={orderLoading}

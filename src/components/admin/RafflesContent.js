@@ -261,7 +261,6 @@ export default function RafflesContent() {
           />
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowForm(!showForm)}
           className="flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors"
@@ -416,7 +415,7 @@ export default function RafflesContent() {
                 </div>
 
                 <div className="flex gap-3">
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">{editingRaffle ? 'Update Raffle' : 'Create Raffle'}</motion.button>
+                  <motion.button whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">{editingRaffle ? 'Update Raffle' : 'Create Raffle'}</motion.button>
                   <button type="button" onClick={resetForm} className="px-6 py-2.5 border border-neutral-200 rounded-xl text-sm hover:bg-neutral-50">Cancel</button>
                 </div>
               </form>
@@ -503,7 +502,6 @@ export default function RafflesContent() {
                           </button>
                           {raffle.canDraw ? (
                             <motion.button
-                              whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => drawWinner(raffle._id)}
                               className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium hover:bg-amber-200 transition-colors"

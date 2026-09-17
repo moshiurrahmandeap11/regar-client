@@ -862,7 +862,6 @@ export default function ContentContent() {
               />
             </div>
             <motion.button
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowForm(!showForm)}
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium"
@@ -919,7 +918,7 @@ export default function ContentContent() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">
+                      <motion.button whileTap={{ scale: 0.98 }} type="submit" className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium">
                         {editingFaq ? 'Update FAQ' : 'Create FAQ'}
                       </motion.button>
                       <button type="button" onClick={resetFaqForm} className="px-6 py-2.5 border border-neutral-200 rounded-xl text-sm hover:bg-neutral-50">Cancel</button>
@@ -1017,7 +1016,6 @@ export default function ContentContent() {
                   Reset Image
                 </button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={saveHeroBanner}
                   disabled={savingBanner}
@@ -1094,13 +1092,13 @@ export default function ContentContent() {
                       <img
                         src={bannerImagePreview || '/images/regar-hero-banner.jpeg'}
                         alt="Banner Preview"
-                        className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover opacity-80"
                       />
                       <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
                         <button
                           type="button"
                           onClick={() => document.getElementById('hero-banner-file-input')?.click()}
-                          className="px-4 py-2 bg-white/95 hover:bg-white text-neutral-900 rounded-xl text-xs font-semibold shadow-md flex items-center gap-2 transition-transform hover:scale-105"
+                          className="px-4 py-2 bg-white/95 hover:bg-white text-neutral-900 rounded-xl text-xs font-semibold shadow-md flex items-center gap-2"
                         >
                           <Upload className="w-3.5 h-3.5" />
                           {bannerImagePreview ? 'Change Banner Photo' : 'Upload Banner Photo'}
@@ -1253,7 +1251,6 @@ export default function ContentContent() {
 
                   <div className="pt-3 border-t border-neutral-100 flex items-center justify-end">
                     <motion.button
-                      whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={saveHeroBanner}
                       disabled={savingBanner}
@@ -1734,7 +1731,6 @@ export default function ContentContent() {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => saveLegalContent(legalSection)}
                   disabled={savingLegal}

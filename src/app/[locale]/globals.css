@@ -294,3 +294,13 @@ body {
   filter: none !important;
   -webkit-box-shadow: none !important;
 }
+
+/* Totally disable all hover and group-hover scale transforms across the website */
+[class*="hover:scale-"]:hover,
+[class*="hover\:scale-"]:hover,
+.group:hover [class*="group-hover:scale-"],
+.group:hover [class*="group-hover\:scale-"] {
+  scale: 1 !important;
+  transform: none !important;
+}
+

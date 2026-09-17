@@ -313,7 +313,6 @@ export default function ProductDetailPage() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <motion.button
-                  whileHover={hasEndedRaffle ? {} : { scale: 1.02 }}
                   whileTap={hasEndedRaffle ? {} : { scale: 0.98 }}
                   onClick={handleAddToCart}
                   disabled={hasEndedRaffle}
@@ -329,7 +328,6 @@ export default function ProductDetailPage() {
                     : (locale === 'fr' ? 'Ajouter au panier' : 'Add to cart')}
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center justify-center gap-2 py-3.5 px-6 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
                 >

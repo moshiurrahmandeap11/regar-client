@@ -121,7 +121,7 @@ export default function PaymentMethodsContent() {
           Add payment methods that appear as tabs during manual checkout (PayPal, Payoneer, etc.)
         </p>
         <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => { resetForm(); setShowForm(!showForm); }}
           className="flex items-center gap-2 px-4 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors"
         >
@@ -203,7 +203,7 @@ export default function PaymentMethodsContent() {
 
                 <div className="flex gap-3">
                   <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={saving}
                     className="px-6 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 disabled:opacity-50"

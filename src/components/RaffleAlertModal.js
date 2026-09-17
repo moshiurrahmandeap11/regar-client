@@ -118,7 +118,6 @@ export default function RaffleAlertModal({
             {/* Action Buttons */}
             <div className="pt-3 flex flex-col sm:flex-row gap-3">
               <motion.button
-                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={onEnterRaffle}

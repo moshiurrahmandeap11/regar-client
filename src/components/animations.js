@@ -69,16 +69,11 @@ export function StaggerItem({ children, className }) {
   );
 }
 
-export function HoverScale({ children, className, scale = 1.03 }) {
+export function HoverScale({ children, className }) {
   return (
-    <motion.div
-      whileHover={{ scale }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-      className={cn(className)}
-    >
+    <div className={cn(className)}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 

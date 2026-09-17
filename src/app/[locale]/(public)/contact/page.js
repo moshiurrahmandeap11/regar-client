@@ -117,7 +117,6 @@ export default function ContactPage() {
                   />
                 </div>
                 <motion.button
-                  whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   type="submit"
                   disabled={sending}

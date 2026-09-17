@@ -665,7 +665,7 @@ export default function HomePage() {
 
                           <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black overflow-hidden flex items-center justify-center p-2 border border-neutral-800">
                             {prize.image ? (
-                              <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="h-full w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-300" />
+                              <img src={prize.image} alt={isFr ? prize.name : prize.nameEn || prize.name} className="h-full w-full object-contain rounded-lg" />
                             ) : (
                               <div className="flex items-center justify-center text-[#b88238]"><Trophy className="h-10 w-10" /></div>
                             )}

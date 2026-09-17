@@ -2,7 +2,7 @@
 
 import { Link } from '@/i18n/routing';
 import { ShoppingBag, Clock, ArrowRight } from 'lucide-react';
-import { FadeIn, HoverScale } from './animations';
+import { FadeIn } from './animations';
 import { productPath } from '@/lib/productPath';
 
 export default function ProductCard({ product, locale }) {
@@ -14,19 +14,18 @@ export default function ProductCard({ product, locale }) {
 
   return (
     <FadeIn>
-      <HoverScale>
-        <Link
-          href={productPath(product)}
-          className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-        >
-          {/* Image */}
-          <div className="aspect-square bg-neutral-100 relative overflow-hidden">
-            {coverImage ? (
-              <img
-                src={coverImage}
-                alt={displayName}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
+      <Link
+        href={productPath(product)}
+        className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden cursor-pointer"
+      >
+        {/* Image */}
+        <div className="aspect-square bg-neutral-100 relative overflow-hidden">
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-neutral-200">
                 <ShoppingBag className="w-12 h-12 text-neutral-400" />
@@ -76,7 +75,6 @@ export default function ProductCard({ product, locale }) {
             </div>
           </div>
         </Link>
-      </HoverScale>
     </FadeIn>
   );
 }

@@ -9,7 +9,7 @@ import api from '@/lib/api';
 import { productPath } from '@/lib/productPath';
 import CountdownTimer from '@/components/CountdownTimer';
 import SectionTitle from '@/components/SectionTitle';
-import { FadeIn, HoverScale } from '@/components/animations';
+import { FadeIn } from '@/components/animations';
 
 export default function RafflesPage() {
   const locale = useLocale();
@@ -53,18 +53,17 @@ export default function RafflesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(raffle => (
             <FadeIn key={raffle._id}>
-              <HoverScale>
-                <Link
-                  href={productPath(raffle.product)}
-                  className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                >
-                  {/* Image */}
-                  <div className="aspect-square bg-neutral-100 relative overflow-hidden">
-                    <img
-                      src={raffle.product?.images?.[0] || '/placeholder.jpg'}
-                      alt={locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+              <Link
+                href={productPath(raffle.product)}
+                className="group block bg-white rounded-2xl border border-neutral-200 overflow-hidden cursor-pointer"
+              >
+                {/* Image */}
+                <div className="aspect-square bg-neutral-100 relative overflow-hidden">
+                  <img
+                    src={raffle.product?.images?.[0] || '/placeholder.jpg'}
+                    alt={locale === 'fr' ? raffle.name : (raffle.nameEn || raffle.name)}
+                    className="w-full h-full object-cover"
+                  />
                     <div className="absolute top-3 left-3">
                       <span className={`px-2 py-1 text-xs font-bold rounded-lg ${
                         raffle.status === 'active' ? 'bg-emerald-500 text-white' :
@@ -158,7 +157,6 @@ export default function RafflesPage() {
                     )}
                   </div>
                 </Link>
-              </HoverScale>
             </FadeIn>
           ))}
         </div>

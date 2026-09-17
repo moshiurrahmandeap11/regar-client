@@ -435,7 +435,6 @@ export default function SettingsContent() {
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
           type="submit"
           disabled={saving}

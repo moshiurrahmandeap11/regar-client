@@ -211,7 +211,6 @@ export default function CartPage() {
                 </div>
               </div>
               <motion.button
-                whileHover={hasBlockedItems ? {} : { scale: 1.01 }}
                 whileTap={hasBlockedItems ? {} : { scale: 0.99 }}
                 onClick={handleCheckout}
                 disabled={hasBlockedItems || checkingRaffles}
