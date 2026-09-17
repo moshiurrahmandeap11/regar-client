@@ -156,7 +156,6 @@ body {
 
 .review-card:hover {
   border-color: #dfb56d;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
@@ -281,3 +280,17 @@ body {
   }
 }
 
+/* Totally remove all shadows across the entire website */
+*, *::before, *::after {
+  --tw-shadow: 0 0 #0000 !important;
+  --tw-shadow-colored: 0 0 #0000 !important;
+  --tw-drop-shadow: none !important;
+  text-shadow: none !important;
+}
+
+[class*="shadow"],
+[class*="drop-shadow"] {
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-box-shadow: none !important;
+}

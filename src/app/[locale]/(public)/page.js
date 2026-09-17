@@ -315,12 +315,12 @@ export default function HomePage() {
 
           <div className="relative min-h-[inherit] px-6 py-12 sm:px-8 sm:py-12 lg:px-12 lg:py-14 xl:px-14">
             <div className="max-w-[320px] sm:max-w-[460px] lg:max-w-[500px]">
-            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs tracking-[0.06em] text-white shadow-[0_8px_28px_rgba(0,0,0,0.22)]">
+            <div className="inline-flex items-center gap-2 rounded-md border border-[#e2bd87]/45 bg-black/20 px-2.5 py-1 text-[10px] sm:text-xs tracking-[0.06em] text-white">
               <span className="h-1.5 w-1.5 rounded-full bg-[#e2bd87]" />
               {heroRaffle ? (isFr ? 'Raffle en direct' : 'Live raffle') : (isFr ? 'Raffle bientot' : 'Raffle coming soon')}
             </div>
 
-            <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-semibold leading-[0.92] tracking-normal drop-shadow-[0_2px_18px_rgba(0,0,0,0.42)]">
+            <h1 className="mt-3 text-[42px] sm:text-[56px] lg:text-[68px] font-semibold leading-[0.92] tracking-normal">
               {heroText.titleLine1 || (isFr ? 'Achetez une casquette.' : 'Buy a cap.')}
               <span className="block text-[#e9c58c]">{heroText.titleLine2 || (isFr ? 'Gagnez gros.' : 'Win big.')}</span>
             </h1>
@@ -330,7 +330,7 @@ export default function HomePage() {
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
-              <Link href={currentButtonLink || "/products"} className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs text-black shadow-[0_12px_30px_rgba(226,189,135,0.24)] hover:bg-[#f1d09b] transition-colors">
+              <Link href={currentButtonLink || "/products"} className="inline-flex items-center gap-3 rounded-md bg-[#e9c58c] px-5 py-3 text-[11px] sm:text-xs text-black hover:bg-[#f1d09b] transition-colors">
                 {heroText.buttonText || (isFr ? 'Acheter et entrer' : 'Buy cap & enter')} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/#how-it-works" className="inline-flex items-center gap-2 rounded-md px-1 py-2 text-[11px] sm:text-xs text-white">
@@ -342,7 +342,7 @@ export default function HomePage() {
             </div>
 
             {/* Countdown Timer */}
-            <div className="mt-8 w-full max-w-[330px] rounded-lg border border-white/10 bg-black/28 px-4 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.24)] sm:max-w-[470px] sm:px-6 sm:py-5">
+            <div className="mt-8 w-full max-w-[330px] rounded-lg border border-white/10 bg-black/28 px-4 py-4 sm:max-w-[470px] sm:px-6 sm:py-5">
               <p className="text-center text-[9px] sm:text-[10px] tracking-[0.16em] text-[#e9c58c]">
                 {isFr ? 'Fin du raffle dans' : 'Raffle ends in'}
               </p>
@@ -367,7 +367,7 @@ export default function HomePage() {
           </div>
 
             {/* Participants */}
-            <div className="absolute bottom-6 right-4 w-[172px] rounded-lg bg-white px-4 py-3 text-black shadow-[0_18px_45px_rgba(0,0,0,0.28)] sm:bottom-7 sm:right-8 sm:w-[250px] lg:right-8">
+            <div className="absolute bottom-6 right-4 w-[172px] rounded-lg bg-white border border-black/10 px-4 py-3 text-black sm:bottom-7 sm:right-8 sm:w-[250px] lg:right-8">
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2 shrink-0">
                   {shopProducts.slice(0, 3).map((product) => (
@@ -413,16 +413,16 @@ export default function HomePage() {
                   <div key={product._id} className="w-full flex-shrink-0 sm:px-0">
                     <Link 
                       href={productPath(product)} 
-                      className="group relative rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-black/5 hover:shadow-xl hover:ring-black/10 transition-all duration-300 flex flex-col h-full justify-between"
+                      className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-neutral-200 transition-colors flex flex-col h-full justify-between"
                     >
                       <div>
-                        {/* Image Container with 1:1 Aspect Ratio & Seamless Blending */}
-                        <div className="relative aspect-square w-full rounded-xl bg-[#faf8f5] p-4 sm:p-6 flex items-center justify-center overflow-hidden border border-black/5 group-hover:bg-[#f4efe6] transition-colors">
+                        {/* Image Container with 1:1 Aspect Ratio & Fitted Image */}
+                        <div className="relative aspect-square w-full rounded-xl bg-[#faf8f5] flex items-center justify-center overflow-hidden border border-black/5">
                           {pickImage(product) ? (
                             <img 
                               src={pickImage(product)} 
                               alt={isFr ? product.name : (product.nameEn || product.name)} 
-                              className="h-full w-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" 
+                              className="h-full w-full object-cover mix-blend-multiply" 
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-neutral-300">
@@ -447,7 +447,7 @@ export default function HomePage() {
                               {product.colors.slice(0, 5).map((color, index) => (
                                 <span 
                                   key={`${color.name}-${index}`} 
-                                  className="h-3.5 w-3.5 rounded-full border border-black/10 shadow-inner" 
+                                  className="h-3.5 w-3.5 rounded-full border border-black/10" 
                                   style={{ backgroundColor: color.hex || '#ddd' }} 
                                   title={color.name}
                                 />
@@ -458,7 +458,7 @@ export default function HomePage() {
                       </div>
 
                       {/* CTA Button */}
-                      <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm group-hover:bg-black transition-colors">
+                      <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-black transition-colors">
                         <ShoppingCart className="h-4 w-4 text-[#b88238]" />
                         {isFr ? 'Acheter et entrer' : 'Buy & Enter'}
                       </div>
@@ -476,7 +476,7 @@ export default function HomePage() {
             {currentShopBenefits.map((benefit, index) => {
               const IconComp = resolveBenefitIcon(benefit.icon);
               return (
-                <div key={`${benefit.title}-${index}`} className="flex items-start gap-3.5 rounded-xl bg-white/70 p-3.5 sm:p-4 ring-1 ring-black/5 sm:bg-white sm:shadow-sm">
+                <div key={`${benefit.title}-${index}`} className="flex items-start gap-3.5 rounded-xl bg-white p-3.5 sm:p-4 border border-neutral-200">
                   <div className="w-10 h-10 rounded-xl bg-[#f3eadb] flex items-center justify-center shrink-0">
                     <IconComp className="w-5 h-5 text-[#b88238]" />
                   </div>
@@ -523,11 +523,11 @@ export default function HomePage() {
                 >
                   {prizeItems.map((prize, index) => (
                     <div key={`${prize.raffle?._id || index}-${index}`} className="w-full flex-shrink-0 px-1 sm:px-0">
-                      <div className="group relative rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-black/5 hover:shadow-xl hover:ring-black/10 transition-all duration-300 flex flex-col h-full justify-between">
+                      <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-neutral-200 transition-colors flex flex-col h-full justify-between">
                         <div>
                           {/* Header: Badge & Value */}
                           <div className="flex items-center justify-between gap-2 mb-3">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#b88238] to-[#d29a4c] px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white shadow-sm">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#b88238] to-[#d29a4c] px-3 py-1 text-[11px] font-black uppercase tracking-wider text-white">
                               <Trophy className="h-3 w-3" />
                               {index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'} Prize
                             </span>
@@ -539,12 +539,12 @@ export default function HomePage() {
                           </div>
 
                           {/* Image Container with 4:5 Aspect Ratio */}
-                          <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black overflow-hidden flex items-center justify-center p-2 shadow-inner border border-neutral-800">
+                          <div className="relative aspect-[4/5] w-full rounded-xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black overflow-hidden flex items-center justify-center p-2 border border-neutral-800">
                             {prize.image ? (
                               <img 
                                 src={prize.image} 
                                 alt={isFr ? prize.name : prize.nameEn || prize.name} 
-                                className="h-full w-full object-contain rounded-lg group-hover:scale-105 transition-transform duration-500" 
+                                className="h-full w-full object-contain rounded-lg" 
                               />
                             ) : (
                               <div className="flex flex-col items-center justify-center text-[#d29a4c]">
@@ -574,14 +574,14 @@ export default function HomePage() {
                 <>
                   <button 
                     onClick={() => setPrizeSlide(prev => Math.max(0, prev - 1))}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 disabled:opacity-30"
                     disabled={prizeSlide === 0}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => setPrizeSlide(prev => Math.min(prizeItems.length - 1, prev + 1))}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center text-neutral-700 disabled:opacity-30"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:hidden w-8 h-8 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-700 disabled:opacity-30"
                     disabled={prizeSlide >= prizeItems.length - 1}
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -632,7 +632,7 @@ export default function HomePage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] overflow-y-auto p-6"
+              className="bg-white rounded-2xl border border-neutral-200 w-full max-w-4xl max-h-[80vh] overflow-y-auto p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
@@ -649,7 +649,7 @@ export default function HomePage() {
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {modalPrizeItems.map((prize, index) => (
-                      <div key={`modal-${prize.raffleName || ''}-${index}`} className="group relative rounded-2xl bg-white p-4 text-center border border-neutral-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                      <div key={`modal-${prize.raffleName || ''}-${index}`} className="group relative rounded-2xl bg-white p-4 text-center border border-neutral-200 flex flex-col justify-between hover:border-neutral-300 transition-colors">
                         <div>
                           <div className="flex items-center justify-between gap-2 mb-3">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#b88238] to-[#d29a4c] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
@@ -722,7 +722,7 @@ export default function HomePage() {
             {steps.map((step, index) => (
               <div key={step.title} className="flex items-center">
                 <div className="flex w-[260px] items-center gap-5 text-left">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] shadow-[0_12px_35px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] border border-neutral-200">
                     <step.icon className={`h-9 w-9 ${index === 0 ? 'text-[#15120f]' : 'text-[#d29a4c]'}`} strokeWidth={1.7} />
                   </div>
                   <div className="min-w-0">
@@ -745,7 +745,7 @@ export default function HomePage() {
             {steps.map((step, index) => (
               <div key={step.title} className="relative flex gap-5 pb-7 last:pb-0">
                 {index < steps.length - 1 ? <span className="absolute left-9 top-[72px] h-[34px] w-px bg-neutral-200" /> : null}
-                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] shadow-[0_12px_35px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.03]">
+                <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-white text-[#c28a3d] border border-neutral-200">
                   <step.icon className={`h-8 w-8 ${index === 0 ? 'text-[#15120f]' : 'text-[#d29a4c]'}`} strokeWidth={1.7} />
                 </div>
                 <div className="pt-1">
@@ -757,7 +757,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <Link href="/products" className="mt-8 inline-flex h-12 min-w-[230px] items-center justify-center gap-3 rounded-md bg-[#dfb778] px-6 text-[12px] font-black uppercase text-black shadow-[0_10px_24px_rgba(194,138,61,0.2)] hover:bg-[#e7c48c] transition-colors">
+          <Link href="/products" className="mt-8 inline-flex h-12 min-w-[230px] items-center justify-center gap-3 rounded-md bg-[#dfb778] px-6 text-[12px] font-black uppercase text-black hover:bg-[#e7c48c] transition-colors">
             {isFr ? 'Acheter et entrer' : 'Buy cap & enter'} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -792,7 +792,7 @@ export default function HomePage() {
               const winner = winners[0];
               const avatar = winner.user?.avatar;
               return (
-                <div className="rounded-2xl bg-[#faf9f6] border border-[#ebe7df] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
+                <div className="rounded-2xl bg-[#faf9f6] border border-[#ebe7df] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex items-center gap-4 sm:gap-6 text-center sm:text-left flex-col sm:flex-row">
                     <div className="h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-full bg-[#f3eadb] flex items-center justify-center text-[#b88238] ring-4 ring-[#e8d3b6] shrink-0">
                       {avatar ? (
@@ -823,7 +823,7 @@ export default function HomePage() {
                   </div>
                   <Link 
                     href="/winners" 
-                    className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#b47b24] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
+                    className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#111] hover:bg-[#b47b24] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 active:scale-95"
                   >
                     {isFr ? 'Voir tous les gagnants' : 'See all winners'} <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -893,7 +893,7 @@ export default function HomePage() {
                   <img
                     src={runningRaffleImage}
                     alt={heroName || 'Raffle'}
-                    className="w-full h-full object-cover rounded-2xl drop-shadow-xl"
+                    className="w-full h-full object-cover rounded-2xl"
                   />
                 </div>
               </div>
