@@ -399,46 +399,25 @@ export default function HomePage() {
             {currentShopCaps?.title || (isFr ? 'Choisissez votre casquette' : 'Choose Your Cap')}
           </h2>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[200px_1fr] lg:items-start">
-            {/* Left: Benefits */}
-            <div className="flex flex-col gap-4">
-              {currentShopBenefits.map((benefit, index) => {
-                const IconComp = resolveBenefitIcon(benefit.icon);
-                return (
-                  <div key={`${benefit.title}-${index}`} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#f3eadb] flex items-center justify-center shrink-0">
-                      <IconComp className="w-5 h-5 text-[#b88238]" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-neutral-900">{benefit.title}</p>
-                      <p className="text-xs text-neutral-500 leading-relaxed">{benefit.text}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Right: Product Cards */}
-            <div>
-              {shopProducts.length ? (
-                <div className={`grid gap-5 ${
-                  shopProducts.length === 1
-                    ? 'grid-cols-1 w-full max-w-sm px-1 mx-auto sm:px-0 sm:mx-0 sm:max-w-[230px] lg:max-w-[240px]'
-                    : shopProducts.length === 2
-                      ? 'grid-cols-1 sm:grid-cols-2 max-w-xl mx-auto sm:mx-0'
-                      : shopProducts.length === 3
-                        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-                }`}>
-                  {shopProducts.map((product) => (
+          {/* Product Cards */}
+          <div className="mt-6">
+            {shopProducts.length ? (
+              <div className={`grid gap-6 ${
+                shopProducts.length === 1
+                  ? 'grid-cols-1 w-full max-w-sm px-1 mx-auto sm:px-0 sm:mx-0 sm:max-w-md'
+                  : shopProducts.length === 2
+                    ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl'
+                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+              }`}>
+                {shopProducts.map((product) => (
+                  <div key={product._id} className="w-full flex-shrink-0 sm:px-0">
                     <Link 
-                      key={product._id} 
                       href={productPath(product)} 
-                      className="group rounded-2xl bg-white p-4 sm:p-3.5 shadow-sm ring-1 ring-black/5 hover:shadow-lg hover:ring-black/10 transition-all duration-300 flex flex-col justify-between"
+                      className="group relative rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-black/5 hover:shadow-xl hover:ring-black/10 transition-all duration-300 flex flex-col h-full justify-between"
                     >
                       <div>
                         {/* Image Container with 1:1 Aspect Ratio & Seamless Blending */}
-                        <div className="relative aspect-square w-full rounded-xl bg-[#faf8f5] p-3 sm:p-3 flex items-center justify-center overflow-hidden border border-black/5 group-hover:bg-[#f4efe6] transition-colors">
+                        <div className="relative aspect-square w-full rounded-xl bg-[#faf8f5] p-4 sm:p-6 flex items-center justify-center overflow-hidden border border-black/5 group-hover:bg-[#f4efe6] transition-colors">
                           {pickImage(product) ? (
                             <img 
                               src={pickImage(product)} 
@@ -447,48 +426,67 @@ export default function HomePage() {
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-neutral-300">
-                              <ShoppingCart className="h-8 w-8" />
+                              <ShoppingCart className="h-12 w-12" />
                             </div>
                           )}
                         </div>
 
-                        {/* Title */}
-                        <h3 className="mt-2.5 text-xs sm:text-sm font-bold text-neutral-900 leading-snug group-hover:text-[#b88238] transition-colors line-clamp-2">
-                          {isFr ? product.name : (product.nameEn || product.name)}
-                        </h3>
+                        {/* Title & Info */}
+                        <div className="mt-4">
+                          <h3 className="text-base font-bold text-neutral-900 group-hover:text-[#b88238] transition-colors line-clamp-2">
+                            {isFr ? product.name : (product.nameEn || product.name)}
+                          </h3>
 
-                        {/* Price */}
-                        <p className="mt-1 text-sm sm:text-base font-extrabold text-neutral-900">
-                          {Number(product.price || 0).toFixed(2)} CHF
-                        </p>
+                          <p className="mt-1.5 text-lg font-extrabold text-neutral-900">
+                            {Number(product.price || 0).toFixed(2)} CHF
+                          </p>
 
-                        {/* Colors */}
-                        {product.colors && product.colors.length > 0 ? (
-                          <div className="mt-1.5 flex min-h-4 items-center gap-1.5">
-                            {product.colors.slice(0, 4).map((color, index) => (
-                              <span 
-                                key={`${color.name}-${index}`} 
-                                className="h-3 w-3 rounded-full border border-black/10 shadow-inner" 
-                                style={{ backgroundColor: color.hex || '#ddd' }} 
-                                title={color.name}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
+                          {/* Colors */}
+                          {product.colors && product.colors.length > 0 ? (
+                            <div className="mt-2.5 flex min-h-4 items-center gap-1.5">
+                              {product.colors.slice(0, 5).map((color, index) => (
+                                <span 
+                                  key={`${color.name}-${index}`} 
+                                  className="h-3.5 w-3.5 rounded-full border border-black/10 shadow-inner" 
+                                  style={{ backgroundColor: color.hex || '#ddd' }} 
+                                  title={color.name}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
 
                       {/* CTA Button */}
-                      <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-neutral-900 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-sm group-hover:bg-black transition-colors">
-                        <ShoppingCart className="h-3.5 w-3.5 text-[#b88238]" />
+                      <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm group-hover:bg-black transition-colors">
+                        <ShoppingCart className="h-4 w-4 text-[#b88238]" />
                         {isFr ? 'Acheter et entrer' : 'Buy & Enter'}
                       </div>
                     </Link>
-                  ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Aucun produit actif.' : 'No active products yet.'}</div>
+            )}
+          </div>
+
+          {/* Benefits: Horizontal Trust Bar at Bottom */}
+          <div className="mt-8 pt-6 border-t border-black/5 grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
+            {currentShopBenefits.map((benefit, index) => {
+              const IconComp = resolveBenefitIcon(benefit.icon);
+              return (
+                <div key={`${benefit.title}-${index}`} className="flex items-start gap-3.5 rounded-xl bg-white/70 p-3.5 sm:p-4 ring-1 ring-black/5 sm:bg-white sm:shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-[#f3eadb] flex items-center justify-center shrink-0">
+                    <IconComp className="w-5 h-5 text-[#b88238]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-neutral-900">{benefit.title}</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed mt-0.5">{benefit.text}</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-neutral-300 p-8 text-sm text-neutral-500">{isFr ? 'Aucun produit actif.' : 'No active products yet.'}</div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
