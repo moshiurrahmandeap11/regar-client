@@ -20,6 +20,8 @@ export default function ProductsContent() {
   const [colorImageFiles, setColorImageFiles] = useState([]);
   const [imagesList, setImagesList] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedImageIndex, setDraggedImageIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
   const [form, setForm] = useState({
     name: '', nameEn: '', slug: '', description: '', descriptionEn: '', price: '', originalPrice: '',
     stock: '', maxTickets: '', category: 'caps', colors: [{ name: '', hex: '#000000', image: '' }], sizes: [''],
@@ -93,6 +95,16 @@ export default function ProductsContent() {
       const temp = next[index];
       next[index] = next[target];
       next[target] = temp;
+      return next;
+    });
+  };
+
+  const handleReorderImages = (sourceIndex, targetIndex) => {
+    if (sourceIndex === targetIndex || sourceIndex == null || targetIndex == null) return;
+    setImagesList((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, moved);
       return next;
     });
   };
@@ -253,6 +265,8 @@ export default function ProductsContent() {
     setHasSizes(false);
     setImagesList([]);
     setIsDragging(false);
+    setDraggedImageIndex(null);
+    setDragOverIndex(null);
     setColorImagePreviews([]);
     setColorImageFiles([]);
     setForm({
@@ -448,12 +462,20 @@ export default function ProductsContent() {
                     </div>
                   ) : (
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                      onDragOver={(e) => { 
+                        e.preventDefault(); 
+                        if (draggedImageIndex === null) {
+                          setIsDragging(true); 
+                        }
+                      }}
+                      onDragLeave={(e) => { 
+                        e.preventDefault(); 
+                        setIsDragging(false); 
+                      }}
                       onDrop={(e) => {
                         e.preventDefault();
                         setIsDragging(false);
-                        if (e.dataTransfer?.files?.length) {
+                        if (e.dataTransfer?.files?.length && draggedImageIndex === null) {
                           handleAddImages(e.dataTransfer.files);
                         }
                       }}
@@ -464,16 +486,73 @@ export default function ProductsContent() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {imagesList.map((item, index) => {
                           const isCover = index === 0;
+                          const isBeingDragged = draggedImageIndex === index;
+                          const isDragTarget = dragOverIndex === index && draggedImageIndex !== null && draggedImageIndex !== index;
                           return (
                             <div
                               key={item.id || index}
-                              className={`group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border transition-all ${
-                                isCover
-                                  ? 'ring-2 ring-neutral-900 border-transparent shadow-md'
-                                  : 'border-neutral-200 hover:border-neutral-400'
+                              draggable
+                              onDragStart={(e) => {
+                                e.stopPropagation();
+                                setDraggedImageIndex(index);
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('text/plain', String(index));
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.dataTransfer.dropEffect = 'move';
+                                if (dragOverIndex !== index) {
+                                  setDragOverIndex(index);
+                                }
+                              }}
+                              onDragLeave={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (dragOverIndex === index) {
+                                  setDragOverIndex(null);
+                                }
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const sourceIdx = draggedImageIndex !== null ? draggedImageIndex : Number(e.dataTransfer.getData('text/plain'));
+                                if (!isNaN(sourceIdx) && sourceIdx !== index) {
+                                  handleReorderImages(sourceIdx, index);
+                                  if (index === 0) {
+                                    toast.success('Cover photo updated! (★ Cover)');
+                                  }
+                                }
+                                setDraggedImageIndex(null);
+                                setDragOverIndex(null);
+                              }}
+                              onDragEnd={() => {
+                                setDraggedImageIndex(null);
+                                setDragOverIndex(null);
+                              }}
+                              className={`group relative aspect-square rounded-xl overflow-hidden bg-neutral-100 border transition-all cursor-grab active:cursor-grabbing select-none ${
+                                isBeingDragged ? 'opacity-30 scale-95' : ''
+                              } ${
+                                isDragTarget
+                                  ? index === 0
+                                    ? 'ring-4 ring-amber-500 scale-105 z-20 border-transparent'
+                                    : 'ring-2 ring-neutral-900 scale-105 z-20 border-transparent'
+                                  : isCover
+                                    ? 'ring-2 ring-neutral-900 border-transparent'
+                                    : 'border-neutral-200 hover:border-neutral-400'
                               }`}
                             >
-                              <img src={item.url} alt="" className="w-full h-full object-cover" />
+                              <img src={item.url} alt="" className="w-full h-full object-cover pointer-events-none" />
+
+                              {/* Target highlight overlay for Cover drop */}
+                              {isDragTarget && index === 0 && (
+                                <div className="absolute inset-0 bg-amber-500/25 backdrop-blur-[1px] flex flex-col items-center justify-center pointer-events-none z-30 p-2 text-center">
+                                  <div className="bg-amber-500 text-white text-[11px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                    <Star className="w-3 h-3 fill-white" />
+                                    Drop to make Cover
+                                  </div>
+                                </div>
+                              )}
 
                               {/* Badge */}
                               {isCover ? (
@@ -490,7 +569,7 @@ export default function ProductsContent() {
                               {/* Delete button */}
                               <button
                                 type="button"
-                                onClick={() => handleRemoveImage(index)}
+                                onClick={(e) => { e.stopPropagation(); handleRemoveImage(index); }}
                                 title="Remove photo"
                                 className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
                               >
@@ -502,7 +581,7 @@ export default function ProductsContent() {
                                 <button
                                   type="button"
                                   disabled={index === 0}
-                                  onClick={() => handleMoveImage(index, -1)}
+                                  onClick={(e) => { e.stopPropagation(); handleMoveImage(index, -1); }}
                                   title="Move left"
                                   className={`p-1 rounded bg-white/20 hover:bg-white/40 text-white transition-colors ${
                                     index === 0 ? 'opacity-30 cursor-not-allowed' : ''
@@ -514,7 +593,7 @@ export default function ProductsContent() {
                                 {!isCover && (
                                   <button
                                     type="button"
-                                    onClick={() => handleSetCover(index)}
+                                    onClick={(e) => { e.stopPropagation(); handleSetCover(index); }}
                                     title="Set as main cover photo"
                                     className="px-2 py-0.5 text-[10px] font-medium rounded bg-white/90 hover:bg-white text-neutral-900 shadow transition-colors flex items-center gap-1"
                                   >
@@ -526,7 +605,7 @@ export default function ProductsContent() {
                                 <button
                                   type="button"
                                   disabled={index === imagesList.length - 1}
-                                  onClick={() => handleMoveImage(index, 1)}
+                                  onClick={(e) => { e.stopPropagation(); handleMoveImage(index, 1); }}
                                   title="Move right"
                                   className={`p-1 rounded bg-white/20 hover:bg-white/40 text-white transition-colors ${
                                     index === imagesList.length - 1 ? 'opacity-30 cursor-not-allowed' : ''
@@ -552,7 +631,7 @@ export default function ProductsContent() {
                       </div>
 
                       <p className="text-[11px] text-neutral-400 mt-2 px-1">
-                        Tip: First photo is the catalog cover. Use &larr; &rarr; arrows to reorder or click &apos;Cover&apos; on any image.
+                        Tip: Drag & drop any photo onto the 1st slot to make it the cover photo, or reorder anytime. Use &larr; &rarr; arrows or click &apos;Cover&apos; on any image.
                       </p>
                     </div>
                   )}
