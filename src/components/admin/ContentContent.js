@@ -6,9 +6,10 @@ import {
   Plus, HelpCircle, Search, X, ChevronLeft, ChevronRight, FileText,
   Image as ImageIcon, Upload, RotateCcw, ArrowRight, Sparkles, Globe,
   Shield, Scale, Calendar, Trash2, ArrowUp, ArrowDown,
-  Gem, Ticket, Truck, Trophy, Star, BadgeCheck, Globe2, Gift, Check, Mail
+  Gem, Ticket, Truck, Trophy, Star, BadgeCheck, Globe2, Gift, Check, Mail, Users
 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
+import { DEFAULT_WINNERS_SHOWCASE } from '@/components/WinnersShowcase';
 import toast from 'react-hot-toast';
 
 export default function ContentContent() {
@@ -330,6 +331,12 @@ export default function ContentContent() {
   const [newsletterPreviewLang, setNewsletterPreviewLang] = useState('en');
   const [savingNewsletter, setSavingNewsletter] = useState(false);
 
+  const [winnersShowcase, setWinnersShowcase] = useState(DEFAULT_WINNERS_SHOWCASE);
+  const [showcaseLang, setShowcaseLang] = useState('fr');
+  const [showcasePreviewLang, setShowcasePreviewLang] = useState('fr');
+  const [savingShowcase, setSavingShowcase] = useState(false);
+  const [activeWinnerCard, setActiveWinnerCard] = useState(0);
+
   const [legalContent, setLegalContent] = useState(defaultLegalContent);
   const [legalSection, setLegalSection] = useState('terms');
   const [legalLang, setLegalLang] = useState('en');
@@ -356,7 +363,86 @@ export default function ContentContent() {
     fetchLegalContent();
     fetchShopCapsContent();
     fetchNewsletterBanner();
+    fetchWinnersShowcase();
   }, []);
+
+  const fetchWinnersShowcase = async () => {
+    try {
+      const res = await fetch(`${API}/api/content/winners-showcase`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          setWinnersShowcase({
+            ...DEFAULT_WINNERS_SHOWCASE,
+            ...data,
+            header: {
+              fr: { ...DEFAULT_WINNERS_SHOWCASE.header.fr, ...(data?.header?.fr || {}) },
+              en: { ...DEFAULT_WINNERS_SHOWCASE.header.en, ...(data?.header?.en || {}) },
+            },
+            winners: Array.isArray(data?.winners) && data.winners.length ? data.winners : DEFAULT_WINNERS_SHOWCASE.winners,
+            badges: Array.isArray(data?.badges) && data.badges.length ? data.badges : DEFAULT_WINNERS_SHOWCASE.badges,
+            cta: {
+              link: data?.cta?.link || DEFAULT_WINNERS_SHOWCASE.cta.link,
+              fr: { ...DEFAULT_WINNERS_SHOWCASE.cta.fr, ...(data?.cta?.fr || {}) },
+              en: { ...DEFAULT_WINNERS_SHOWCASE.cta.en, ...(data?.cta?.en || {}) },
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch winners showcase:', e);
+    }
+  };
+
+  const handleWinnerImageUpload = (index, file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, WEBP)');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setWinnersShowcase((prev) => {
+        const updated = [...prev.winners];
+        if (updated[index]) {
+          updated[index] = { ...updated[index], image: reader.result };
+        }
+        return { ...prev, winners: updated };
+      });
+      toast.success(`Image loaded for card #${index + 1}`);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetWinnerImage = (index) => {
+    setWinnersShowcase((prev) => {
+      const updated = [...prev.winners];
+      if (updated[index]) {
+        updated[index] = { ...updated[index], image: `/images/winners/winner-${index + 1}.jpg` };
+      }
+      return { ...prev, winners: updated };
+    });
+    toast.success(`Reset card #${index + 1} image to default`);
+  };
+
+  const saveWinnersShowcase = async () => {
+    setSavingShowcase(true);
+    try {
+      const res = await fetch(`${API}/api/content/winners-showcase`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(winnersShowcase),
+      });
+      if (!res.ok) throw new Error('Failed to save winners showcase');
+      toast.success('Winners showcase saved successfully');
+    } catch (err) {
+      toast.error(err.message || 'Failed to save');
+    } finally {
+      setSavingShowcase(false);
+    }
+  };
 
   const fetchNewsletterBanner = async () => {
     try {
@@ -948,6 +1034,12 @@ export default function ContentContent() {
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'newsletter' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
         >
           Newsletter Banner
+        </button>
+        <button
+          onClick={() => setActiveTab('winnersShowcase')}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'winnersShowcase' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+        >
+          Winners Showcase
         </button>
         <button
           onClick={() => setActiveTab('legal')}
@@ -2554,6 +2646,565 @@ export default function ContentContent() {
 
                   <p className="text-[11px] text-neutral-400 text-center">
                     Interactive Preview: Live representation of the bottom section on the homepage.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {activeTab === 'winnersShowcase' && (
+        <FadeIn>
+          <div className="space-y-6">
+            {/* Top Header */}
+            <div className="bg-white rounded-2xl border border-neutral-200 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-[#b88238]" />
+                  <h2 className="text-lg font-bold text-neutral-900">
+                    Winners Showcase & Social Proof
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#f3eadb] text-[#b88238]">
+                    Luxury Grid
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Customize the 6 winner photo cards, testimonials, winner names, prizes, trust badges, and CTA button.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Language Switcher */}
+                <div className="flex items-center bg-neutral-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setShowcaseLang('fr')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      showcaseLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    🇫🇷 Français
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowcaseLang('en')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      showcaseLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    🇬🇧 English
+                  </button>
+                </div>
+
+                {/* Save Button */}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={saveWinnersShowcase}
+                  disabled={savingShowcase}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-neutral-800 transition-all shadow"
+                >
+                  {savingShowcase ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-[#e9c58c]" />
+                  )}
+                  <span>{savingShowcase ? 'Saving...' : 'Save Showcase'}</span>
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Main Content: Editor (Left) & Preview (Right) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              {/* Left Column (7 cols): Forms */}
+              <div className="xl:col-span-7 space-y-6">
+                {/* 1. Header & Taglines Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#b88238]" />
+                      Section Header & Taglines ({showcaseLang.toUpperCase()})
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                          Top Left Tagline
+                        </label>
+                        <input
+                          type="text"
+                          value={winnersShowcase.header[showcaseLang]?.taglineLeft || ''}
+                          onChange={(e) =>
+                            setWinnersShowcase((prev) => ({
+                              ...prev,
+                              header: {
+                                ...prev.header,
+                                [showcaseLang]: { ...prev.header[showcaseLang], taglineLeft: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={showcaseLang === 'fr' ? "PLUS QU'UN PRODUIT — DES OPPORTUNITÉS" : "MORE THAN A PRODUCT — OPPORTUNITIES"}
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 uppercase font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                          Top Right Tagline
+                        </label>
+                        <input
+                          type="text"
+                          value={winnersShowcase.header[showcaseLang]?.taglineRight || ''}
+                          onChange={(e) =>
+                            setWinnersShowcase((prev) => ({
+                              ...prev,
+                              header: {
+                                ...prev.header,
+                                [showcaseLang]: { ...prev.header[showcaseLang], taglineRight: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={showcaseLang === 'fr' ? "DES CLIENTS RÉELS · DES RÊVES RÉALISÉS" : "REAL CUSTOMERS · DREAMS REALIZED"}
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 uppercase font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                          Title Prefix (e.g. Nos derniers)
+                        </label>
+                        <input
+                          type="text"
+                          value={winnersShowcase.header[showcaseLang]?.titlePrefix || ''}
+                          onChange={(e) =>
+                            setWinnersShowcase((prev) => ({
+                              ...prev,
+                              header: {
+                                ...prev.header,
+                                [showcaseLang]: { ...prev.header[showcaseLang], titlePrefix: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={showcaseLang === 'fr' ? "Nos derniers" : "Our latest"}
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                          Title Gold Accent (e.g. gagnants)
+                        </label>
+                        <input
+                          type="text"
+                          value={winnersShowcase.header[showcaseLang]?.titleHighlight || ''}
+                          onChange={(e) =>
+                            setWinnersShowcase((prev) => ({
+                              ...prev,
+                              header: {
+                                ...prev.header,
+                                [showcaseLang]: { ...prev.header[showcaseLang], titleHighlight: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={showcaseLang === 'fr' ? "gagnants" : "winners"}
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-amber-300 bg-amber-50/20 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Subtitle (Under Main Title)
+                      </label>
+                      <input
+                        type="text"
+                        value={winnersShowcase.header[showcaseLang]?.subtitle || ''}
+                        onChange={(e) =>
+                          setWinnersShowcase((prev) => ({
+                            ...prev,
+                            header: {
+                              ...prev.header,
+                              [showcaseLang]: { ...prev.header[showcaseLang], subtitle: e.target.value },
+                            },
+                          }))
+                        }
+                        placeholder={showcaseLang === 'fr' ? "ILS ONT TENTÉ LEUR CHANCE, ILS ONT GAGNÉ" : "THEY TOOK THEIR CHANCE, THEY WON"}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 uppercase font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Winner Cards Selector & Editor */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-5 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div>
+                      <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-[#b88238]" />
+                        Winner Testimonial Cards (6 Cards)
+                      </h3>
+                      <p className="text-xs text-neutral-400 mt-0.5">
+                        Select a card below to edit its photo, quote, winner name, prize, and date.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card selector pills */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {winnersShowcase.winners.map((w, idx) => {
+                      const isSelected = activeWinnerCard === idx;
+                      return (
+                        <button
+                          key={`card-tab-${idx}`}
+                          type="button"
+                          onClick={() => setActiveWinnerCard(idx)}
+                          className={`relative p-2 rounded-xl border transition-all text-center flex flex-col items-center gap-1.5 ${
+                            isSelected
+                              ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
+                              : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-700'
+                          }`}
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-black/10 bg-neutral-200">
+                            <img
+                              src={w.image || `/images/winners/winner-${idx + 1}.jpg`}
+                              alt={w.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <span className="text-[11px] font-bold truncate max-w-full">
+                            #{idx + 1} {w.name?.split(' ')?.[0] || 'Winner'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Active Card Form */}
+                  {winnersShowcase.winners[activeWinnerCard] && (() => {
+                    const curr = winnersShowcase.winners[activeWinnerCard];
+                    const quoteField = showcaseLang === 'fr' ? 'quoteFr' : 'quoteEn';
+                    const prizeField = showcaseLang === 'fr' ? 'prizeFr' : 'prizeEn';
+                    const dateField = showcaseLang === 'fr' ? 'dateFr' : 'dateEn';
+
+                    return (
+                      <div className="p-4 rounded-xl border border-neutral-200 bg-[#faf8f5] space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[#f3eadb] text-[#b88238] flex items-center justify-center text-xs font-black">
+                              {activeWinnerCard + 1}
+                            </span>
+                            <span className="text-xs font-bold text-neutral-900">
+                              Editing Card #{activeWinnerCard + 1}: {curr.name}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleResetWinnerImage(activeWinnerCard)}
+                            className="text-[11px] font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-neutral-200 bg-white"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Reset Image</span>
+                          </button>
+                        </div>
+
+                        {/* Photo Uploader */}
+                        <div>
+                          <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                            Winner Photo
+                          </label>
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-24 rounded-xl overflow-hidden shadow border border-neutral-300 shrink-0 bg-neutral-900">
+                              <img
+                                src={curr.image || `/images/winners/winner-${activeWinnerCard + 1}.jpg`}
+                                alt={curr.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) {
+                                    handleWinnerImageUpload(activeWinnerCard, e.target.files[0]);
+                                  }
+                                }}
+                                className="text-xs text-neutral-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-neutral-900 file:text-white hover:file:bg-neutral-800 cursor-pointer"
+                              />
+                              <p className="text-[11px] text-neutral-400 mt-1">
+                                High-res portrait or landscape photo of the winner holding the prize / car.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Name & Date */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                              Winner Name
+                            </label>
+                            <input
+                              type="text"
+                              value={curr.name || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setWinnersShowcase((prev) => {
+                                  const updated = [...prev.winners];
+                                  updated[activeWinnerCard] = { ...updated[activeWinnerCard], name: val };
+                                  return { ...prev, winners: updated };
+                                });
+                              }}
+                              placeholder="e.g. Mathieu D."
+                              className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                              Win Date / Month ({showcaseLang.toUpperCase()})
+                            </label>
+                            <input
+                              type="text"
+                              value={curr[dateField] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setWinnersShowcase((prev) => {
+                                  const updated = [...prev.winners];
+                                  updated[activeWinnerCard] = { ...updated[activeWinnerCard], [dateField]: val };
+                                  return { ...prev, winners: updated };
+                                });
+                              }}
+                              placeholder={showcaseLang === 'fr' ? 'Janvier 2025' : 'January 2025'}
+                              className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Prize */}
+                        <div>
+                          <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                            Prize Title ({showcaseLang.toUpperCase()})
+                          </label>
+                          <input
+                            type="text"
+                            value={curr[prizeField] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setWinnersShowcase((prev) => {
+                                const updated = [...prev.winners];
+                                updated[activeWinnerCard] = { ...updated[activeWinnerCard], [prizeField]: val };
+                                return { ...prev, winners: updated };
+                              });
+                            }}
+                            placeholder={showcaseLang === 'fr' ? 'Gagnant Mercedes Classe G' : 'Mercedes G-Class Winner'}
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 font-semibold text-[#9e7030]"
+                          />
+                        </div>
+
+                        {/* Testimonial Quote */}
+                        <div>
+                          <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                            Testimonial Quote ({showcaseLang.toUpperCase()})
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={curr[quoteField] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setWinnersShowcase((prev) => {
+                                const updated = [...prev.winners];
+                                updated[activeWinnerCard] = { ...updated[activeWinnerCard], [quoteField]: val };
+                                return { ...prev, winners: updated };
+                              });
+                            }}
+                            placeholder={
+                              showcaseLang === 'fr'
+                                ? "“Incroyable ! Je n'y croyais pas en achetant mon produit du mois et me voilà aujourd'hui au volant d'une Classe G ! Merci REGAR 🙏!”"
+                                : "“Incredible! I didn't believe it when purchasing my monthly product, and here I am today at the wheel of a G-Class! Thank you REGAR 🙏!”"
+                            }
+                            className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900 italic resize-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 3. CTA Button & Destination Link Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2 pb-3 border-b border-neutral-100">
+                    <ArrowRight className="w-4 h-4 text-[#b88238]" />
+                    Call-to-Action Button & Link
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Button Label ({showcaseLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={winnersShowcase.cta[showcaseLang]?.buttonText || ''}
+                        onChange={(e) =>
+                          setWinnersShowcase((prev) => ({
+                            ...prev,
+                            cta: {
+                              ...prev.cta,
+                              [showcaseLang]: { ...prev.cta[showcaseLang], buttonText: e.target.value },
+                            },
+                          }))
+                        }
+                        placeholder={showcaseLang === 'fr' ? 'TENTEZ VOTRE CHANCE' : 'TRY YOUR LUCK'}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 font-bold uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Button Link Destination
+                      </label>
+                      <input
+                        type="text"
+                        value={winnersShowcase.cta?.link || '/products'}
+                        onChange={(e) =>
+                          setWinnersShowcase((prev) => ({
+                            ...prev,
+                            cta: {
+                              ...prev.cta,
+                              link: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="/products"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Subtext Under Button ({showcaseLang.toUpperCase()})
+                    </label>
+                    <input
+                      type="text"
+                      value={winnersShowcase.cta[showcaseLang]?.subtext || ''}
+                      onChange={(e) =>
+                        setWinnersShowcase((prev) => ({
+                          ...prev,
+                          cta: {
+                            ...prev.cta,
+                            [showcaseLang]: { ...prev.cta[showcaseLang], subtext: e.target.value },
+                          },
+                        }))
+                      }
+                      placeholder={showcaseLang === 'fr' ? "AUJOURD'HUI UN PRODUIT, DEMAIN PEUT-ÊTRE VOUS" : "TODAY A PRODUCT, TOMORROW MAYBE YOU"}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900 uppercase font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column (5 cols): Sticky Live Preview */}
+              <div className="xl:col-span-5">
+                <div className="sticky top-6 space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-neutral-800 uppercase tracking-wider">
+                        Live Social Proof Preview
+                      </span>
+                    </div>
+
+                    <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setShowcasePreviewLang('fr')}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${
+                          showcasePreviewLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        FR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowcasePreviewLang('en')}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${
+                          showcasePreviewLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        EN
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Simulated Luxury Showcase Preview Box */}
+                  <div className="bg-[#faf8f5] rounded-2xl border border-neutral-300 p-4 space-y-4 max-h-[750px] overflow-y-auto shadow-sm">
+                    {/* Header */}
+                    <div className="text-center space-y-1.5 pb-3 border-b border-black/10">
+                      <p className="text-[9px] font-bold tracking-widest text-[#9b6e2d] uppercase">
+                        {winnersShowcase.header[showcasePreviewLang]?.taglineLeft}
+                      </p>
+                      <h4 className="text-lg font-black text-neutral-900 font-serif">
+                        {winnersShowcase.header[showcasePreviewLang]?.titlePrefix}{' '}
+                        <span className="italic text-[#9b6e2d]">
+                          {winnersShowcase.header[showcasePreviewLang]?.titleHighlight}
+                        </span>
+                      </h4>
+                      <p className="text-[9px] font-bold tracking-wider text-neutral-500 uppercase">
+                        {winnersShowcase.header[showcasePreviewLang]?.subtitle}
+                      </p>
+                    </div>
+
+                    {/* Compact Grid (2 columns in preview) */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {winnersShowcase.winners.slice(0, 4).map((w, idx) => {
+                        const quote = showcasePreviewLang === 'fr' ? w.quoteFr : (w.quoteEn || w.quoteFr);
+                        const prize = showcasePreviewLang === 'fr' ? w.prizeFr : (w.prizeEn || w.prizeFr);
+                        const date = showcasePreviewLang === 'fr' ? w.dateFr : (w.dateEn || w.dateFr);
+
+                        return (
+                          <div
+                            key={`preview-card-${idx}`}
+                            className="relative rounded-xl overflow-hidden aspect-[3/4] flex flex-col justify-end p-2 bg-neutral-900 shadow border border-black/10"
+                          >
+                            <img
+                              src={w.image || `/images/winners/winner-${idx + 1}.jpg`}
+                              alt={w.name}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                            <div className="relative z-10 bg-white/95 rounded-lg p-2 text-[10px] space-y-1">
+                              <p className="italic line-clamp-2 text-neutral-700 leading-tight">
+                                {quote}
+                              </p>
+                              <div className="flex items-center justify-between pt-1 border-t border-black/5">
+                                <span className="font-bold text-neutral-900 truncate">— {w.name}</span>
+                                <span className="text-[8px] text-neutral-400">{date}</span>
+                              </div>
+                              <p className="text-[9px] font-bold text-[#9e7030] truncate">{prize}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* CTA preview */}
+                    <div className="pt-2 text-center space-y-1">
+                      <div className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-[#9b6e2d] via-[#c99b58] to-[#8a5d20] text-white text-[10px] font-black uppercase tracking-wider shadow">
+                        {winnersShowcase.cta[showcasePreviewLang]?.buttonText || 'TENTEZ VOTRE CHANCE'} →
+                      </div>
+                      <p className="text-[8px] font-bold text-neutral-400 uppercase">
+                        {winnersShowcase.cta[showcasePreviewLang]?.subtext}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-neutral-400 text-center">
+                    Real-time preview reflects exact design rendered on the /winners page.
                   </p>
                 </div>
               </div>
