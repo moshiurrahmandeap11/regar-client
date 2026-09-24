@@ -6,7 +6,7 @@ import {
   Plus, HelpCircle, Search, X, ChevronLeft, ChevronRight, FileText,
   Image as ImageIcon, Upload, RotateCcw, ArrowRight, Sparkles, Globe,
   Shield, Scale, Calendar, Trash2, ArrowUp, ArrowDown,
-  Gem, Ticket, Truck, Trophy, Star, BadgeCheck, Globe2, Gift, Check
+  Gem, Ticket, Truck, Trophy, Star, BadgeCheck, Globe2, Gift, Check, Mail
 } from 'lucide-react';
 import { FadeIn } from '@/components/animations';
 import toast from 'react-hot-toast';
@@ -308,6 +308,28 @@ export default function ContentContent() {
   const [shopCapsPreviewLang, setShopCapsPreviewLang] = useState('en');
   const [savingShopCaps, setSavingShopCaps] = useState(false);
 
+  const defaultNewsletterConfig = {
+    image: '',
+    en: {
+      title: "Don't Miss Out!",
+      subtitle: 'Join our community and get exclusive updates on new raffles and special offers.',
+      buttonText: 'Subscribe',
+    },
+    fr: {
+      title: 'Ne manquez rien !',
+      subtitle: 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.',
+      buttonText: "S'inscrire",
+    },
+  };
+
+  const [newsletterConfig, setNewsletterConfig] = useState(defaultNewsletterConfig);
+  const [newsletterImageFile, setNewsletterImageFile] = useState(null);
+  const [newsletterImagePreview, setNewsletterImagePreview] = useState('');
+  const [isNewsletterDragging, setIsNewsletterDragging] = useState(false);
+  const [newsletterLang, setNewsletterLang] = useState('en');
+  const [newsletterPreviewLang, setNewsletterPreviewLang] = useState('en');
+  const [savingNewsletter, setSavingNewsletter] = useState(false);
+
   const [legalContent, setLegalContent] = useState(defaultLegalContent);
   const [legalSection, setLegalSection] = useState('terms');
   const [legalLang, setLegalLang] = useState('en');
@@ -333,7 +355,88 @@ export default function ContentContent() {
     fetchHeroContent();
     fetchLegalContent();
     fetchShopCapsContent();
+    fetchNewsletterBanner();
   }, []);
+
+  const fetchNewsletterBanner = async () => {
+    try {
+      const res = await fetch(`${API}/api/content/newsletter-banner`);
+      const data = await res.json();
+      if (data) {
+        setNewsletterConfig({
+          image: data.image || '',
+          en: { ...defaultNewsletterConfig.en, ...(data.en || {}) },
+          fr: { ...defaultNewsletterConfig.fr, ...(data.fr || {}) },
+        });
+        if (data.image) {
+          setNewsletterImagePreview(data.image);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load newsletter banner:', error);
+    }
+  };
+
+  const handleNewsletterImageChange = (file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, WEBP)');
+      return;
+    }
+    setNewsletterImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewsletterImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetNewsletterImage = () => {
+    setNewsletterImageFile(null);
+    setNewsletterImagePreview('');
+    setNewsletterConfig((prev) => ({ ...prev, image: '' }));
+    toast.success('Reset to default auto raffle prize image');
+  };
+
+  const saveNewsletterBanner = async () => {
+    setSavingNewsletter(true);
+    try {
+      const formData = new FormData();
+      if (newsletterImageFile) {
+        formData.append('newsletterImage', newsletterImageFile);
+      } else if (!newsletterConfig.image && !newsletterImagePreview) {
+        formData.append('resetImage', 'true');
+      } else if (newsletterConfig.image) {
+        formData.append('image', newsletterConfig.image);
+      }
+      formData.append('en', JSON.stringify(newsletterConfig.en));
+      formData.append('fr', JSON.stringify(newsletterConfig.fr));
+
+      const res = await fetch(`${API}/api/content/newsletter-banner`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Failed to save newsletter banner');
+      const updated = await res.json();
+      toast.success('Newsletter banner updated successfully');
+      setNewsletterConfig({
+        image: updated.image || '',
+        en: { ...defaultNewsletterConfig.en, ...(updated.en || {}) },
+        fr: { ...defaultNewsletterConfig.fr, ...(updated.fr || {}) },
+      });
+      setNewsletterImageFile(null);
+      if (updated.image) {
+        setNewsletterImagePreview(updated.image);
+      } else {
+        setNewsletterImagePreview('');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Error saving newsletter banner');
+    } finally {
+      setSavingNewsletter(false);
+    }
+  };
 
   const fetchShopCapsContent = async () => {
     try {
@@ -821,7 +924,7 @@ export default function ContentContent() {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setActiveTab('faq')}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'faq' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
@@ -839,6 +942,12 @@ export default function ContentContent() {
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'shopCaps' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
         >
           Shop Caps & Benefits
+        </button>
+        <button
+          onClick={() => setActiveTab('newsletter')}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === 'newsletter' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
+        >
+          Newsletter Banner
         </button>
         <button
           onClick={() => setActiveTab('legal')}
@@ -2123,6 +2232,328 @@ export default function ContentContent() {
 
                   <p className="text-[11px] text-neutral-400 text-center">
                     Real-time document preview updates as you type.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      {activeTab === 'newsletter' && (
+        <FadeIn>
+          <div className="space-y-6">
+            {/* Header / Intro */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-[#b88238]" />
+                  Newsletter Banner Customization
+                </h2>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Customize the homepage bottom newsletter call-to-action banner: upload a custom image or use the active raffle prize image, and edit bilingual texts.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetNewsletterImage}
+                  className="px-3.5 py-2 text-xs font-medium border border-neutral-200 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset to Prize Image
+                </button>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={saveNewsletterBanner}
+                  disabled={savingNewsletter}
+                  className="px-5 py-2 bg-neutral-900 text-white rounded-xl text-xs font-semibold hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow"
+                >
+                  {savingNewsletter ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 text-[#e9c58c]" />
+                  )}
+                  {savingNewsletter ? 'Saving...' : 'Save Banner'}
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              {/* Left Column: Image Uploader & Bilingual Text Form (7 cols) */}
+              <div className="xl:col-span-7 space-y-6">
+                {/* 1. Promotional Image Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-neutral-800 flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-neutral-500" />
+                        Newsletter Promo Image
+                      </h3>
+                      <p className="text-xs text-neutral-400 mt-0.5">
+                        Image shown beside the newsletter signup box on the homepage.
+                      </p>
+                    </div>
+                    {newsletterImagePreview ? (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                        Custom Image Active
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f3eadb] text-[#b88238]">
+                        Auto Raffle Prize Image
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dropzone */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsNewsletterDragging(true); }}
+                    onDragLeave={() => setIsNewsletterDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsNewsletterDragging(false);
+                      if (e.dataTransfer.files?.[0]) handleNewsletterImageChange(e.dataTransfer.files[0]);
+                    }}
+                    className={`relative rounded-xl border-2 border-dashed transition-all p-6 text-center cursor-pointer ${
+                      isNewsletterDragging
+                        ? 'border-neutral-900 bg-neutral-50'
+                        : 'border-neutral-200 hover:border-neutral-400 bg-neutral-50/50'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/jpg"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) handleNewsletterImageChange(e.target.files[0]);
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+
+                    {newsletterImagePreview ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="relative w-28 h-28 rounded-xl overflow-hidden shadow-md border border-neutral-200">
+                          <img
+                            src={newsletterImagePreview}
+                            alt="Newsletter Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-neutral-700">Click or drop to replace image</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleResetNewsletterImage();
+                            }}
+                            className="text-xs text-red-600 hover:text-red-700 font-medium underline ml-2"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-neutral-400">PNG, JPG or WEBP recommended</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-medium text-neutral-700">
+                          Drag and drop custom image here, or <span className="text-blue-600">browse</span>
+                        </p>
+                        <p className="text-[11px] text-neutral-400">
+                          If left empty, the active raffle 1st prize image will automatically be shown.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Bilingual Text Editor Card */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4 shadow-sm">
+                  {/* Language switch */}
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-[#b88238]" />
+                      <h3 className="text-sm font-bold text-neutral-900">
+                        Banner Texts ({newsletterLang.toUpperCase()})
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center bg-neutral-100 p-1 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setNewsletterLang('en')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          newsletterLang === 'en'
+                            ? 'bg-white text-neutral-900 shadow-sm'
+                            : 'text-neutral-500 hover:text-neutral-800'
+                        }`}
+                      >
+                        🇬🇧 English
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewsletterLang('fr')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          newsletterLang === 'fr'
+                            ? 'bg-white text-neutral-900 shadow-sm'
+                            : 'text-neutral-500 hover:text-neutral-800'
+                        }`}
+                      >
+                        🇫🇷 Français
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Text inputs */}
+                  <div className="space-y-4">
+                    {/* Main Headline */}
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">
+                        Headline Title ({newsletterLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={newsletterConfig[newsletterLang]?.title || ''}
+                        onChange={(e) => setNewsletterConfig((prev) => ({
+                          ...prev,
+                          [newsletterLang]: { ...prev[newsletterLang], title: e.target.value }
+                        }))}
+                        placeholder={newsletterLang === 'en' ? "Don't Miss Out!" : "Ne manquez rien !"}
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                    </div>
+
+                    {/* Subtitle / Description */}
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">
+                        Subtitle / Description ({newsletterLang.toUpperCase()})
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={newsletterConfig[newsletterLang]?.subtitle || ''}
+                        onChange={(e) => setNewsletterConfig((prev) => ({
+                          ...prev,
+                          [newsletterLang]: { ...prev[newsletterLang], subtitle: e.target.value }
+                        }))}
+                        placeholder={newsletterLang === 'en' ? 'Join our community and get exclusive updates on new raffles and special offers.' : 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.'}
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                      />
+                    </div>
+
+                    {/* Subscribe Button Text */}
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 mb-1.5 block">
+                        Subscribe Button Label ({newsletterLang.toUpperCase()})
+                      </label>
+                      <input
+                        type="text"
+                        value={newsletterConfig[newsletterLang]?.buttonText || ''}
+                        onChange={(e) => setNewsletterConfig((prev) => ({
+                          ...prev,
+                          [newsletterLang]: { ...prev[newsletterLang], buttonText: e.target.value }
+                        }))}
+                        placeholder={newsletterLang === 'en' ? 'Subscribe' : "S'inscrire"}
+                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-end">
+                    <motion.button
+                      whileTap={{ scale: 0.99 }}
+                      onClick={saveNewsletterBanner}
+                      disabled={savingNewsletter}
+                      className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-semibold flex items-center gap-2 shadow"
+                    >
+                      {savingNewsletter ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 text-[#e9c58c]" />
+                      )}
+                      {savingNewsletter ? 'Saving...' : 'Save Banner Changes'}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Live Interactive Preview (5 cols) */}
+              <div className="xl:col-span-5">
+                <div className="sticky top-6 space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-neutral-800 uppercase tracking-wider">Live Homepage Preview</span>
+                    </div>
+
+                    <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setNewsletterPreviewLang('en')}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${
+                          newsletterPreviewLang === 'en' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        EN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewsletterPreviewLang('fr')}
+                        className={`px-2 py-1 rounded-md font-medium transition-all ${
+                          newsletterPreviewLang === 'fr' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500'
+                        }`}
+                      >
+                        FR
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Simulated Newsletter Box */}
+                  <div className="relative w-full rounded-2xl overflow-hidden bg-[#e8d3b6] p-6 text-neutral-900 shadow-lg border border-[#d6bda0] select-none space-y-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {/* Left: Image Preview */}
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-white/50 border border-black/10 flex items-center justify-center shadow-sm">
+                        {newsletterImagePreview ? (
+                          <img
+                            src={newsletterImagePreview}
+                            alt="Newsletter Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="p-3 text-center">
+                            <Gift className="w-8 h-8 text-[#b88238] mx-auto mb-1" />
+                            <span className="text-[9px] font-bold text-neutral-600 block leading-tight">
+                              Active Raffle 1st Prize
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Middle: Content */}
+                      <div className="flex-1 text-center sm:text-left">
+                        <h4 className="text-lg font-black text-neutral-900">
+                          {newsletterConfig[newsletterPreviewLang]?.title || (newsletterPreviewLang === 'fr' ? 'Ne manquez rien !' : "Don't Miss Out!")}
+                        </h4>
+                        <p className="text-xs text-neutral-700 mt-1 leading-relaxed">
+                          {newsletterConfig[newsletterPreviewLang]?.subtitle || (newsletterPreviewLang === 'fr' ? 'Rejoignez notre communaute et recevez des mises a jour exclusives...' : 'Join our community and get exclusive updates on new raffles...')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right / Bottom Form simulation */}
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-black/5">
+                      <div className="flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-xs text-neutral-400">
+                        {newsletterPreviewLang === 'fr' ? 'Votre email' : 'Enter your email'}
+                      </div>
+                      <div className="rounded-lg bg-black px-4 py-2 text-xs font-black uppercase text-white text-center">
+                        {newsletterConfig[newsletterPreviewLang]?.buttonText || (newsletterPreviewLang === 'fr' ? "S'inscrire" : 'Subscribe')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-neutral-400 text-center">
+                    Interactive Preview: Live representation of the bottom section on the homepage.
                   </p>
                 </div>
               </div>

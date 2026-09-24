@@ -86,6 +86,20 @@ const DEFAULT_SHOP_CAPS = {
   },
 };
 
+const DEFAULT_NEWSLETTER_BANNER = {
+  image: '',
+  en: {
+    title: "Don't Miss Out!",
+    subtitle: 'Join our community and get exclusive updates on new raffles and special offers.',
+    buttonText: 'Subscribe',
+  },
+  fr: {
+    title: 'Ne manquez rien !',
+    subtitle: 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.',
+    buttonText: "S'inscrire",
+  },
+};
+
 const resolveBenefitIcon = (iconName) => {
   switch (iconName) {
     case 'Ticket': return Ticket;
@@ -163,6 +177,7 @@ export default function HomePage() {
   const [winners, setWinners] = useState([]);
   const [heroBanner, setHeroBanner] = useState(DEFAULT_HERO_BANNER);
   const [shopCapsContent, setShopCapsContent] = useState(DEFAULT_SHOP_CAPS);
+  const [newsletterBanner, setNewsletterBanner] = useState(DEFAULT_NEWSLETTER_BANNER);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -175,13 +190,14 @@ export default function HomePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [productRes, raffleRes, reviewRes, winnerRes, heroRes, shopCapsRes] = await Promise.all([
+        const [productRes, raffleRes, reviewRes, winnerRes, heroRes, shopCapsRes, newsletterRes] = await Promise.all([
           api.get('/api/products?featured=true&active=true'),
           api.get('/api/raffles?status=active'),
           api.get('/api/reviews?limit=20'),
           api.get(`/api/tickets/winners?limit=4&t=${Date.now()}`),
           api.get('/api/content/hero-banner').catch(() => ({ data: null })),
           api.get('/api/content/shop_caps_section').catch(() => ({ data: null })),
+          api.get('/api/content/newsletter-banner').catch(() => ({ data: null })),
         ]);
         setProducts(Array.isArray(productRes.data) ? productRes.data : []);
         setRaffles(Array.isArray(raffleRes.data) ? raffleRes.data : []);
@@ -211,6 +227,13 @@ export default function HomePage() {
             } catch (e) {}
           }
           setShopCapsContent({ en, fr });
+        }
+        if (newsletterRes?.data) {
+          setNewsletterBanner({
+            image: newsletterRes.data.image || '',
+            en: { ...DEFAULT_NEWSLETTER_BANNER.en, ...(newsletterRes.data.en || {}) },
+            fr: { ...DEFAULT_NEWSLETTER_BANNER.fr, ...(newsletterRes.data.fr || {}) },
+          });
         }
       } catch (error) {
         console.error('Home load failed:', error);
@@ -886,14 +909,14 @@ export default function HomePage() {
       <section className="pb-8 sm:pb-0 bg-[#e8d3b6]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
-            {/* Left: Recent Raffle Image */}
-            {runningRaffleImage && (
+            {/* Left: Custom Image or fallback to Recent/Active Raffle 1st Prize Image */}
+            {(newsletterBanner.image || runningRaffleImage) && (
               <div className="w-full sm:w-48 shrink-0 flex items-center justify-center">
                 <div className="relative w-32 h-32 sm:w-40 sm:h-40">
                   <img
-                    src={runningRaffleImage}
-                    alt={heroName || 'Raffle'}
-                    className="w-full h-full object-cover rounded-2xl"
+                    src={newsletterBanner.image || runningRaffleImage}
+                    alt={heroName || 'Newsletter Promo'}
+                    className="w-full h-full object-cover rounded-2xl shadow-sm"
                   />
                 </div>
               </div>
@@ -901,8 +924,12 @@ export default function HomePage() {
             
             {/* Middle: Content */}
             <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-2xl sm:text-3xl font-black text-neutral-900">{isFr ? 'Ne manquez rien !' : "Don't Miss Out!"}</h2>
-              <p className="mt-2 text-sm text-neutral-700 max-w-md">{isFr ? 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.' : 'Join our community and get exclusive updates on new raffles and special offers.'}</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-neutral-900">
+                {isFr ? (newsletterBanner.fr?.title || 'Ne manquez rien !') : (newsletterBanner.en?.title || "Don't Miss Out!")}
+              </h2>
+              <p className="mt-2 text-sm text-neutral-700 max-w-md">
+                {isFr ? (newsletterBanner.fr?.subtitle || 'Rejoignez notre communaute et recevez des mises a jour exclusives sur les nouvelles tombolas et offres speciales.') : (newsletterBanner.en?.subtitle || 'Join our community and get exclusive updates on new raffles and special offers.')}
+              </p>
             </div>
 
             {/* Right: Form */}
@@ -916,7 +943,7 @@ export default function HomePage() {
                 className="min-w-0 sm:w-56 rounded-lg border border-black/10 bg-white px-4 py-3 text-sm outline-none"
               />
               <button type="submit" className="rounded-lg bg-black px-6 py-3 text-xs font-black uppercase text-white whitespace-nowrap">
-                {isFr ? 'Subscribe' : 'Subscribe'}
+                {isFr ? (newsletterBanner.fr?.buttonText || "S'inscrire") : (newsletterBanner.en?.buttonText || 'Subscribe')}
               </button>
             </form>
           </div>
